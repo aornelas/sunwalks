@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { addDays, formatMonthDayRange, formatShortDate, formatTime, startOfWeek } from "@/lib/dates";
+import { buildSrcSet } from "@/lib/image";
 import type { DayData } from "@/lib/types";
 import styles from "./WeekZoomView.module.css";
 
@@ -65,7 +66,11 @@ export function WeekZoomView({
                       className={[styles.cell, styles.captured, isToday ? styles.today : ""].join(" ")}
                       onClick={() => onOpenDay(date)}
                     >
-                      <img src={dayShot.thumbUrl} alt="" />
+                      <img
+                        {...buildSrcSet(dayShot.id, "sq")}
+                        sizes="(min-width: 900px) 160px, 25vw"
+                        alt=""
+                      />
                       <span className={styles.scrim} />
                       <span className={styles.dayLabel}>{formatShortDate(date)}</span>
                       <span className={styles.time}>{formatTime(new Date(dayShot.takenAt), timezone)}</span>

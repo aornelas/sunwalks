@@ -2,7 +2,10 @@
 
 import { useSyncExternalStore } from "react";
 
-const QUERY = "(min-width: 900px)";
+// `pointer: fine` excludes a rotated phone: the Pixel 10 Pro XL's landscape
+// viewport (~998×448) is wider than 900px, which would otherwise misread a
+// rotated touch phone as desktop (see ANDROID_UPDATE.md — device profile).
+const QUERY = "(min-width: 900px) and (pointer: fine)";
 
 function subscribe(callback: () => void) {
   const mql = window.matchMedia(QUERY);

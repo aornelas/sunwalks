@@ -8,7 +8,7 @@
   padding: 7px 15px;
   border-radius: 999px;
   font-family: var(--font-heading);
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--color-neutral-700);
   transition: background 180ms ease, color 180ms ease;
 }

@@ -22,22 +22,14 @@ export interface Stats {
 
 export type ZoomLevel = "week" | "month" | "year";
 
-export interface SyncInfo {
-  lastSyncedAt: string | null;
-  status: "running" | "ok" | "error" | "never";
-  error?: string | null;
-}
-
-export interface AlbumInfo {
-  id: string;
-  title: string;
-  photoCount: number;
-  coverUrl: string | null;
-}
-
 export interface AccountInfo {
   email: string;
-  albumId: string | null;
-  albumName: string | null;
-  autoSync: boolean;
+  lastPickedAt: string | null;
+}
+
+export interface PickerSessionInfo {
+  sessionId: string;
+  pickerUri: string;
+  pollIntervalMs: number;
+  timeoutMs: number;
 }

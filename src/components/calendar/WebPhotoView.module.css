@@ -7,6 +7,12 @@
   flex-direction: column;
   padding: 22px 26px 24px;
   color: #f5ead8;
+  animation: photoIn 220ms ease;
+}
+
+@keyframes photoIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .topRow {
@@ -20,13 +26,13 @@
 
 .dateLine {
   font-family: var(--font-heading);
-  font-size: 22px;
+  font-size: 1.375rem;
   color: #f5ead8;
 }
 
 .metaLine {
   font-family: var(--font-body);
-  font-size: 12.5px;
+  font-size: 0.7812rem;
   color: rgba(245, 234, 216, 0.7);
   margin-top: 4px;
 }
@@ -100,7 +106,7 @@
 .shotsKicker {
   font-family: var(--font-body);
   font-weight: 600;
-  font-size: 9px;
+  font-size: 0.5625rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgba(245, 234, 216, 0.45);
@@ -108,7 +114,7 @@
 
 .dayPhotoPill {
   font-family: var(--font-heading);
-  font-size: 12px;
+  font-size: 0.75rem;
   padding: 7px 14px;
   border-radius: 999px;
   white-space: nowrap;

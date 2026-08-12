@@ -1,12 +1,13 @@
-import type { DayData, Stats } from "./types";
+import type { DayData, PickerSessionInfo, Stats } from "./types";
 
 export interface CalendarApi {
   fetchDays(start: string, end: string): Promise<DayData[]>;
   fetchStats(): Promise<Stats>;
   fetchDayKeys(): Promise<string[]>;
   setDayPhoto?(date: string, shotId: string): Promise<void>;
-  triggerSync?(): Promise<{ ok: boolean; error?: string }>;
-  setAutoSync?(autoSync: boolean): Promise<void>;
+  createPickerSession?(): Promise<PickerSessionInfo>;
+  pollPickerSession?(sessionId: string): Promise<{ ready: boolean }>;
+  importPickerSession?(sessionId: string): Promise<{ ok: boolean; photosAdded?: number; error?: string }>;
   getShareUrl?(): Promise<string>;
   regenerateShareUrl?(): Promise<string>;
 }
@@ -44,21 +45,19 @@ export function createOwnerApi(): CalendarApi {
       });
       await json(res);
     },
-    async triggerSync() {
-      const res = await fetch("/api/sync", { method: "POST" });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        return { ok: false, error: body.error ?? "Sync failed" };
-      }
-      return { ok: true };
+    async createPickerSession() {
+      const res = await fetch("/api/picker/session", { method: "POST" });
+      return json<PickerSessionInfo>(res);
     },
-    async setAutoSync(autoSync) {
-      const res = await fetch("/api/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ autoSync }),
-      });
-      await json(res);
+    async pollPickerSession(sessionId) {
+      const res = await fetch(`/api/picker/session/${sessionId}`);
+      return json<{ ready: boolean }>(res);
+    },
+    async importPickerSession(sessionId) {
+      const res = await fetch(`/api/picker/session/${sessionId}/import`, { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return { ok: false, error: data.error ?? "Import failed" };
+      return { ok: true, photosAdded: data.photosAdded };
     },
     async getShareUrl() {
       const res = await fetch("/api/share-links");

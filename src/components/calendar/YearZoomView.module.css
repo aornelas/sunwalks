@@ -28,13 +28,13 @@
   font-weight: 400;
 }
 
-.mobileGrid .name { font-size: 13px; }
-.webGrid .name { font-size: 14px; }
+.mobileGrid .name { font-size: 0.8125rem; }
+.webGrid .name { font-size: 0.875rem; }
 
 .count {
   font-family: var(--font-body);
   font-weight: 600;
-  font-size: 9px;
+  font-size: 0.5625rem;
   color: var(--color-neutral-600);
 }
 

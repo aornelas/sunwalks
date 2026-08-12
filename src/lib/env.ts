@@ -20,9 +20,6 @@ export const env = {
   get ownerEmail() {
     return process.env.OWNER_EMAIL; // optional: locks sign-in to this address
   },
-  get cronSecret() {
-    return process.env.CRON_SECRET;
-  },
   get timezone() {
     return process.env.APP_TIMEZONE || "America/Los_Angeles";
   },

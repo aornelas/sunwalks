@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight, Share2, X } from "lucide-react";
 import { formatLongDate, formatTime } from "@/lib/dates";
+import { buildSrcSet } from "@/lib/image";
 import type { DayData } from "@/lib/types";
 import styles from "./WebPhotoView.module.css";
 
@@ -72,7 +73,7 @@ export function WebPhotoView({
             <ChevronLeft size={22} strokeWidth={2.75} />
           </button>
         )}
-        <img src={shot.url} alt={formatLongDate(date)} />
+        <img {...buildSrcSet(shot.id, "full")} sizes="70vw" alt={formatLongDate(date)} fetchPriority="high" />
         {nextDate && (
           <button
             type="button"

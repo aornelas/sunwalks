@@ -1,9 +1,19 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Share2, X } from "lucide-react";
 import { formatLongDate, formatTime } from "@/lib/dates";
+import { buildSrcSet } from "@/lib/image";
 import type { DayData } from "@/lib/types";
 import styles from "./PhotoView.module.css";
+
+const DISMISS_THRESHOLD = 110;
+
+interface DragState {
+  startX: number;
+  startY: number;
+  dragging: boolean;
+}
 
 interface PhotoViewProps {
   date: string;
@@ -45,8 +55,49 @@ export function PhotoView({
     .filter(Boolean)
     .join(" · ");
 
+  // Vertical swipe-down-to-dismiss (ANDROID_UPDATE.md §4/§5). Horizontal
+  // drags are released immediately so the system's edge back-gesture still
+  // works — see `touch-action: pan-x` on .photoArea.
+  const [dragY, setDragY] = useState(0);
+  const [settling, setSettling] = useState(false);
+  const dragRef = useRef<DragState | null>(null);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    setSettling(false);
+    dragRef.current = { startX: e.clientX, startY: e.clientY, dragging: false };
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    const s = dragRef.current;
+    if (!s) return;
+    const dx = e.clientX - s.startX;
+    const dy = e.clientY - s.startY;
+    if (!s.dragging) {
+      if (Math.abs(dy) < 10 && Math.abs(dx) < 10) return;
+      if (Math.abs(dx) > Math.abs(dy)) {
+        dragRef.current = null; // horizontal — leave it to the system gesture
+        return;
+      }
+      s.dragging = true;
+    }
+    if (dy > 0) setDragY(dy);
+  };
+  const endDrag = () => {
+    const s = dragRef.current;
+    dragRef.current = null;
+    if (s?.dragging && dragY > DISMISS_THRESHOLD) {
+      onClose();
+      return;
+    }
+    setSettling(true);
+    setDragY(0);
+  };
+
   return (
-    <div className={styles.overlay}>
+    <div
+      className={`${styles.overlay} ${settling ? styles.settling : ""}`}
+      style={dragY ? { transform: `translateY(${dragY}px)`, opacity: Math.max(1 - dragY / 400, 0.4) } : undefined}
+      onTransitionEnd={() => setSettling(false)}
+    >
       <div className={styles.topBar}>
         <button type="button" className={styles.iconButton} onClick={onClose} aria-label="Close">
           <X size={18} strokeWidth={2.75} />
@@ -62,7 +113,13 @@ export function PhotoView({
         </div>
       </div>
 
-      <div className={styles.photoArea}>
+      <div
+        className={styles.photoArea}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+      >
         {prevDate && (
           <button
             type="button"
@@ -73,7 +130,7 @@ export function PhotoView({
             <ChevronLeft size={20} strokeWidth={2.75} />
           </button>
         )}
-        <img src={shot.url} alt={formatLongDate(date)} />
+        <img {...buildSrcSet(shot.id, "full")} sizes="100vw" alt={formatLongDate(date)} fetchPriority="high" />
         {nextDate && (
           <button
             type="button"

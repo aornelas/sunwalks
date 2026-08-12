@@ -2,6 +2,7 @@
 
 import { buildMonthCells } from "@/lib/calendar-grid";
 import { dayOfMonth, monthName } from "@/lib/dates";
+import { buildSrcSet } from "@/lib/image";
 import type { DayData } from "@/lib/types";
 import styles from "./MonthBlock.module.css";
 
@@ -10,11 +11,12 @@ interface MonthBlockProps {
   today: string;
   variant: "mobile" | "web";
   filter: boolean;
+  eager?: boolean;
   getDay(date: string): DayData | undefined;
   onOpenDay(date: string): void;
 }
 
-export function MonthBlock({ monthKey, today, variant, filter, getDay, onOpenDay }: MonthBlockProps) {
+export function MonthBlock({ monthKey, today, variant, filter, eager, getDay, onOpenDay }: MonthBlockProps) {
   const allCells = buildMonthCells(monthKey, today, getDay);
   const cells = filter ? allCells.filter((c) => c.state === "captured") : allCells;
   const capturedCount = allCells.filter((c) => c.state === "captured").length;
@@ -50,7 +52,14 @@ export function MonthBlock({ monthKey, today, variant, filter, getDay, onOpenDay
               disabled={cell.state !== "captured"}
               aria-label={cell.date!}
             >
-              {dayShot && <img src={dayShot.thumbUrl} alt="" />}
+              {dayShot && (
+                <img
+                  {...buildSrcSet(dayShot.id, "sq")}
+                  sizes="(min-width: 900px) 90px, 55px"
+                  alt=""
+                  loading={eager ? undefined : "lazy"}
+                />
+              )}
               <span className={styles.dateNumber}>{dayOfMonth(cell.date!)}</span>
               {day && day.shots.length > 1 && <span className={styles.multiDot} />}
             </button>

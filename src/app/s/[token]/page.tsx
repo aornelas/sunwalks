@@ -4,6 +4,7 @@ import { computeStats } from "@/lib/stats";
 import { env } from "@/lib/env";
 import { addMonths, monthKey, todayDayKey } from "@/lib/dates";
 import { CalendarApp } from "@/components/calendar/CalendarApp";
+import styles from "./unavailable.module.css";
 
 export default async function SharePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -11,10 +12,8 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
 
   if (!active) {
     return (
-      <div style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <p style={{ fontFamily: "var(--font-body)", color: "var(--color-neutral-700)", textAlign: "center" }}>
-          This link isn&apos;t available anymore.
-        </p>
+      <div className={styles.page}>
+        <p className={styles.message}>This link isn&apos;t available anymore.</p>
       </div>
     );
   }

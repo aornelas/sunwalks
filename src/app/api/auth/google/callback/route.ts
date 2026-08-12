@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
 
     const sessionToken = await createSession();
     const account = await getOwnerAccount();
-    const destination = account?.albumId ? "/" : "/onboarding";
+    const destination = account?.lastPickedAt ? "/" : "/onboarding";
 
     const res = NextResponse.redirect(new URL(destination, req.url));
     res.cookies.set(SESSION_COOKIE, sessionToken, {

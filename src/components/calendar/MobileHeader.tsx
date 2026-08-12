@@ -16,7 +16,9 @@ export function MobileHeader({ today, readOnly, syncing, onRefresh, onOpenSettin
   return (
     <div className={styles.header}>
       <div>
-        <h3 className={styles.wordmark}>Sunrise</h3>
+        <h3 className={styles.wordmark}>
+          Sunrise Calendar <span className={styles.version}>v0.1</span>
+        </h3>
         <div className={styles.date}>{formatLongDate(today)}</div>
       </div>
       {!readOnly && (

@@ -84,11 +84,14 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overscroll-behavior-y: none;
+  /* Chrome's native pull-to-refresh would otherwise fight the calendar's own
+     scroll (see ANDROID_UPDATE.md §12). */
+  overscroll-behavior-y: contain;
+  -webkit-tap-highlight-color: transparent;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -111,6 +114,9 @@ button {
   cursor: pointer;
 }
 button:disabled { cursor: not-allowed; }
+/* Since the tap highlight above is suppressed, every button needs its own
+   answered-tap feedback (see ANDROID_UPDATE.md §12). */
+button:not(:disabled):active { opacity: 0.7; }
 input { font: inherit; }
 
 :focus { outline: none; }

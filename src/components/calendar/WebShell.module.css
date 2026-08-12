@@ -1,5 +1,6 @@
 .page {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-bg);
   display: flex;
   justify-content: center;
@@ -28,21 +29,28 @@
 
 .wordmark {
   font-family: var(--font-heading);
-  font-size: 34px;
+  font-size: 2.125rem;
   color: var(--color-text);
+}
+
+.version {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-neutral-600);
 }
 
 .date {
   font-family: var(--font-body);
   font-weight: 600;
-  font-size: 12.5px;
+  font-size: 0.7812rem;
   color: var(--color-neutral-700);
   margin-top: 4px;
 }
 
 .tagline {
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-neutral-600);
   margin-top: 2px;
 }
@@ -56,7 +64,7 @@
 .kicker {
   font-family: var(--font-body);
   font-weight: 600;
-  font-size: 9.5px;
+  font-size: 0.5938rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-neutral-600);
@@ -65,13 +73,13 @@
 
 .totalNumber {
   font-family: var(--font-heading);
-  font-size: 40px;
+  font-size: 2.5rem;
   color: var(--color-accent-700);
 }
 
 .totalLabel {
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-neutral-700);
   margin-bottom: 20px;
 }
@@ -85,13 +93,13 @@
 
 .figureNumber {
   font-family: var(--font-heading);
-  font-size: 22px;
+  font-size: 1.375rem;
   color: var(--color-text);
 }
 
 .figureLabel {
   font-family: var(--font-body);
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--color-neutral-600);
   margin-top: 2px;
 }
@@ -128,7 +136,7 @@
   left: 4px;
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 8.5px;
+  font-size: 0.5312rem;
   color: #fff;
   opacity: 0.92;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
@@ -136,7 +144,7 @@
 
 .syncLine {
   font-family: var(--font-body);
-  font-size: 11.5px;
+  font-size: 0.7188rem;
   color: var(--color-neutral-700);
   margin-bottom: 10px;
 }
@@ -151,7 +159,7 @@
   border: 1px solid var(--color-divider);
   border-radius: 999px;
   font-family: var(--font-heading);
-  font-size: 12.5px;
+  font-size: 0.7812rem;
   padding: 8px 14px;
 }
 
@@ -162,13 +170,13 @@
   color: var(--color-bg);
   border-radius: 999px;
   font-family: var(--font-heading);
-  font-size: 12.5px;
+  font-size: 0.7812rem;
   padding: 8px 14px;
 }
 
 .shareUrl {
   font-family: ui-monospace, "SF Mono", monospace;
-  font-size: 10.5px;
+  font-size: 0.6562rem;
   color: var(--color-neutral-600);
   word-break: break-all;
 }

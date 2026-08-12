@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { buildMonthCells } from "@/lib/calendar-grid";
 import { monthShort } from "@/lib/dates";
+import { buildSrcSet } from "@/lib/image";
 import type { DayData } from "@/lib/types";
 import styles from "./YearZoomView.module.css";
 
@@ -52,7 +53,7 @@ export function YearZoomView({ today, variant, filter, getDay, ensureLoaded, onJ
                     key={cell.date}
                     className={[styles.dot, cell.state === "missed" ? styles.missed : "", isToday ? styles.today : ""].join(" ")}
                   >
-                    {shot && <img src={shot.thumbUrl} alt="" />}
+                    {shot && <img {...buildSrcSet(shot.id, "sq")} sizes="20px" alt="" loading="lazy" />}
                   </div>
                 );
               })}

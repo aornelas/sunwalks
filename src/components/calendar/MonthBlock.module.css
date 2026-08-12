@@ -1,5 +1,13 @@
 .block {
   margin-bottom: 26px;
+  /* Skip layout/paint for off-screen months so scrolling a year of history
+     stays smooth at 120fps — see ANDROID_UPDATE.md §10. */
+  content-visibility: auto;
+  contain-intrinsic-size: 340px 100%;
+}
+
+.web.block {
+  contain-intrinsic-size: 420px 100%;
 }
 
 .titleRow {
@@ -80,15 +88,15 @@
 /* — mobile variant — */
 .mobile .grid { gap: 4px; }
 .mobile .cell { border-radius: var(--grid-radius-mobile); }
-.mobile .title { font-size: 18px; }
-.mobile .count { font-size: 9px; }
-.mobile .dateNumber { font-size: 9px; top: 2px; left: 5px; }
+.mobile .title { font-size: 1.125rem; }
+.mobile .count { font-size: 0.5625rem; }
+.mobile .dateNumber { font-size: 0.5625rem; top: 2px; left: 5px; }
 .mobile .multiDot { width: 4px; height: 4px; bottom: 4px; right: 4px; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35); }
 
 /* — web variant — */
 .web .grid { gap: 5px; }
 .web .cell { border-radius: var(--grid-radius-web); }
-.web .title { font-size: 21px; }
-.web .count { font-size: 10px; }
-.web .dateNumber { font-size: 10.5px; top: 4px; left: 7px; }
+.web .title { font-size: 1.3125rem; }
+.web .count { font-size: 0.625rem; }
+.web .dateNumber { font-size: 0.6562rem; top: 4px; left: 7px; }
 .web .multiDot { width: 5px; height: 5px; bottom: 5px; right: 5px; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35); }

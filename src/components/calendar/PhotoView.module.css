@@ -6,6 +6,16 @@
   display: flex;
   flex-direction: column;
   color: #f5ead8;
+  animation: photoIn 220ms ease;
+}
+
+.settling {
+  transition: transform 200ms ease, opacity 200ms ease;
+}
+
+@keyframes photoIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .topBar {
@@ -13,15 +23,20 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
-  padding: 52px 16px 10px;
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 10px;
 }
 
 .iconButton {
+  /* 34px visual size, 48px tap target — see ANDROID_UPDATE.md §5. */
+  box-sizing: content-box;
   flex: none;
   width: 34px;
   height: 34px;
+  padding: 7px;
+  margin: -7px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.12);
+  background-clip: content-box;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -41,7 +56,7 @@
 
 .dateLine {
   font-family: var(--font-heading);
-  font-size: 15px;
+  font-size: 0.9375rem;
   color: #f5ead8;
   white-space: nowrap;
   overflow: hidden;
@@ -50,7 +65,7 @@
 
 .metaLine {
   font-family: var(--font-body);
-  font-size: 10.5px;
+  font-size: 0.6562rem;
   color: rgba(245, 234, 216, 0.55);
   margin-top: 2px;
 }
@@ -62,6 +77,9 @@
   align-items: center;
   justify-content: center;
   min-height: 0;
+  /* Vertical drags are ours (swipe-to-dismiss); horizontal ones stay the
+     system's, so the Android edge back-gesture still works. */
+  touch-action: pan-x;
 }
 
 .photoArea img {
@@ -71,13 +89,17 @@
 }
 
 .chevron {
+  /* 32px visual size, 48px tap target — see ANDROID_UPDATE.md §5. */
+  box-sizing: content-box;
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
   width: 32px;
   height: 32px;
+  padding: 8px;
   border-radius: 999px;
   background: rgba(23, 20, 15, 0.45);
+  background-clip: content-box;
   color: #f5ead8;
   display: flex;
   align-items: center;
@@ -88,16 +110,16 @@
   opacity: 0.3;
 }
 
-.chevronPrev { left: 12px; }
-.chevronNext { right: 12px; }
+.chevronPrev { left: 4px; }
+.chevronNext { right: 4px; }
 
 .bottomBlock {
-  padding: 12px 16px 26px;
+  padding: 12px 16px calc(env(safe-area-inset-bottom, 0px) + 26px);
 }
 
 .caption {
   font-family: var(--font-body);
-  font-size: 11.5px;
+  font-size: 0.7188rem;
   color: rgba(245, 234, 216, 0.7);
 }
 
@@ -113,7 +135,7 @@
 .shotsKicker {
   font-family: var(--font-body);
   font-weight: 600;
-  font-size: 9px;
+  font-size: 0.5625rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgba(245, 234, 216, 0.45);
@@ -121,7 +143,7 @@
 
 .dayPhotoPill {
   font-family: var(--font-heading);
-  font-size: 11.5px;
+  font-size: 0.7188rem;
   padding: 7px 14px;
   border-radius: 999px;
   white-space: nowrap;

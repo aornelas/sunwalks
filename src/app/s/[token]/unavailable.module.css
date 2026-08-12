@@ -1,0 +1,15 @@
+.page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--color-bg);
+}
+
+.message {
+  font-family: var(--font-body);
+  color: var(--color-neutral-700);
+  text-align: center;
+}

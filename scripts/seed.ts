@@ -72,9 +72,7 @@ async function main() {
     email: "demo@example.com",
     googleSub: "demo",
     refreshTokenEncrypted: "unused-in-demo-mode",
-    albumId: "demo-album",
-    albumName: "Sunrises",
-    autoSync: true,
+    lastPickedAt: new Date(),
   });
 
   await db.insert(syncLog).values({

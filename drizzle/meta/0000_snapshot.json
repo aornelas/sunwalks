@@ -1,5 +1,5 @@
 {
-  "id": "49f6b617-dbaa-45a6-8050-32a26094b327",
+  "id": "84ddd105-b298-499d-91b0-0e72c8d09350",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -58,24 +58,11 @@
           "primaryKey": false,
           "notNull": true
         },
-        "album_id": {
-          "name": "album_id",
-          "type": "text",
+        "last_picked_at": {
+          "name": "last_picked_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
-        },
-        "album_name": {
-          "name": "album_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "auto_sync": {
-          "name": "auto_sync",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
         },
         "created_at": {
           "name": "created_at",

@@ -6,6 +6,12 @@ import { refreshAccessToken } from "./google";
 
 export type OwnerAccount = typeof ownerAccount.$inferSelect;
 
+// Access tokens live ~1hr; cache in memory per server instance rather than
+// hitting Google (and rewriting the DB) on every request. Cleared whenever
+// the stored refresh token changes (see upsertOwnerAccount) so a re-auth
+// (e.g. after granting a new scope) can't keep serving a stale token.
+let cachedAccessToken: { token: string; expiresAt: number } | undefined;
+
 export async function getOwnerAccount(): Promise<OwnerAccount | undefined> {
   const [row] = await db.select().from(ownerAccount).where(eq(ownerAccount.id, 1)).limit(1);
   return row;
@@ -36,22 +42,17 @@ export async function upsertOwnerAccount(fields: {
       refreshTokenEncrypted,
     });
   }
+  // The old access token (possibly missing scopes granted just now, or
+  // belonging to a since-replaced refresh token) is no longer valid to reuse.
+  cachedAccessToken = undefined;
 }
 
-export async function setAlbum(albumId: string, albumName: string): Promise<void> {
+export async function markPicked(): Promise<void> {
   await db
     .update(ownerAccount)
-    .set({ albumId, albumName, updatedAt: new Date() })
+    .set({ lastPickedAt: new Date(), updatedAt: new Date() })
     .where(eq(ownerAccount.id, 1));
 }
-
-export async function setAutoSync(autoSync: boolean): Promise<void> {
-  await db.update(ownerAccount).set({ autoSync, updatedAt: new Date() }).where(eq(ownerAccount.id, 1));
-}
-
-// Access tokens live ~1hr; cache in memory per server instance rather than
-// hitting Google (and rewriting the DB) on every request.
-let cachedAccessToken: { token: string; expiresAt: number } | undefined;
 
 export async function getValidAccessToken(): Promise<string> {
   const account = await getOwnerAccount();

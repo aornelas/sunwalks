@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Maximize, Minimize, Share2, X } from "lucide-react";
 import { formatLongDate, formatTime } from "@/lib/dates";
+import { buildSrcSet } from "@/lib/image";
 import type { DayData } from "@/lib/types";
 import styles from "./LandscapePhotoView.module.css";
 
@@ -52,8 +53,10 @@ export function LandscapePhotoView({
     <div className={styles.overlay}>
       <img
         className={`${styles.photo} ${fit ? styles.photoContain : styles.photoCover}`}
-        src={shot.url}
+        {...buildSrcSet(shot.id, "full")}
+        sizes="100vw"
         alt={formatLongDate(date)}
+        fetchPriority="high"
         onClick={() => setChromeVisible((v) => !v)}
       />
 

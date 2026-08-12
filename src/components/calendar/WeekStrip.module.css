@@ -38,7 +38,7 @@
 
 .initial {
   font-family: var(--font-body);
-  font-size: 9.5px;
+  font-size: 0.5938rem;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;

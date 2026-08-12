@@ -2,7 +2,7 @@
   position: fixed;
   left: 14px;
   right: 14px;
-  bottom: 14px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
   z-index: 10;
   display: flex;
   align-items: center;
@@ -25,7 +25,7 @@
   padding: 8px 0;
   border-radius: 999px;
   font-family: var(--font-heading);
-  font-size: 13px;
+  font-size: 0.8125rem;
   text-align: center;
   color: var(--color-neutral-700);
   transition: background 180ms ease, color 180ms ease;
@@ -37,14 +37,22 @@
 }
 
 .toggle {
+  /* 36px visual size, 48px tap target: content-box so padding is additive,
+     then a negative margin pulls the enlarged box back so it doesn't shift
+     surrounding layout (Android Material minimum touch target — see
+     ANDROID_UPDATE.md §5). */
+  box-sizing: content-box;
   flex: none;
   width: 36px;
   height: 36px;
+  padding: 6px;
+  margin: -6px;
   border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--color-neutral-200);
+  background-clip: content-box;
   color: #645c50;
   transition: background 180ms ease, color 180ms ease;
 }

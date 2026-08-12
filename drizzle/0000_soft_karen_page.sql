@@ -8,9 +8,7 @@ CREATE TABLE "owner_account" (
 	"email" text NOT NULL,
 	"google_sub" text NOT NULL,
 	"refresh_token_encrypted" text NOT NULL,
-	"album_id" text,
-	"album_name" text,
-	"auto_sync" boolean DEFAULT true NOT NULL,
+	"last_picked_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );

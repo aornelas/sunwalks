@@ -2,13 +2,19 @@ import { env } from "./env";
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
-const PHOTOS_API = "https://photoslibrary.googleapis.com/v1";
+const PICKER_API = "https://photospicker.googleapis.com/v1";
 const USERINFO_URL = "https://openidconnect.googleapis.com/v1/userinfo";
 
+// `photoslibrary.readonly` (and albums.list/mediaItems.search) was removed
+// by Google on 2025-03-31 — see design_handoff_sunrise_calendar/ANDROID_UPDATE.md
+// discussion and https://developers.google.com/photos/support/updates. Broad,
+// unattended library access is no longer available to apps; the Picker API
+// below is the replacement, and it's inherently a user-present, one-shot
+// selection flow — see src/lib/ingest.ts for what that means for this app.
 export const GOOGLE_SCOPES = [
   "openid",
   "email",
-  "https://www.googleapis.com/auth/photoslibrary.readonly",
+  "https://www.googleapis.com/auth/photospicker.mediaitems.readonly",
 ].join(" ");
 
 export function redirectUri(): string {
@@ -79,68 +85,74 @@ export async function fetchUserInfo(accessToken: string): Promise<GoogleUserInfo
   return res.json();
 }
 
-export interface GoogleAlbum {
+export interface PickerSession {
   id: string;
-  title: string;
-  mediaItemsCount?: string;
-  coverPhotoBaseUrl?: string;
+  pickerUri: string;
+  pollingConfig: { pollInterval: string; timeoutIn: string };
+  expireTime: string;
+  mediaItemsSet?: boolean;
 }
 
-export async function listAlbums(accessToken: string): Promise<GoogleAlbum[]> {
-  const albums: GoogleAlbum[] = [];
-  let pageToken: string | undefined;
-  do {
-    const params = new URLSearchParams({ pageSize: "50" });
-    if (pageToken) params.set("pageToken", pageToken);
-    const res = await fetch(`${PHOTOS_API}/albums?${params.toString()}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (!res.ok) throw new Error(`Google albums list failed: ${await res.text()}`);
-    const data = await res.json();
-    albums.push(...(data.albums ?? []));
-    pageToken = data.nextPageToken;
-  } while (pageToken);
-  return albums;
+const MAX_ITEMS_PER_SESSION = "2000"; // Google's own max; int64 fields are strings in JSON
+
+export async function createPickerSession(accessToken: string): Promise<PickerSession> {
+  const res = await fetch(`${PICKER_API}/sessions`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ pickingConfig: { maxItemCount: MAX_ITEMS_PER_SESSION } }),
+  });
+  if (!res.ok) throw new Error(`Picker sessions.create failed: ${await res.text()}`);
+  return res.json();
 }
 
-export interface GoogleMediaItem {
+export async function getPickerSession(accessToken: string, sessionId: string): Promise<PickerSession> {
+  const res = await fetch(`${PICKER_API}/sessions/${sessionId}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) throw new Error(`Picker sessions.get failed: ${await res.text()}`);
+  return res.json();
+}
+
+export async function deletePickerSession(accessToken: string, sessionId: string): Promise<void> {
+  await fetch(`${PICKER_API}/sessions/${sessionId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  }).catch(() => {}); // best-effort cleanup — a leaked session just expires on its own
+}
+
+export interface PickedMediaItem {
   id: string;
-  filename: string;
-  baseUrl: string;
-  mimeType: string;
-  mediaMetadata: {
-    creationTime: string;
-    width: string;
-    height: string;
+  createTime: string;
+  type: "TYPE_UNSPECIFIED" | "PHOTO" | "VIDEO";
+  mediaFile: {
+    baseUrl: string;
+    mimeType: string;
+    filename: string;
+    mediaFileMetadata?: {
+      width?: number;
+      height?: number;
+    };
   };
 }
 
-export async function searchAlbumMediaItems(
+export async function listPickerMediaItems(
   accessToken: string,
-  albumId: string,
-  onPage: (items: GoogleMediaItem[]) => Promise<void>,
+  sessionId: string,
+  onPage: (items: PickedMediaItem[]) => Promise<void>,
 ): Promise<void> {
   let pageToken: string | undefined;
   do {
-    const res = await fetch(`${PHOTOS_API}/mediaItems:search`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ albumId, pageSize: 100, pageToken }),
+    const params = new URLSearchParams({ sessionId, pageSize: "100" });
+    if (pageToken) params.set("pageToken", pageToken);
+    const res = await fetch(`${PICKER_API}/mediaItems?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
-    if (!res.ok) throw new Error(`Google mediaItems:search failed: ${await res.text()}`);
+    if (!res.ok) throw new Error(`Picker mediaItems.list failed: ${await res.text()}`);
     const data = await res.json();
-    await onPage(data.mediaItems ?? []);
+    await onPage((data.mediaItems ?? []).filter((item: PickedMediaItem) => item.type === "PHOTO"));
     pageToken = data.nextPageToken;
   } while (pageToken);
-}
-
-export async function getMediaItem(accessToken: string, id: string): Promise<GoogleMediaItem> {
-  const res = await fetch(`${PHOTOS_API}/mediaItems/${id}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!res.ok) throw new Error(`Google mediaItems.get failed: ${await res.text()}`);
-  return res.json();
 }

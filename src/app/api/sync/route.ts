@@ -1,25 +1,10 @@
 import { NextResponse } from "next/server";
 import { requireOwner } from "@/lib/require-owner";
-import { runSync, getLatestSyncLog } from "@/lib/ingest";
-import { getOwnerAccount } from "@/lib/owner";
+import { getLatestSyncLog } from "@/lib/ingest";
 
-export async function POST() {
-  const unauthorized = await requireOwner();
-  if (unauthorized) return unauthorized;
-
-  try {
-    const result = await runSync();
-    const account = await getOwnerAccount();
-    return NextResponse.json({ ok: true, ...result, syncedAt: account?.updatedAt });
-  } catch (err) {
-    console.error("Sync failed", err);
-    return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : "Sync failed" },
-      { status: 500 },
-    );
-  }
-}
-
+// No POST here anymore — importing photos is a multi-step, user-present
+// flow (create a picker session, wait for the owner to pick, then import),
+// not a single fire-and-forget trigger. See /api/picker/session*.
 export async function GET() {
   const unauthorized = await requireOwner();
   if (unauthorized) return unauthorized;

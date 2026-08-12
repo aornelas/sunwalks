@@ -3,7 +3,6 @@ import {
   text,
   timestamp,
   integer,
-  boolean,
   date,
   uniqueIndex,
   index,
@@ -11,16 +10,15 @@ import {
 
 /**
  * Single-owner app: one row, ever. Holds the Google identity that's allowed
- * to sign in and the encrypted refresh token used for background ingest.
+ * to sign in and the encrypted refresh token used to mint access tokens for
+ * Picker API sessions (there's no "album" to store anymore — see ingest.ts).
  */
 export const ownerAccount = pgTable("owner_account", {
   id: integer("id").primaryKey().default(1),
   email: text("email").notNull(),
   googleSub: text("google_sub").notNull(),
   refreshTokenEncrypted: text("refresh_token_encrypted").notNull(),
-  albumId: text("album_id"),
-  albumName: text("album_name"),
-  autoSync: boolean("auto_sync").notNull().default(true),
+  lastPickedAt: timestamp("last_picked_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

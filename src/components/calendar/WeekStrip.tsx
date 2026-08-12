@@ -1,6 +1,7 @@
 "use client";
 
 import { addDays, weekdayInitial } from "@/lib/dates";
+import { buildSrcSet } from "@/lib/image";
 import type { DayData } from "@/lib/types";
 import styles from "./WeekStrip.module.css";
 
@@ -29,7 +30,12 @@ export function WeekStrip({ today, getDay, onOpenDay }: WeekStripProps) {
                 aria-label={`Open sunrise for ${date}`}
               >
                 <div className={`${styles.circle} ${isToday ? styles.today : ""}`}>
-                  <img src={shot.thumbUrl} alt="" />
+                  <img
+                    {...buildSrcSet(shot.id, "sq")}
+                    sizes="55px"
+                    alt=""
+                    fetchPriority="high"
+                  />
                 </div>
               </button>
             ) : (

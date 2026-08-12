@@ -90,13 +90,14 @@ export function MonthZoomView({
         </div>
       )}
       <div className={listClass}>
-        {monthKeys.map((mKey) => (
+        {monthKeys.map((mKey, i) => (
           <MonthBlock
             key={mKey}
             monthKey={mKey}
             today={today}
             variant={variant}
             filter={filter}
+            eager={i < 2}
             getDay={getDay}
             onOpenDay={onOpenDay}
           />

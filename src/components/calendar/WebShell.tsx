@@ -1,7 +1,8 @@
 "use client";
 
 import { addDays, dayOfMonth, formatLongDate, formatTime } from "@/lib/dates";
-import type { AccountInfo, DayData, Stats, SyncInfo, ZoomLevel } from "@/lib/types";
+import type { AccountInfo, DayData, Stats, ZoomLevel } from "@/lib/types";
+import type { PickerImportState } from "@/hooks/usePickerImport";
 import { WebZoomBar } from "./WebZoomBar";
 import { MonthZoomView } from "./MonthZoomView";
 import { WeekZoomView } from "./WeekZoomView";
@@ -24,10 +25,11 @@ interface WebShellProps {
   jumpMonth?: string;
   firstMonthLabel: string | null;
   account?: AccountInfo;
-  syncInfo?: SyncInfo;
+  pickerState?: PickerImportState;
+  pickerPhotosAdded?: number | null;
+  pickerError?: string | null;
   shareUrl?: string | null;
-  syncing?: boolean;
-  onFetchNow?(): void;
+  onAddPhotos?(): void;
   onCopyShareLink?(): void;
 }
 
@@ -47,12 +49,14 @@ export function WebShell({
   jumpMonth,
   firstMonthLabel,
   account,
-  syncInfo,
+  pickerState,
+  pickerPhotosAdded,
+  pickerError,
   shareUrl,
-  syncing,
-  onFetchNow,
+  onAddPhotos,
   onCopyShareLink,
 }: WebShellProps) {
+  const busy = pickerState === "waiting" || pickerState === "importing";
   const last7 = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6));
 
   return (
@@ -61,7 +65,9 @@ export function WebShell({
         <div className={styles.main}>
           <div className={styles.header}>
             <div>
-              <h1 className={styles.wordmark}>Sunrise</h1>
+              <h1 className={styles.wordmark}>
+                Sunrise Calendar <span className={styles.version}>v0.1</span>
+              </h1>
               <div className={styles.date}>{formatLongDate(today)}</div>
               {firstMonthLabel && (
                 <div className={styles.tagline}>Every morning I got up for, since {firstMonthLabel}.</div>
@@ -155,19 +161,21 @@ export function WebShell({
             })}
           </div>
 
-          {!readOnly && account && syncInfo && (
+          {!readOnly && account && (
             <>
               <div className={styles.divider} />
               <div className={styles.syncLine}>
-                {syncInfo.status === "error"
-                  ? `Sync failed — ${syncInfo.error ?? "try again"}.`
-                  : syncInfo.lastSyncedAt
-                    ? `Synced ${formatTime(new Date(syncInfo.lastSyncedAt), timezone)} from Google Photos, album '${account.albumName}'.`
-                    : `Not synced yet from Google Photos, album '${account.albumName}'.`}
+                {pickerState === "error"
+                  ? `Couldn't add photos — ${pickerError ?? "try again"}.`
+                  : pickerState === "done"
+                    ? `Added ${pickerPhotosAdded ?? 0} photos just now.`
+                    : account.lastPickedAt
+                      ? `Last added ${formatTime(new Date(account.lastPickedAt), timezone)} from Google Photos.`
+                      : "Nothing added yet from Google Photos."}
               </div>
               <div className={styles.syncActions}>
-                <button type="button" className={styles.secondaryPill} onClick={onFetchNow} disabled={syncing}>
-                  {syncing ? "Fetching…" : "Fetch now"}
+                <button type="button" className={styles.secondaryPill} onClick={onAddPhotos} disabled={busy}>
+                  {pickerState === "waiting" ? "Waiting…" : pickerState === "importing" ? "Adding…" : "Add photos"}
                 </button>
                 <button type="button" className={styles.accentPill} onClick={onCopyShareLink}>
                   Copy link

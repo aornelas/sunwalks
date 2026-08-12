@@ -1,0 +1,180 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--photo-ground);
+  display: flex;
+  flex-direction: column;
+  color: #f5ead8;
+}
+
+.topBar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 52px 16px 10px;
+}
+
+.iconButton {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f5ead8;
+}
+
+.topActions {
+  display: flex;
+  gap: 8px;
+}
+
+.center {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.dateLine {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  color: #f5ead8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metaLine {
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  color: rgba(245, 234, 216, 0.55);
+  margin-top: 2px;
+}
+
+.photoArea {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+.photoArea img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.chevron {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: rgba(23, 20, 15, 0.45);
+  color: #f5ead8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chevron:disabled {
+  opacity: 0.3;
+}
+
+.chevronPrev { left: 12px; }
+.chevronNext { right: 12px; }
+
+.bottomBlock {
+  padding: 12px 16px 26px;
+}
+
+.caption {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  color: rgba(245, 234, 216, 0.7);
+}
+
+.shotsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  margin-bottom: 10px;
+}
+
+.shotsKicker {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(245, 234, 216, 0.45);
+}
+
+.dayPhotoPill {
+  font-family: var(--font-heading);
+  font-size: 11.5px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.pillCommit {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.pillInert {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f5ead8;
+}
+
+.thumbRow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.thumb {
+  position: relative;
+  flex: none;
+  width: 62px;
+  height: 62px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbViewing {
+  box-shadow: inset 0 0 0 2.5px #f5ead8;
+}
+
+.thumbDimmed::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(23, 20, 15, 0.4);
+}
+
+.thumbDayDot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-accent);
+}

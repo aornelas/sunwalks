@@ -1,0 +1,128 @@
+.week {
+  margin-bottom: 22px;
+}
+
+.label {
+  display: block;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+  margin-bottom: 9px;
+}
+
+.mobileGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.webGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.cell {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.mobileGrid .cell {
+  aspect-ratio: 1;
+  border-radius: var(--week-card-radius);
+}
+
+.webGrid .cell {
+  aspect-ratio: 0.78;
+  border-radius: 18px;
+  box-shadow: var(--shadow-md);
+}
+
+.cell img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.5), transparent);
+}
+
+.captured {
+  padding: 16px 8px 6px;
+  cursor: pointer;
+}
+
+.missed {
+  background: var(--color-neutral-300);
+  padding: 16px 8px 6px;
+}
+
+.future {
+  padding: 16px 8px 6px;
+}
+
+.today {
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+
+.mobileGrid .cell.today.captured {
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+
+.webGrid .cell.today {
+  box-shadow: var(--shadow-md), inset 0 0 0 2px var(--color-accent);
+}
+
+.dayLabel {
+  position: relative;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 11px;
+  color: #fff;
+}
+
+.webGrid .dayLabel {
+  font-size: 13px;
+}
+
+.time {
+  position: relative;
+  font-family: var(--font-body);
+  font-size: 9.5px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.webGrid .time {
+  font-size: 11px;
+}
+
+.missedLabel {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--color-neutral-500);
+}
+
+.noWalk {
+  font-family: var(--font-body);
+  font-size: 9.5px;
+  color: var(--color-neutral-400);
+}
+
+.futureLabel {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--color-neutral-400);
+}

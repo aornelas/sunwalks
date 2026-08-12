@@ -1,0 +1,56 @@
+.page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--color-bg);
+}
+
+.card {
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+}
+
+.wordmark {
+  font-family: var(--font-heading);
+  font-size: 34px;
+  color: var(--color-text);
+  margin-bottom: 10px;
+}
+
+.tagline {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-neutral-700);
+  line-height: 1.5;
+  margin-bottom: 32px;
+}
+
+.error {
+  background: var(--color-accent-100);
+  color: var(--color-accent-800);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  margin-bottom: 20px;
+}
+
+.button {
+  display: block;
+  width: 100%;
+  background: var(--color-accent);
+  color: var(--color-bg);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  padding: 14px 0;
+  border-radius: 999px;
+}
+
+.note {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--color-neutral-600);
+  margin-top: 14px;
+}

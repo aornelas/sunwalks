@@ -1,0 +1,67 @@
+.mobileGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px 12px;
+}
+
+.webGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 22px 18px;
+}
+
+.month {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.name {
+  font-family: var(--font-heading);
+  font-weight: 400;
+}
+
+.mobileGrid .name { font-size: 13px; }
+.webGrid .name { font-size: 14px; }
+
+.count {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 9px;
+  color: var(--color-neutral-600);
+}
+
+.dotGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.mobileGrid .dotGrid { gap: 2px; }
+.webGrid .dotGrid { gap: 3px; }
+
+.dot {
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+
+.mobileGrid .dot { border-radius: var(--year-dot-radius); }
+.webGrid .dot { border-radius: 3px; }
+
+.dot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.missed { background: var(--color-neutral-300); }
+
+.today {
+  box-shadow: inset 0 0 0 1.5px var(--color-accent);
+}

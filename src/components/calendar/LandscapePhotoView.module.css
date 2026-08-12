@@ -1,0 +1,176 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--photo-ground);
+  overflow: hidden;
+}
+
+.photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.photoCover { object-fit: cover; }
+.photoContain { object-fit: contain; }
+
+.scrimTop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 96px;
+  background: linear-gradient(to bottom, rgba(23, 20, 15, 0.55), transparent);
+  pointer-events: none;
+}
+
+.scrimBottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 140px;
+  background: linear-gradient(to top, rgba(23, 20, 15, 0.7), transparent);
+  pointer-events: none;
+}
+
+.chromeButton {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: rgba(23, 20, 15, 0.45);
+  backdrop-filter: blur(8px);
+  color: #f5ead8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topRow {
+  position: absolute;
+  top: 16px;
+  left: 22px;
+  right: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.topActions {
+  display: flex;
+  gap: 8px;
+}
+
+.chevron {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: rgba(23, 20, 15, 0.35);
+  color: #f5ead8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chevronPrev { left: 52px; }
+.chevronNext { right: 22px; }
+
+.bottomRow {
+  position: absolute;
+  bottom: 22px;
+  left: 26px;
+  right: 26px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dateBlock { min-width: 0; }
+
+.dateLine {
+  font-family: var(--font-heading);
+  font-size: 19px;
+  color: #f5ead8;
+}
+
+.metaLine {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  color: rgba(245, 234, 216, 0.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.shotsBlock {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dayPhotoPill {
+  font-family: var(--font-heading);
+  font-size: 12px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.pillCommit {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.pillInert {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f5ead8;
+}
+
+.thumbRow {
+  display: flex;
+  gap: 7px;
+}
+
+.thumb {
+  position: relative;
+  flex: none;
+  width: 56px;
+  height: 44px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbViewing {
+  box-shadow: inset 0 0 0 2.5px #f5ead8;
+}
+
+.thumbDimmed::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(23, 20, 15, 0.4);
+}
+
+.thumbDayDot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-accent);
+}

@@ -1,0 +1,55 @@
+.bar {
+  position: fixed;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(245, 234, 216, 0.86);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-md);
+}
+
+.pills {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+}
+
+.pill {
+  flex: 1;
+  padding: 8px 0;
+  border-radius: 999px;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  text-align: center;
+  color: var(--color-neutral-700);
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.pillSelected {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.toggle {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-neutral-200);
+  color: #645c50;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.toggleOn {
+  background: var(--color-accent-2-600);
+  color: #fff;
+}

@@ -1,0 +1,27 @@
+.weekdayHeader {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--color-neutral-500);
+  margin-bottom: 7px;
+}
+
+.mobileList {
+  display: flex;
+  flex-direction: column;
+}
+
+.webGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  align-items: start;
+}
+
+.sentinel {
+  height: 1px;
+}

@@ -1,0 +1,52 @@
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 2px 0 4px;
+}
+
+.wordmark {
+  font-family: var(--font-heading);
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+.date {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--color-neutral-700);
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+
+.iconButton {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--color-neutral-200);
+  color: #645c50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconButton:disabled {
+  opacity: 0.5;
+}
+
+.spin {
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

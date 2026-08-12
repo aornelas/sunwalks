@@ -1,0 +1,23 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pill {
+  padding: 7px 15px;
+  border-radius: 999px;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  color: var(--color-neutral-700);
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.pillSelected {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.filterPill {
+  margin-left: 6px;
+}

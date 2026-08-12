@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/organic-f9e57ef6-0916-419f-9a10-cf4e586bde11/styles.css">
+<script src="_ds/organic-f9e57ef6-0916-419f-9a10-cf4e586bde11/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#e8ddc8;font-family:Figtree,system-ui,sans-serif}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#201e1d;color:#f5ead8;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 13px/1.2 Figtree,system-ui,sans-serif;color:#201e1d}
+.dv-opts{display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(32,30,29,.1);color:#201e1d;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11.5px/1.3 Figtree,system-ui,sans-serif;color:rgba(32,30,29,.6)}
+.dv-opt:target .dv-oid{background:#c67139;color:#fff}
+.dv-next{margin:26px 0 0;font:12px/1.6 Figtree,system-ui,sans-serif;color:rgba(32,30,29,.55)}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Landscape photo view — rotate the phone and the sunrise fills the screen. Tap the photo to hide the chrome; the corner button switches fill / whole frame.</span></div>
+<div class="dv-opts">
+<div class="dv-opt" id="2a">
+<div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Photo view rotated — calendar stays portrait-locked</div>
+<div style="width:874px;height:402px;border-radius:52px;background:#0a0a0a;padding:11px;box-shadow:0 40px 80px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.12)">
+  <div style="position:relative;width:100%;height:100%;border-radius:42px;overflow:hidden;background:#17140f">
+    <div onClick="{{ land.toggleChrome }}" style="position:absolute;inset:0;cursor:pointer;display:flex;align-items:center;justify-content:center">
+      <sc-if value="{{ land.fill }}" hint-placeholder-val="{{ true }}"><img src="{{ land.src }}" alt="" style="width:100%;height:100%;object-fit:cover"></sc-if>
+      <sc-if value="{{ land.fit }}"><img src="{{ land.src }}" alt="" style="max-width:100%;max-height:100%;object-fit:contain"></sc-if>
+    </div>
+
+    <sc-if value="{{ land.chrome }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;inset:0;pointer-events:none">
+        <div style="position:absolute;left:0;right:0;top:0;height:96px;background:linear-gradient(to bottom,rgba(23,20,15,.55),transparent)"></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;height:140px;background:linear-gradient(to top,rgba(23,20,15,.7),transparent)"></div>
+
+        <div style="position:absolute;left:22px;right:22px;top:16px;display:flex;align-items:center;justify-content:space-between;pointer-events:auto">
+          <div onClick="{{ land.close }}" style="cursor:pointer;width:36px;height:36px;border-radius:999px;display:grid;place-items:center;background:rgba(23,20,15,.45);backdrop-filter:blur(8px)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.75" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </div>
+          <div style="display:flex;gap:8px">
+            <div onClick="{{ land.toggleFit }}" title="Fill / whole frame" style="cursor:pointer;width:36px;height:36px;border-radius:999px;display:grid;place-items:center;background:rgba(23,20,15,.45);backdrop-filter:blur(8px)">
+              <sc-if value="{{ land.fill }}" hint-placeholder-val="{{ true }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4M15 3h4a2 2 0 0 1 2 2v4M9 21H5a2 2 0 0 1-2-2v-4M15 21h4a2 2 0 0 0 2-2v-4"></path></svg></sc-if>
+              <sc-if value="{{ land.fit }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"></path></svg></sc-if>
+            </div>
+            <div onClick="{{ land.share }}" style="cursor:pointer;width:36px;height:36px;border-radius:999px;display:grid;place-items:center;background:rgba(23,20,15,.45);backdrop-filter:blur(8px)">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.75" stroke-linecap="round"><path d="M12 16V4"></path><path d="M7.5 8.5L12 4l4.5 4.5"></path><path d="M5 15v3.5a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 18.5V15"></path></svg>
+            </div>
+          </div>
+        </div>
+
+        <div onClick="{{ land.prevDay }}" style="position:absolute;left:52px;top:50%;transform:translateY(-50%);cursor:pointer;pointer-events:auto;width:36px;height:36px;border-radius:999px;display:grid;place-items:center;background:rgba(23,20,15,.35);backdrop-filter:blur(8px)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.75" stroke-linecap="round"><path d="M15 5l-7 7 7 7"></path></svg>
+        </div>
+        <div onClick="{{ land.nextDay }}" style="position:absolute;right:22px;top:50%;transform:translateY(-50%);cursor:pointer;pointer-events:auto;width:36px;height:36px;border-radius:999px;display:grid;place-items:center;background:rgba(23,20,15,.35);backdrop-filter:blur(8px)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.75" stroke-linecap="round"><path d="M9 5l7 7-7 7"></path></svg>
+        </div>
+
+        <div style="position:absolute;left:26px;right:26px;bottom:22px;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;pointer-events:auto">
+          <div>
+            <div style="font:400 19px var(--font-heading);color:#f5ead8">{{ land.dayLabel }}</div>
+            <div style="font:400 11.5px var(--font-body);color:rgba(245,234,216,.72);margin-top:1px;white-space:nowrap">{{ land.caption }}</div>
+          </div>
+          <sc-if value="{{ land.hasMany }}">
+            <div style="display:flex;align-items:center;gap:10px">
+              <sc-if value="{{ land.canSet }}"><span onClick="{{ land.setDay }}" style="cursor:pointer;border-radius:999px;background:var(--color-accent);color:var(--color-bg);padding:7px 14px;font:400 12px var(--font-heading);white-space:nowrap">Set as day photo</span></sc-if>
+              <sc-if value="{{ land.isDayShot }}"><span style="border-radius:999px;background:rgba(255,255,255,.14);color:rgba(245,234,216,.6);padding:7px 14px;font:400 12px var(--font-heading);white-space:nowrap">Day photo</span></sc-if>
+              <div style="display:flex;gap:7px">
+                <sc-for list="{{ land.thumbs }}" as="t">
+                  <div onClick="{{ t.choose }}" style="cursor:pointer;position:relative;width:56px;height:44px;border-radius:10px;overflow:hidden">
+                    <img src="{{ t.src }}" alt="" style="width:100%;height:100%;object-fit:cover">
+                    <sc-if value="{{ t.chosen }}"><span style="position:absolute;inset:0;border-radius:10px;box-shadow:inset 0 0 0 2.5px #f5ead8"></span></sc-if>
+                    <sc-if value="{{ t.dim }}"><span style="position:absolute;inset:0;background:rgba(23,20,15,.45)"></span></sc-if>
+                    <sc-if value="{{ t.isDay }}"><span style="position:absolute;top:3px;right:3px;width:8px;height:8px;border-radius:999px;background:var(--color-accent);box-shadow:0 0 0 1.5px rgba(23,20,15,.35)"></span></sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <div style="position:absolute;left:6px;top:50%;transform:translateY(-50%);width:24px;height:88px;border-radius:999px;background:#000;opacity:.9"></div>
+    <div style="position:absolute;left:50%;bottom:6px;transform:translateX(-50%);width:132px;height:5px;border-radius:999px;background:rgba(255,255,255,.55)"></div>
+  </div>
+</div>
+</div>
+</div>
+<p class="dv-next">Try next: “keep the chrome hidden by default in <a class="dv-oid" href="#2a">2a</a>” · “let the landscape view swipe between shots, not days” · “design the landscape calendar too”</p>
+</section>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Sunrise — first pass. Everything is live: tap days, switch week / month / year, filter, sync, share.</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Mobile app — last 7 days over a scrolling month grid</div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+<div style="position:relative;height:100%;min-height:788px;overflow:hidden;display:flex;flex-direction:column;background:var(--color-bg)">
+
+  <div style="flex:1;overflow:auto;padding:54px 14px 96px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:2px 0 4px">
+      <div>
+        <h3 style="margin:0;font-family:var(--font-heading);font-size:26px;letter-spacing:-.02em">Sunrise</h3>
+        <div style="font:400 11px var(--font-body);color:var(--color-neutral-600);margin-top:2px;white-space:nowrap;font-weight:600;color:var(--color-neutral-700)">{{ todayLine }}</div>
+      </div>
+      <div style="display:flex;gap:6px;padding-top:4px">
+        <div onClick="{{ sync }}" title="Fetch now" style="cursor:pointer;width:34px;height:34px;border-radius:999px;display:grid;place-items:center;background:var(--color-neutral-200)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#645c50" stroke-width="2.75" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3.1-6.8"></path><path d="M21 3v5h-5"></path></svg>
+        </div>
+        <div onClick="{{ openSheet }}" title="Settings" style="cursor:pointer;width:34px;height:34px;border-radius:999px;display:grid;place-items:center;background:var(--color-neutral-200)">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#645c50" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:6px;margin:14px 0 10px">
+      <sc-for list="{{ strip }}" as="s">
+        <div onClick="{{ s.open }}" style="flex:1;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px">
+          <div style="width:100%;aspect-ratio:1;border-radius:999px;overflow:hidden;position:relative;background:var(--color-neutral-200)">
+            <sc-if value="{{ s.src }}"><img src="{{ s.src }}" alt="" style="width:100%;height:100%;object-fit:cover"></sc-if>
+            <sc-if value="{{ s.isToday }}"><span style="position:absolute;inset:0;border-radius:999px;box-shadow:inset 0 0 0 2px var(--color-accent)"></span></sc-if>
+          </div>
+          <span style="font:600 9.5px var(--font-body);letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-600)">{{ s.wd }}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px 11px;white-space:nowrap;padding:13px 0;border-top:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider);margin-bottom:18px;font:400 11.5px var(--font-body);color:var(--color-neutral-700)">
+      <span><b style="font-weight:700;color:var(--color-accent-700)">{{ stats.total }}</b> sunrises</span>
+      <span><b style="font-weight:700;color:var(--color-accent-700)">{{ stats.week }}</b> this week</span>
+      <span><b style="font-weight:700;color:var(--color-accent-700)">{{ stats.month }}</b> this month</span>
+      <span><b style="font-weight:700;color:var(--color-accent-700)">{{ stats.avg }}</b> a week</span>
+    </div>
+
+    <sc-if value="{{ isMonth }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:7px">
+          <sc-for list="{{ weekdays }}" as="w" hint-placeholder-count="7">
+            <div style="text-align:center;font:600 9px var(--font-body);letter-spacing:.1em;color:var(--color-neutral-500)">{{ w }}</div>
+          </sc-for>
+        </div>
+        <sc-for list="{{ months }}" as="m">
+          <div style="margin-bottom:26px">
+            <div style="display:flex;align-items:baseline;gap:8px;margin:0 0 9px 2px">
+              <h4 style="margin:0;font-family:var(--font-heading);font-size:18px">{{ m.name }}</h4>
+              <span style="font:600 9px var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-600);white-space:nowrap">{{ m.count }} captured</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+              <sc-for list="{{ m.cells }}" as="c">
+                <sc-if value="{{ c.pad }}"><div></div></sc-if>
+                <sc-if value="{{ c.photo }}">
+                  <div onClick="{{ c.open }}" style="cursor:pointer;position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;box-shadow:var(--shadow-sm)">
+                    <img src="{{ c.src }}" alt="" style="width:100%;height:100%;object-fit:cover">
+                    <span style="position:absolute;top:2px;left:5px;font:700 9px var(--font-body);color:#fff;opacity:.92;text-shadow:0 1px 3px rgba(0,0,0,.55)">{{ c.numText }}</span>
+                    <sc-if value="{{ c.multi }}"><span style="position:absolute;bottom:4px;right:4px;width:4px;height:4px;border-radius:999px;background:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.35)"></span></sc-if>
+                    <sc-if value="{{ c.isToday }}"><span style="position:absolute;inset:0;border-radius:12px;box-shadow:inset 0 0 0 2px var(--color-accent)"></span></sc-if>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ c.emptyMuted }}">
+                  <div style="position:relative;aspect-ratio:1;border-radius:12px;background:var(--color-neutral-300)">
+                    <span style="position:absolute;top:2px;left:5px;font:600 9px var(--font-body);color:var(--color-neutral-500)">{{ c.numText }}</span>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ c.emptyDash }}">
+                  <div style="position:relative;aspect-ratio:1;border-radius:12px;border:1px dashed var(--color-neutral-400)">
+                    <span style="position:absolute;top:2px;left:5px;font:600 9px var(--font-body);color:var(--color-neutral-500)">{{ c.numText }}</span>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ c.emptyBlank }}">
+                  <div style="position:relative;aspect-ratio:1">
+                    <span style="position:absolute;top:2px;left:5px;font:600 9px var(--font-body);color:var(--color-neutral-400)">{{ c.numText }}</span>
+                  </div>
+                </sc-if>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isWeek }}">
+      <div>
+        <sc-for list="{{ weekRows }}" as="r" hint-placeholder-count="3">
+          <div style="margin-bottom:22px">
+            <div style="font:600 10px var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-600);margin:0 0 8px 2px">{{ r.label }}</div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+              <sc-for list="{{ r.cells }}" as="c">
+                <sc-if value="{{ c.photo }}">
+                  <div onClick="{{ c.open }}" style="cursor:pointer;position:relative;aspect-ratio:1;border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm)">
+                    <img src="{{ c.src }}" alt="" style="width:100%;height:100%;object-fit:cover">
+                    <div style="position:absolute;left:0;right:0;bottom:0;padding:16px 8px 6px;background:linear-gradient(to top,rgba(0,0,0,.5),transparent)">
+                      <div style="font:700 11px var(--font-body);color:#fff">{{ c.wd }} {{ c.num }}</div>
+                      <div style="font:400 9.5px var(--font-body);color:rgba(255,255,255,.8)">{{ c.time }}</div>
+                    </div>
+                    <sc-if value="{{ c.isToday }}"><span style="position:absolute;inset:0;border-radius:16px;box-shadow:inset 0 0 0 2px var(--color-accent)"></span></sc-if>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ c.emptyAny }}">
+                  <div style="position:relative;aspect-ratio:1;border-radius:16px;background:var(--color-neutral-300);display:flex;flex-direction:column;justify-content:flex-end;padding:8px">
+                    <div style="font:700 11px var(--font-body);color:var(--color-neutral-500)">{{ c.wd }} {{ c.num }}</div>
+                    <div style="font:400 9.5px var(--font-body);color:var(--color-neutral-400)">no walk</div>
+                    <sc-if value="{{ c.isToday }}"><span style="position:absolute;inset:0;border-radius:16px;box-shadow:inset 0 0 0 2px var(--color-accent)"></span></sc-if>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ c.future }}">
+                  <div style="position:relative;aspect-ratio:1;border-radius:16px;display:flex;flex-direction:column;justify-content:flex-end;padding:8px">
+                    <div style="font:700 11px var(--font-body);color:var(--color-neutral-400)">{{ c.wd }} {{ c.num }}</div>
+                  </div>
+                </sc-if>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isYear }}">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px 12px">
+        <sc-for list="{{ yearMonths }}" as="y">
+          <div onClick="{{ y.jump }}" style="cursor:pointer">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px">
+              <span style="font-family:var(--font-heading);font-size:13px">{{ y.name }}</span>
+              <span style="font:600 9px var(--font-body);color:var(--color-neutral-600)">{{ y.count }}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">
+              <sc-for list="{{ y.dots }}" as="d">
+                <sc-if value="{{ d.on }}"><div style="position:relative;aspect-ratio:1;border-radius:2px;overflow:hidden"><img src="{{ d.src }}" alt="" style="width:100%;height:100%;object-fit:cover"><sc-if value="{{ d.today }}"><span style="position:absolute;inset:0;border-radius:2px;box-shadow:inset 0 0 0 1.5px var(--color-accent)"></span></sc-if></div></sc-if>
+                <sc-if value="{{ d.off }}"><div style="position:relative;aspect-ratio:1;border-radius:2px;background:var(--color-neutral-300)"><sc-if value="{{ d.today }}"><span style="position:absolute;inset:0;border-radius:2px;box-shadow:inset 0 0 0 1.5px var(--color-accent)"></span></sc-if></div></sc-if>
+                <sc-if value="{{ d.future }}"><div style="aspect-ratio:1"></div></sc-if>
+                <sc-if value="{{ d.pad }}"><div></div></sc-if>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+
+  <div style="position:absolute;left:14px;right:14px;bottom:14px;display:flex;align-items:center;gap:6px;padding:6px;border-radius:999px;background:rgba(245,234,216,.86);backdrop-filter:blur(14px);box-shadow:var(--shadow-md)">
+    <div onClick="{{ setWeek }}" style="cursor:pointer;flex:1;text-align:center;padding:8px 0;border-radius:999px;font:400 13px var(--font-heading);background:{{ wkBg }};color:{{ wkFg }}">Week</div>
+    <div onClick="{{ setMonth }}" style="cursor:pointer;flex:1;text-align:center;padding:8px 0;border-radius:999px;font:400 13px var(--font-heading);background:{{ moBg }};color:{{ moFg }}">Month</div>
+    <div onClick="{{ setYear }}" style="cursor:pointer;flex:1;text-align:center;padding:8px 0;border-radius:999px;font:400 13px var(--font-heading);background:{{ yrBg }};color:{{ yrFg }}">Year</div>
+    <div onClick="{{ toggleFilter }}" title="Sunrise days only" style="cursor:pointer;width:36px;height:36px;flex:none;border-radius:999px;display:grid;place-items:center;background:{{ filBg }}">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="{{ filFg }}" stroke-width="2.75" stroke-linecap="round"><circle cx="12" cy="14" r="4"></circle><path d="M3 20h18M12 4v2.5M5 8l1.6 1.6M19 8l-1.6 1.6"></path></svg>
+    </div>
+  </div>
+
+  <sc-if value="{{ detail.open }}">
+    <div style="position:absolute;inset:0;background:#17140f;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:52px 16px 10px">
+        <div onClick="{{ detail.close }}" style="cursor:pointer;width:34px;height:34px;border-radius:999px;display:grid;place-items:center;background:rgba(255,255,255,.12)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.75" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </div>
+        <div style="flex:1;min-width:0;text-align:center;padding:0 8px">
+          <div style="font:400 15px var(--font-heading);color:#f5ead8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ detail.dayLabel }}</div>
+          <div style="font:400 10.5px var(--font-body);color:rgba(245,234,216,.55);letter-spacing:.04em;white-space:nowrap">{{ detail.sub }}</div>
+        </div>
+        <div onClick="{{ detail.share }}" style="cursor:pointer;width:34px;height:34px;border-radius:999px;display:grid;place-items:center;background:rgba(255,255,255,.12)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.75" stroke-linecap="round"><path d="M12 16V4"></path><path d="M7.5 8.5L12 4l4.5 4.5"></path><path d="M5 15v3.5a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 18.5V15"></path></svg>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;align-items:center;position:relative">
+        <img src="{{ detail.src }}" alt="" style="width:100%;max-height:100%;object-fit:contain">
+        <div onClick="{{ detail.prevDay }}" style="cursor:pointer;position:absolute;left:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:999px;display:grid;place-items:center;background:rgba(23,20,15,.45)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.75" stroke-linecap="round"><path d="M15 5l-7 7 7 7"></path></svg>
+        </div>
+        <div onClick="{{ detail.nextDay }}" style="cursor:pointer;position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:999px;display:grid;place-items:center;background:rgba(23,20,15,.45)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.75" stroke-linecap="round"><path d="M9 5l7 7-7 7"></path></svg>
+        </div>
+      </div>
+      <div style="padding:12px 16px 26px">
+        <div style="font:400 11.5px var(--font-body);color:rgba(245,234,216,.7);margin-bottom:10px">{{ detail.caption }}</div>
+        <sc-if value="{{ detail.hasMany }}">
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px">
+              <span style="font:600 9px var(--font-body);letter-spacing:.14em;text-transform:uppercase;color:rgba(245,234,216,.45);white-space:nowrap">{{ detail.shotCount }} shots</span>
+              <sc-if value="{{ detail.canSet }}"><span onClick="{{ detail.setDay }}" style="cursor:pointer;border-radius:999px;background:var(--color-accent);color:var(--color-bg);padding:6px 13px;font:400 11.5px var(--font-heading);white-space:nowrap">Set as day photo</span></sc-if>
+              <sc-if value="{{ detail.isDayShot }}"><span style="border-radius:999px;background:rgba(255,255,255,.1);color:rgba(245,234,216,.5);padding:6px 13px;font:400 11.5px var(--font-heading);white-space:nowrap">Day photo</span></sc-if>
+            </div>
+            <div style="display:flex;gap:8px">
+              <sc-for list="{{ detail.thumbs }}" as="t">
+                <div onClick="{{ t.choose }}" style="cursor:pointer;position:relative;width:62px;height:62px;border-radius:12px;overflow:hidden">
+                  <img src="{{ t.src }}" alt="" style="width:100%;height:100%;object-fit:cover">
+                  <sc-if value="{{ t.chosen }}"><span style="position:absolute;inset:0;border-radius:12px;box-shadow:inset 0 0 0 2.5px #f5ead8"></span></sc-if>
+                  <sc-if value="{{ t.dim }}"><span style="position:absolute;inset:0;background:rgba(23,20,15,.4)"></span></sc-if>
+                  <sc-if value="{{ t.isDay }}"><span style="position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:999px;background:var(--color-accent);box-shadow:0 0 0 1.5px rgba(23,20,15,.35)"></span></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ sheet.open }}">
+    <div style="position:absolute;inset:0;background:rgba(23,20,15,.4);display:flex;align-items:flex-end">
+      <div style="width:100%;background:var(--color-bg);border-radius:28px 28px 0 0;padding:20px 20px 26px;box-shadow:var(--shadow-lg)">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px">
+          <h4 style="margin:0;font-family:var(--font-heading);font-size:20px;white-space:nowrap">Source &amp; sharing</h4>
+          <div onClick="{{ sheet.close }}" style="cursor:pointer;font:600 12px var(--font-body);color:var(--color-accent-700)">Done</div>
+        </div>
+        <div style="border-radius:20px;background:var(--color-neutral-100);padding:14px 16px;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="width:8px;height:8px;border-radius:999px;background:var(--color-accent-2-600)"></span>
+            <div style="flex:1">
+              <div style="font:600 13px var(--font-body)">Google Photos</div>
+              <div style="font:400 11px var(--font-body);color:var(--color-neutral-600)">{{ account }}</div>
+            </div>
+            <div style="font:600 11px var(--font-body);color:var(--color-neutral-600);cursor:pointer">Change</div>
+          </div>
+          <div style="height:1px;background:var(--color-divider);margin:12px 0"></div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="flex:1">
+              <div style="font:600 13px var(--font-body)">Album — “Sunrises”</div>
+              <div style="font:400 11px var(--font-body);color:var(--color-neutral-600)">{{ albumLine }}</div>
+            </div>
+            <div style="font:600 11px var(--font-body);color:var(--color-neutral-600);cursor:pointer">Switch</div>
+          </div>
+          <div style="height:1px;background:var(--color-divider);margin:12px 0"></div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="flex:1">
+              <div style="font:600 13px var(--font-body)">Fetch once a day</div>
+              <div style="font:400 11px var(--font-body);color:var(--color-neutral-600)">{{ syncLine }}</div>
+            </div>
+            <div onClick="{{ toggleAuto }}" style="cursor:pointer;width:44px;height:26px;border-radius:999px;padding:3px;background:{{ autoBg }};display:flex;justify-content:{{ autoJustify }}">
+              <span style="width:20px;height:20px;border-radius:999px;background:#fff;box-shadow:var(--shadow-sm)"></span>
+            </div>
+          </div>
+        </div>
+        <div style="border-radius:20px;background:var(--color-neutral-100);padding:14px 16px;margin-bottom:16px">
+          <div style="font:600 13px var(--font-body);margin-bottom:3px">Share link</div>
+          <div style="font:400 11px var(--font-body);color:var(--color-neutral-600);margin-bottom:10px">Anyone with the link can look. Not indexed, no sign-in.</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div style="flex:1;border-radius:999px;background:var(--color-neutral-200);padding:8px 13px;font:400 11.5px ui-monospace,Menlo,monospace;color:var(--color-neutral-800);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ shareUrl }}</div>
+            <div onClick="{{ copy }}" style="cursor:pointer;border-radius:999px;background:var(--color-accent);color:var(--color-bg);padding:8px 15px;font:400 13px var(--font-heading);white-space:nowrap">{{ copyLabel }}</div>
+          </div>
+        </div>
+        <div onClick="{{ sync }}" style="cursor:pointer;text-align:center;border-radius:999px;border:1px solid var(--color-divider);padding:11px 0;font:400 14px var(--font-heading)">Fetch new photos now</div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-import>
+</div>
+
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Web — same data, two months at a glance, stats in the margin</div>
+<x-import component-from-global-scope="ChromeWindow" from="./browser-window.jsx" width="{{ winW }}" height="{{ winH }}" url="sunwalks.example.com" hint-size="1180px,768px">
+<div style="position:relative;height:100%;overflow:hidden;background:var(--color-bg);display:flex">
+  <div style="flex:1;overflow:auto;padding:30px 34px 34px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <h2 style="margin:0;font-family:var(--font-heading);font-size:34px;letter-spacing:-.02em">Sunrise</h2>
+        <div style="font:600 12.5px var(--font-body);color:var(--color-neutral-700);margin-top:3px">{{ todayLine }}</div>
+        <div style="font:400 12px var(--font-body);color:var(--color-neutral-600)">Every morning I got up for, since March.</div>
+      </div>
+      <div style="display:flex;gap:7px;align-items:center">
+        <div onClick="{{ dSetWeek }}" style="cursor:pointer;padding:7px 15px;border-radius:999px;font:400 13px var(--font-heading);background:{{ dWkBg }};color:{{ dWkFg }}">Week</div>
+        <div onClick="{{ dSetMonth }}" style="cursor:pointer;padding:7px 15px;border-radius:999px;font:400 13px var(--font-heading);background:{{ dMoBg }};color:{{ dMoFg }}">Month</div>
+        <div onClick="{{ dSetYear }}" style="cursor:pointer;padding:7px 15px;border-radius:999px;font:400 13px var(--font-heading);background:{{ dYrBg }};color:{{ dYrFg }}">Year</div>
+        <div onClick="{{ dToggleFilter }}" style="cursor:pointer;margin-left:6px;padding:7px 15px;border-radius:999px;font:400 13px var(--font-heading);white-space:nowrap;background:{{ dFilBg }};color:{{ dFilFg }}">Sunrise days only</div>
+      </div>
+    </div>
+
+    <sc-if value="{{ dIsMonth }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px">
+        <sc-for list="{{ dMonths }}" as="m">
+          <div>
+            <div style="display:flex;align-items:baseline;gap:9px;margin-bottom:10px">
+              <h4 style="margin:0;font-family:var(--font-heading);font-size:21px">{{ m.name }}</h4>
+              <span style="font:600 9.5px var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-600);white-space:nowrap">{{ m.count }} captured</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:6px">
+              <sc-for list="{{ weekdays }}" as="w" hint-placeholder-count="7">
+                <div style="text-align:center;font:600 9px var(--font-body);letter-spacing:.1em;color:var(--color-neutral-500)">{{ w }}</div>
+              </sc-for>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px">
+              <sc-for list="{{ m.cells }}" as="c">
+                <sc-if value="{{ c.pad }}"><div></div></sc-if>
+                <sc-if value="{{ c.photo }}">
+                  <div onClick="{{ c.open }}" style="cursor:pointer;position:relative;aspect-ratio:1;border-radius:14px;overflow:hidden;box-shadow:var(--shadow-sm)">
+                    <img src="{{ c.src }}" alt="" style="width:100%;height:100%;object-fit:cover">
+                    <span style="position:absolute;top:4px;left:7px;font:700 10.5px var(--font-body);color:#fff;opacity:.92;text-shadow:0 1px 3px rgba(0,0,0,.55)">{{ c.numText }}</span>
+                    <sc-if value="{{ c.multi }}"><span style="position:absolute;bottom:6px;right:6px;width:5px;height:5px;border-radius:999px;background:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.35)"></span></sc-if>
+                    <sc-if value="{{ c.isToday }}"><span style="position:absolute;inset:0;border-radius:14px;box-shadow:inset 0 0 0 2px var(--color-accent)"></span></sc-if>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ c.emptyMuted }}">
+                  <div style="position:relative;aspect-ratio:1;border-radius:14px;background:var(--color-neutral-300)">
+                    <span style="position:absolute;top:4px;left:7px;font:600 10.5px var(--font-body);color:var(--color-neutral-500)">{{ c.numText }}</span>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ c.emptyDash }}">
+                  <div style="position:relative;aspect-ratio:1;border-radius:14px;border:1px dashed var(--color-neutral-400)">
+                    <span style="position:absolute;top:4px;left:7px;font:600 10.5px var(--font-body);color:var(--color-neutral-500)">{{ c.numText }}</span>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ c.emptyBlank }}">
+                  <div style="position:relative;aspect-ratio:1">
+                    <span style="position:absolute;top:4px;left:7px;font:600 10.5px var(--font-body);color:var(--color-neutral-400)">{{ c.numText }}</span>
+                  </div>
+                </sc-if>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ dIsWeek }}">
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">
+        <sc-for list="{{ dWeekCells }}" as="c">
+          <sc-if value="{{ c.photo }}">
+            <div onClick="{{ c.open }}" style="cursor:pointer;position:relative;aspect-ratio:.78;border-radius:18px;overflow:hidden;box-shadow:var(--shadow-md)">
+              <img src="{{ c.src }}" alt="" style="width:100%;height:100%;object-fit:cover">
+              <div style="position:absolute;left:0;right:0;bottom:0;padding:26px 12px 10px;background:linear-gradient(to top,rgba(0,0,0,.55),transparent)">
+                <div style="font:700 13px var(--font-body);color:#fff">{{ c.wd }} {{ c.num }}</div>
+                <div style="font:400 11px var(--font-body);color:rgba(255,255,255,.8)">{{ c.time }}</div>
+              </div>
+              <sc-if value="{{ c.isToday }}"><span style="position:absolute;inset:0;border-radius:18px;box-shadow:inset 0 0 0 2px var(--color-accent)"></span></sc-if>
+            </div>
+          </sc-if>
+          <sc-if value="{{ c.emptyAny }}">
+            <div style="position:relative;aspect-ratio:.78;border-radius:18px;background:var(--color-neutral-300);display:flex;flex-direction:column;justify-content:flex-end;padding:12px">
+              <div style="font:700 13px var(--font-body);color:var(--color-neutral-500)">{{ c.wd }} {{ c.num }}</div>
+              <div style="font:400 11px var(--font-body);color:var(--color-neutral-400)">no walk</div>
+              <sc-if value="{{ c.isToday }}"><span style="position:absolute;inset:0;border-radius:18px;box-shadow:inset 0 0 0 2px var(--color-accent)"></span></sc-if>
+            </div>
+          </sc-if>
+          <sc-if value="{{ c.future }}">
+            <div style="position:relative;aspect-ratio:.78;border-radius:18px;display:flex;flex-direction:column;justify-content:flex-end;padding:12px">
+              <div style="font:700 13px var(--font-body);color:var(--color-neutral-400)">{{ c.wd }} {{ c.num }}</div>
+            </div>
+          </sc-if>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ dIsYear }}">
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:22px 18px">
+        <sc-for list="{{ dYearMonths }}" as="y">
+          <div onClick="{{ y.jump }}" style="cursor:pointer">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px">
+              <span style="font-family:var(--font-heading);font-size:14px">{{ y.name }}</span>
+              <span style="font:600 9.5px var(--font-body);color:var(--color-neutral-600)">{{ y.count }}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">
+              <sc-for list="{{ y.dots }}" as="d">
+                <sc-if value="{{ d.on }}"><div style="position:relative;aspect-ratio:1;border-radius:3px;overflow:hidden"><img src="{{ d.src }}" alt="" style="width:100%;height:100%;object-fit:cover"><sc-if value="{{ d.today }}"><span style="position:absolute;inset:0;border-radius:3px;box-shadow:inset 0 0 0 1.5px var(--color-accent)"></span></sc-if></div></sc-if>
+                <sc-if value="{{ d.off }}"><div style="position:relative;aspect-ratio:1;border-radius:3px;background:var(--color-neutral-300)"><sc-if value="{{ d.today }}"><span style="position:absolute;inset:0;border-radius:3px;box-shadow:inset 0 0 0 1.5px var(--color-accent)"></span></sc-if></div></sc-if>
+                <sc-if value="{{ d.future }}"><div style="aspect-ratio:1"></div></sc-if>
+                <sc-if value="{{ d.pad }}"><div></div></sc-if>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+
+  <div style="width:266px;flex:none;border-left:1px solid var(--color-divider);padding:30px 26px;overflow:auto">
+    <div style="font:600 9.5px var(--font-body);letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-600);margin-bottom:14px">This year so far</div>
+    <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:24px">
+      <div>
+        <div style="font-family:var(--font-heading);font-size:40px;line-height:1;color:var(--color-accent-700)">{{ stats.total }}</div>
+        <div style="font:400 11.5px var(--font-body);color:var(--color-neutral-700)">sunrises captured</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <div style="font-family:var(--font-heading);font-size:22px;line-height:1">{{ stats.week }}</div>
+          <div style="font:400 11px var(--font-body);color:var(--color-neutral-700)">last 7 days</div>
+        </div>
+        <div>
+          <div style="font-family:var(--font-heading);font-size:22px;line-height:1">{{ stats.month }}</div>
+          <div style="font:400 11px var(--font-body);color:var(--color-neutral-700)">last 30 days</div>
+        </div>
+        <div>
+          <div style="font-family:var(--font-heading);font-size:22px;line-height:1">{{ stats.avg }}</div>
+          <div style="font:400 11px var(--font-body);color:var(--color-neutral-700)">a week, on average</div>
+        </div>
+        <div>
+          <div style="font-family:var(--font-heading);font-size:22px;line-height:1">{{ stats.run }}</div>
+          <div style="font:400 11px var(--font-body);color:var(--color-neutral-700)">days in a row now</div>
+        </div>
+      </div>
+    </div>
+    <div style="height:1px;background:var(--color-divider);margin-bottom:20px"></div>
+    <div style="font:600 9.5px var(--font-body);letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-600);margin-bottom:10px">Last 7 mornings</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:24px">
+      <sc-for list="{{ strip }}" as="s">
+        <div onClick="{{ s.openD }}" style="cursor:pointer;position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--color-neutral-200)">
+          <sc-if value="{{ s.src }}"><img src="{{ s.src }}" alt="" style="width:100%;height:100%;object-fit:cover"></sc-if>
+          <span style="position:absolute;bottom:3px;left:5px;font:700 9px var(--font-body);color:{{ s.numFg }};text-shadow:0 1px 3px rgba(0,0,0,.5)">{{ s.num }}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="height:1px;background:var(--color-divider);margin-bottom:20px"></div>
+    <div style="font:400 11.5px var(--font-body);color:var(--color-neutral-700);margin-bottom:10px">{{ syncLine }} from Google Photos, album “Sunrises”.</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <div onClick="{{ sync }}" style="cursor:pointer;border-radius:999px;border:1px solid var(--color-divider);padding:7px 14px;font:400 12.5px var(--font-heading);white-space:nowrap">Fetch now</div>
+      <div onClick="{{ copy }}" style="cursor:pointer;border-radius:999px;background:var(--color-accent);color:var(--color-bg);padding:7px 14px;font:400 12.5px var(--font-heading);white-space:nowrap">{{ copyLabel }}</div>
+    </div>
+    <div style="font:400 10.5px var(--font-body);color:var(--color-neutral-600);margin-top:8px">{{ shareUrl }} — unlisted, no sign-in.</div>
+  </div>
+
+  <sc-if value="{{ dDetail.open }}">
+    <div style="position:absolute;inset:0;background:rgba(23,20,15,.93);display:flex;flex-direction:column;padding:22px 26px 24px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
+        <div>
+          <div style="font:400 22px var(--font-heading);color:#f5ead8">{{ dDetail.dayLabel }}</div>
+          <div style="font:400 12px var(--font-body);color:rgba(245,234,216,.6)">{{ dDetail.caption }}</div>
+        </div>
+        <div onClick="{{ dDetail.close }}" style="cursor:pointer;width:34px;height:34px;border-radius:999px;display:grid;place-items:center;background:rgba(255,255,255,.12)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.75" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;min-height:0">
+        <img src="{{ dDetail.src }}" alt="" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:14px">
+        <div onClick="{{ dDetail.prevDay }}" style="cursor:pointer;position:absolute;left:0;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:999px;display:grid;place-items:center;background:rgba(255,255,255,.12)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.75" stroke-linecap="round"><path d="M15 5l-7 7 7 7"></path></svg>
+        </div>
+        <div onClick="{{ dDetail.nextDay }}" style="cursor:pointer;position:absolute;right:0;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:999px;display:grid;place-items:center;background:rgba(255,255,255,.12)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.75" stroke-linecap="round"><path d="M9 5l7 7-7 7"></path></svg>
+        </div>
+      </div>
+      <sc-if value="{{ dDetail.hasMany }}">
+        <div style="margin-top:14px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+            <span style="font:600 9.5px var(--font-body);letter-spacing:.14em;text-transform:uppercase;color:rgba(245,234,216,.45);white-space:nowrap">{{ dDetail.shotCount }} shots this morning</span>
+            <sc-if value="{{ dDetail.canSet }}"><span onClick="{{ dDetail.setDay }}" style="cursor:pointer;border-radius:999px;background:var(--color-accent);color:var(--color-bg);padding:6px 14px;font:400 12px var(--font-heading);white-space:nowrap">Set as day photo</span></sc-if>
+            <sc-if value="{{ dDetail.isDayShot }}"><span style="border-radius:999px;background:rgba(255,255,255,.1);color:rgba(245,234,216,.5);padding:6px 14px;font:400 12px var(--font-heading);white-space:nowrap">Day photo</span></sc-if>
+          </div>
+          <div style="display:flex;gap:8px">
+            <sc-for list="{{ dDetail.thumbs }}" as="t">
+              <div onClick="{{ t.choose }}" style="cursor:pointer;position:relative;width:76px;height:60px;border-radius:12px;overflow:hidden">
+                <img src="{{ t.src }}" alt="" style="width:100%;height:100%;object-fit:cover">
+                <sc-if value="{{ t.chosen }}"><span style="position:absolute;inset:0;border-radius:12px;box-shadow:inset 0 0 0 2.5px #f5ead8"></span></sc-if>
+                <sc-if value="{{ t.dim }}"><span style="position:absolute;inset:0;background:rgba(23,20,15,.4)"></span></sc-if>
+                <sc-if value="{{ t.isDay }}"><span style="position:absolute;top:4px;right:4px;width:9px;height:9px;border-radius:999px;background:var(--color-accent);box-shadow:0 0 0 1.5px rgba(23,20,15,.35)"></span></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-import>
+</div>
+
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>First run — connect the album, then it runs itself</div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+<div style="height:100%;min-height:788px;background:var(--color-bg);display:flex;flex-direction:column;padding:56px 22px 26px">
+  <div style="flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:20px">
+    <div style="aspect-ratio:1;border-radius:18px;overflow:hidden"><img src="assets/sq/12.png" alt="" style="width:100%;height:100%;object-fit:cover"></div>
+    <div style="aspect-ratio:1;border-radius:18px;background:var(--color-neutral-200)"></div>
+    <div style="aspect-ratio:1;border-radius:18px;overflow:hidden"><img src="assets/sq/3.png" alt="" style="width:100%;height:100%;object-fit:cover"></div>
+    <div style="aspect-ratio:1;border-radius:18px;background:var(--color-neutral-200)"></div>
+    <div style="aspect-ratio:1;border-radius:18px;overflow:hidden"><img src="assets/sq/7.png" alt="" style="width:100%;height:100%;object-fit:cover"></div>
+    <div style="aspect-ratio:1;border-radius:18px;overflow:hidden"><img src="assets/sq/9.png" alt="" style="width:100%;height:100%;object-fit:cover"></div>
+  </div>
+  <h3 style="margin:0 0 10px;font-family:var(--font-heading);font-size:30px;line-height:1.08;letter-spacing:-.02em;text-wrap:pretty">One square for every morning you were out there.</h3>
+  <p style="margin:0 0 22px;font:400 13.5px/1.55 var(--font-body);color:var(--color-neutral-700);text-wrap:pretty">Point this at the album you already keep. It picks up new photos once a day, reads the date off each one, and fills in the square. Nothing to log.</p>
+  <div style="font:600 9.5px var(--font-body);letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-600);margin-bottom:9px">Your albums</div>
+  <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:auto">
+    <div style="display:flex;align-items:center;gap:12px;border-radius:20px;background:var(--color-neutral-100);padding:11px 14px;box-shadow:inset 0 0 0 2px var(--color-accent)">
+      <div style="width:42px;height:42px;border-radius:14px;overflow:hidden;flex:none"><img src="assets/sq/1.png" alt="" style="width:100%;height:100%;object-fit:cover"></div>
+      <div style="flex:1">
+        <div style="font:600 13.5px var(--font-body)">Sunrises</div>
+        <div style="font:400 11px var(--font-body);color:var(--color-neutral-600)">112 photos — since March 11</div>
+      </div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c67139" stroke-width="2.75" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"></path></svg>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;border-radius:20px;background:var(--color-neutral-100);padding:11px 14px">
+      <div style="width:42px;height:42px;border-radius:14px;background:var(--color-neutral-300);flex:none"></div>
+      <div style="flex:1">
+        <div style="font:600 13.5px var(--font-body)">Camera roll</div>
+        <div style="font:400 11px var(--font-body);color:var(--color-neutral-600)">18,402 photos</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;border-radius:20px;background:var(--color-neutral-100);padding:11px 14px">
+      <div style="width:42px;height:42px;border-radius:14px;background:var(--color-neutral-300);flex:none"></div>
+      <div style="flex:1">
+        <div style="font:600 13.5px var(--font-body)">Morning walks</div>
+        <div style="font:400 11px var(--font-body);color:var(--color-neutral-600)">76 photos</div>
+      </div>
+    </div>
+  </div>
+  <div style="border-radius:999px;background:var(--color-accent);color:var(--color-bg);text-align:center;padding:14px 0;font:400 16px var(--font-heading);margin-top:20px">Use this album</div>
+  <div style="text-align:center;font:400 11px var(--font-body);color:var(--color-neutral-600);margin-top:10px">Read-only access. Photos stay in your account.</div>
+</div>
+</x-import>
+</div>
+
+</div>
+<p class="dv-next">Try next: “in <a class="dv-oid" href="#1a">1a</a>, make the empty days disappear entirely instead of grey” · “give <a class="dv-oid" href="#1b">1b</a> a full-year wall of photos as the default” · “design the shared-link view family sees”</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;emptyDay&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;muted&quot;,&quot;dashed&quot;,&quot;blank&quot;],&quot;default&quot;:&quot;muted&quot;,&quot;tsType&quot;:&quot;'muted'|'dashed'|'blank'&quot;,&quot;section&quot;:&quot;Calendar&quot;},&quot;showDateNumbers&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Calendar&quot;}}">
+const CAPTURED = {
+  2: [], 1: [],
+  3: [1,2,3,5,6,8,9,11,12,14,16,17,19,20,22,23,25,27,29,30],
+  4: [1,2,4,5,7,9,10,12,14,16,17,19,21,23,24,26,28,30],
+  5: [1,3,4,6,8,10,11,13,15,17,18,20,22,24,26,28,29,31],
+  6: [2,3,5,7,9,10,12,14,15,17,19,21,23,25,27,29],
+  7: [1,2,4,6,8,9,11,13,15,16,18,20,22,24,25,27,29,31],
+  8: [1,2,4,5,6,7,9,10,11]
+};
+const MULTI = { '2026-8-11': 3, '2026-8-9': 2, '2026-7-4': 2, '2026-6-14': 2 };
+const PLACES = ['Telegraph Hill', 'Twin Peaks', 'Treasure Island', 'Rincon Park', 'Crissy Field'];
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const TODAY = { y: 2026, m: 8, d: 11 };
+
+class Component extends DCLogic {
+  state = {
+    view: 'month', filter: false, detail: null, sheet: false, copied: false,
+    auto: true, chosen: {}, synced: '6:52 AM',
+    dView: 'month', dFilter: false, dDetail: null, dMonth: 8,
+    lDetail: { m: 8, d: 11, view: 0 }, landFit: false, landChrome: true
+  };
+
+  detailKey(surface) { return surface === 'd' ? 'dDetail' : (surface === 'l' ? 'lDetail' : 'detail'); }
+
+  /* one running index per captured day, so each day gets a stable photo */
+  index() {
+    if (this._idx) return this._idx;
+    const idx = {}; let n = 0;
+    for (let m = 1; m <= 12; m++) for (const d of (CAPTURED[m] || [])) { idx['2026-' + m + '-' + d] = (n % 12) + 1; n++; }
+    this._idx = idx; this._total = n; return idx;
+  }
+  has(m, d) { return (CAPTURED[m] || []).indexOf(d) !== -1; }
+  src(m, d) {
+    const key = '2026-' + m + '-' + d;
+    const b = this.index()[key], pick = this.state.chosen[key] || 0;
+    return 'assets/sq/' + (((b - 1 + pick) % 12) + 1) + '.png';
+  }
+  full(m, d, shot) { const b = this.index()['2026-' + m + '-' + d]; const i = ((b - 1 + (shot || 0)) % 12) + 1; return 'assets/full/' + i + '.png'; }
+  time(m, d, shot) { const mins = 12 + ((m * 7 + d * 3) % 34) + (shot || 0) * 4; return '6:' + String(mins).padStart(2, '0') + ' AM'; }
+  place(m, d) { return PLACES[(m + d) % PLACES.length]; }
+  shots(m, d) { return MULTI['2026-' + m + '-' + d] || 1; }
+  wd(m, d) { return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(2026, m - 1, d).getDay()]; }
+  longDate(m, d) { return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(2026, m - 1, d).getDay()] + ', ' + MONTH_NAMES[m - 1] + ' ' + d; }
+
+  emptyMode() { return this.props.emptyDay || 'muted'; }
+  showNums() { return this.props.showDateNumbers !== false; }
+
+  isFuture(m, d) { return m > TODAY.m || (m === TODAY.m && d > TODAY.d); }
+
+  cell(m, d, surface) {
+    const future = this.isFuture(m, d);
+    const photo = this.has(m, d) && !future;
+    const mode = this.emptyMode();
+    const c = {
+      num: d, numText: this.showNums() ? String(d) : '',
+      wd: this.wd(m, d), time: photo ? this.time(m, d, 0) : '',
+      photo, future, isToday: m === TODAY.m && d === TODAY.d,
+      multi: photo && this.shots(m, d) > 1,
+      emptyAny: !photo && !future,
+      emptyMuted: !photo && !future && mode === 'muted',
+      emptyDash: !photo && !future && mode === 'dashed',
+      emptyBlank: !photo && !future && mode === 'blank'
+    };
+    if (photo) {
+      c.src = this.src(m, d);
+      c.open = () => this.openDetail(m, d, surface);
+    }
+    return c;
+  }
+
+  openDetail(m, d, surface) {
+    const key = this.detailKey(surface);
+    this.setState({ [key]: { m, m2: m, d } , sheet: false });
+  }
+  stepDay(surface, dir) {
+    const key = this.detailKey(surface);
+    const cur = this.state[key]; if (!cur) return;
+    let m = cur.m, d = cur.d;
+    for (let i = 0; i < 400; i++) {
+      d += dir;
+      if (d < 1) { m--; if (m < 1) return; d = new Date(2026, m, 0).getDate(); }
+      if (d > new Date(2026, m, 0).getDate()) { m++; if (m > 12) return; d = 1; }
+      if (this.has(m, d)) { this.setState({ [key]: { m, d } }); return; }
+    }
+  }
+
+  detailFor(surface) {
+    const key2 = this.detailKey(surface);
+    const cur = this.state[key2];
+    if (!cur) return { open: false, thumbs: [] };
+    const { m, d } = cur;
+    const key = '2026-' + m + '-' + d;
+    const n = this.shots(m, d);
+    const pick = this.state.chosen[key] || 0;
+    const view = cur.view === undefined ? pick : cur.view;
+    const thumbs = [];
+    for (let i = 0; i < n; i++) thumbs.push({
+      src: this.full(m, d, i), chosen: i === view, dim: i !== view, isDay: i === pick,
+      choose: () => this.setState({ [key2]: { m, d, view: i } })
+    });
+    return {
+      open: true, src: this.full(m, d, view),
+      dayLabel: this.longDate(m, d),
+      sub: this.time(m, d, view) + ' · ' + this.place(m, d),
+      caption: this.time(m, d, view) + ' · ' + this.place(m, d) + ' · ' + (n > 1 ? 'shot ' + (view + 1) + ' of ' + n : '1 shot'),
+      hasMany: n > 1, shotCount: n, thumbs,
+      canSet: view !== pick, isDayShot: view === pick,
+      setDay: () => this.setState(s => ({ chosen: Object.assign({}, s.chosen, { [key]: view }) })),
+      close: () => this.setState({ [key2]: surface === 'l' ? { m, d, view } : null }),
+      share: () => this.setState({ copied: true }),
+      prevDay: () => this.stepDay(surface, -1),
+      nextDay: () => this.stepDay(surface, 1)
+    };
+  }
+
+  monthObj(m, surface) {
+    const days = new Date(2026, m, 0).getDate();
+    const lead = new Date(2026, m - 1, 1).getDay();
+    const cells = [];
+    const filter = surface === 'd' ? this.state.dFilter : this.state.filter;
+    if (!filter) for (let i = 0; i < lead; i++) cells.push({ pad: true });
+    for (let d = 1; d <= days; d++) {
+      if (m === TODAY.m && d > TODAY.d) { if (!filter) cells.push({ pad: true }); continue; }
+      if (filter && !this.has(m, d)) continue;
+      cells.push(this.cell(m, d, surface));
+    }
+    return { name: MONTH_NAMES[m - 1], count: (CAPTURED[m] || []).length, cells };
+  }
+
+  pill(on) { return on ? { bg: 'var(--color-accent)', fg: 'var(--color-bg)' } : { bg: 'transparent', fg: 'var(--color-neutral-700)' }; }
+
+  renderVals() {
+    const s = this.state;
+    this.index();
+    const strip = [];
+    for (let i = 6; i >= 0; i--) {
+      const dt = new Date(2026, TODAY.m - 1, TODAY.d - i);
+      const m = dt.getMonth() + 1, d = dt.getDate();
+      const on = this.has(m, d);
+      strip.push({
+        wd: this.wd(m, d).slice(0, 1), num: d, isToday: i === 0,
+        src: on ? this.src(m, d) : '',
+        numFg: on ? '#fff' : 'var(--color-neutral-500)',
+        open: on ? () => this.openDetail(m, d, 'm') : () => {},
+        openD: on ? () => this.openDetail(m, d, 'd') : () => {}
+      });
+    }
+    const weekRowsFor = (surface) => {
+      const filter = surface === 'd' ? s.dFilter : s.filter;
+      const rows = [];
+      for (let w = 0; w < 3; w++) {
+        const start = new Date(2026, TODAY.m - 1, TODAY.d - new Date(2026, TODAY.m - 1, TODAY.d).getDay() - w * 7);
+        const cells = [];
+        for (let k = 0; k < 7; k++) {
+          const dt = new Date(start.getFullYear(), start.getMonth(), start.getDate() + k);
+          const m = dt.getMonth() + 1, d = dt.getDate();
+          if (filter && (this.isFuture(m, d) || !this.has(m, d))) continue;
+          cells.push(this.cell(m, d, surface));
+        }
+        const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
+        rows.push({
+          label: MONTH_NAMES[start.getMonth()].slice(0, 3) + ' ' + start.getDate() + ' – ' + (end.getMonth() === start.getMonth() ? end.getDate() : MONTH_NAMES[end.getMonth()].slice(0, 3) + ' ' + end.getDate()),
+          cells
+        });
+      }
+      return rows;
+    };
+    const weekRows = weekRowsFor('m');
+    const dWeekCells = weekRowsFor('d')[0].cells;
+
+    const yearMonths = (surface) => {
+      const filter = surface === 'd' ? s.dFilter : s.filter;
+      const out = [];
+      for (let m = 1; m <= 12; m++) {
+        const days = new Date(2026, m, 0).getDate();
+        const lead = new Date(2026, m - 1, 1).getDay();
+        const dots = [];
+        if (!filter) for (let i = 0; i < lead; i++) dots.push({ pad: true });
+        for (let d = 1; d <= days; d++) {
+          const future = this.isFuture(m, d);
+          const on = this.has(m, d) && !future;
+          const today = m === TODAY.m && d === TODAY.d;
+          if (filter && !on) continue;
+          if (future) { dots.push({ future: true }); continue; }
+          dots.push(on ? { on: true, today, src: this.src(m, d) } : { off: true, today });
+        }
+        out.push({
+          name: MONTH_NAMES[m - 1].slice(0, 3), count: (CAPTURED[m] || []).length || '—', dots,
+          jump: () => this.setState(surface === 'd' ? { dView: 'month', dMonth: m } : { view: 'month' })
+        });
+      }
+      return out;
+    };
+
+    const wk = this.pill(s.view === 'week'), mo = this.pill(s.view === 'month'), yr = this.pill(s.view === 'year');
+    const dwk = this.pill(s.dView === 'week'), dmo = this.pill(s.dView === 'month'), dyr = this.pill(s.dView === 'year');
+    const fil = s.filter ? { bg: 'var(--color-accent-2-600)', fg: '#fff' } : { bg: 'var(--color-neutral-200)', fg: '#645c50' };
+    const dfil = s.dFilter ? { bg: 'var(--color-accent-2-600)', fg: '#fff' } : { bg: 'var(--color-neutral-200)', fg: 'var(--color-neutral-700)' };
+
+    const dm = Math.max(2, s.dMonth);
+    return {
+      winW: 1180, winH: 768,
+      weekdays: ['S','M','T','W','T','F','S'],
+      stats: { total: this._total, week: 6, month: 20, avg: '4.4', run: 3 },
+      todayLine: this.longDate(TODAY.m, TODAY.d),
+      syncLine: 'Synced ' + s.synced,
+      account: 'you@example.com', albumLine: '112 photos · read-only',
+      shareUrl: 'sunwalks.example.com/x7q2',
+      copyLabel: s.copied ? 'Link copied' : 'Copy link',
+      copy: () => { this.setState({ copied: true }); setTimeout(() => this.setState({ copied: false }), 1800); },
+      sync: () => this.setState({ synced: '9:04 AM' }),
+      openSheet: () => this.setState({ sheet: true }),
+      sheet: { open: s.sheet, close: () => this.setState({ sheet: false }) },
+      toggleAuto: () => this.setState({ auto: !s.auto }),
+      autoBg: s.auto ? 'var(--color-accent-2-600)' : 'var(--color-neutral-400)',
+      autoJustify: s.auto ? 'flex-end' : 'flex-start',
+      strip,
+      isMonth: s.view === 'month', isWeek: s.view === 'week', isYear: s.view === 'year',
+      months: [this.monthObj(8, 'm'), this.monthObj(7, 'm'), this.monthObj(6, 'm'), this.monthObj(5, 'm'), this.monthObj(4, 'm'), this.monthObj(3, 'm')],
+      weekRows, yearMonths: yearMonths('m'),
+      setWeek: () => this.setState({ view: 'week' }), setMonth: () => this.setState({ view: 'month' }), setYear: () => this.setState({ view: 'year' }),
+      toggleFilter: () => this.setState({ filter: !s.filter }),
+      wkBg: wk.bg, wkFg: wk.fg, moBg: mo.bg, moFg: mo.fg, yrBg: yr.bg, yrFg: yr.fg, filBg: fil.bg, filFg: fil.fg,
+      detail: this.detailFor('m'),
+      dIsMonth: s.dView === 'month', dIsWeek: s.dView === 'week', dIsYear: s.dView === 'year',
+      dMonths: [this.monthObj(dm, 'd'), this.monthObj(dm - 1, 'd')],
+      dWeekCells, dYearMonths: yearMonths('d'),
+      dSetWeek: () => this.setState({ dView: 'week' }), dSetMonth: () => this.setState({ dView: 'month' }), dSetYear: () => this.setState({ dView: 'year' }),
+      dToggleFilter: () => this.setState({ dFilter: !s.dFilter }),
+      dWkBg: dwk.bg, dWkFg: dwk.fg, dMoBg: dmo.bg, dMoFg: dmo.fg, dYrBg: dyr.bg, dYrFg: dyr.fg, dFilBg: dfil.bg, dFilFg: dfil.fg,
+      dDetail: this.detailFor('d'),
+      land: Object.assign(this.detailFor('l'), {
+        fill: !s.landFit, fit: s.landFit, chrome: s.landChrome,
+        toggleFit: () => this.setState({ landFit: !s.landFit }),
+        toggleChrome: () => this.setState({ landChrome: !s.landChrome })
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

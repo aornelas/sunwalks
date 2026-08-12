@@ -1,7 +1,7 @@
 "use client";
 
 import { RefreshCw, Settings } from "lucide-react";
-import { formatLongDate } from "@/lib/dates";
+import { formatLongDateWithYear } from "@/lib/dates";
 import styles from "./MobileHeader.module.css";
 
 interface MobileHeaderProps {
@@ -19,7 +19,7 @@ export function MobileHeader({ today, readOnly, syncing, onRefresh, onOpenSettin
         <h3 className={styles.wordmark}>
           Sunrise Calendar <span className={styles.version}>v0.1</span>
         </h3>
-        <div className={styles.date}>{formatLongDate(today)}</div>
+        <div className={styles.date}>{formatLongDateWithYear(today)}</div>
       </div>
       {!readOnly && (
         <div className={styles.actions}>

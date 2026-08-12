@@ -91,6 +91,10 @@ export function formatLongDate(dayKey: string): string {
   return `${WEEKDAY_NAMES[d.getUTCDay()]}, ${MONTH_NAMES[d.getUTCMonth()]} ${d.getUTCDate()}`;
 }
 
+export function formatLongDateWithYear(dayKey: string): string {
+  return `${formatLongDate(dayKey)}, ${dayKey.slice(0, 4)}`;
+}
+
 export function formatShortDate(dayKey: string): string {
   const d = dayKeyToDate(dayKey);
   return `${WEEKDAY_SHORT[d.getUTCDay()]} ${d.getUTCDate()}`;
@@ -113,9 +117,16 @@ export function formatTime(instant: Date, timeZone: string): string {
   }).format(instant);
 }
 
-/** Start (Sunday) of the calendar week containing dayKey. */
+/** Start (Monday) of the calendar week containing dayKey. */
 export function startOfWeek(dayKey: string): string {
-  return addDays(dayKey, -weekdayIndex(dayKey));
+  return addDays(dayKey, -((weekdayIndex(dayKey) + 6) % 7));
+}
+
+/** 1-indexed week number within weekStart's own year, weeks starting Monday, week 1 anchored to the Monday on/before Jan 1. */
+export function weekOfYear(weekStart: string): number {
+  const jan1WeekStart = startOfWeek(`${weekStart.slice(0, 4)}-01-01`);
+  const diffDays = Math.round((dayKeyToDate(weekStart).getTime() - dayKeyToDate(jan1WeekStart).getTime()) / 86_400_000);
+  return diffDays / 7 + 1;
 }
 
 export function isFutureDayKey(dayKey: string, todayKey: string): boolean {

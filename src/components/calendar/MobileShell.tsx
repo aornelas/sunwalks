@@ -25,6 +25,7 @@ interface MobileShellProps {
   onOpenDay(date: string): void;
   onJumpToMonth(monthKey: string): void;
   jumpMonth?: string;
+  earliestDate: string | null;
   onRefresh(): void;
   onOpenSettings(): void;
 }
@@ -44,6 +45,7 @@ export function MobileShell({
   onOpenDay,
   onJumpToMonth,
   jumpMonth,
+  earliestDate,
   onRefresh,
   onOpenSettings,
 }: MobileShellProps) {
@@ -61,6 +63,7 @@ export function MobileShell({
           today={today}
           variant="mobile"
           filter={filter}
+          earliestDate={earliestDate}
           getDay={getDay}
           ensureLoaded={ensureLoaded}
           onOpenDay={onOpenDay}
@@ -73,6 +76,7 @@ export function MobileShell({
           timezone={timezone}
           variant="mobile"
           filter={filter}
+          earliestDate={earliestDate}
           getDay={getDay}
           ensureLoaded={ensureLoaded}
           onOpenDay={onOpenDay}
@@ -83,6 +87,7 @@ export function MobileShell({
           today={today}
           variant="mobile"
           filter={filter}
+          earliestDate={earliestDate}
           getDay={getDay}
           ensureLoaded={ensureLoaded}
           onJumpToMonth={onJumpToMonth}

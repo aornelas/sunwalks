@@ -1,16 +1,32 @@
 "use client";
 
-import { useEffect } from "react";
-import { addDays, formatMonthDayRange, formatShortDate, formatTime, startOfWeek } from "@/lib/dates";
+import { Fragment, useEffect, useRef, useState } from "react";
+import {
+  addDays,
+  dayKeyToDate,
+  formatMonthDayRange,
+  formatShortDate,
+  formatTime,
+  startOfWeek,
+  weekOfYear,
+} from "@/lib/dates";
 import { buildSrcSet } from "@/lib/image";
 import type { DayData } from "@/lib/types";
 import styles from "./WeekZoomView.module.css";
+
+const LOAD_MARGIN_PX = 800;
+const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
+
+function weeksBetween(fromWeekStart: string, toWeekStart: string): number {
+  return Math.round((dayKeyToDate(fromWeekStart).getTime() - dayKeyToDate(toWeekStart).getTime()) / MS_PER_WEEK);
+}
 
 interface WeekZoomViewProps {
   today: string;
   timezone: string;
   variant: "mobile" | "web";
   filter: boolean;
+  earliestDate: string | null;
   getDay(date: string): DayData | undefined;
   ensureLoaded(start: string, end: string): Promise<void>;
   onOpenDay(date: string): void;
@@ -21,12 +37,19 @@ export function WeekZoomView({
   timezone,
   variant,
   filter,
+  earliestDate,
   getDay,
   ensureLoaded,
   onOpenDay,
 }: WeekZoomViewProps) {
-  const weekCount = variant === "web" ? 1 : 3;
+  const step = variant === "web" ? 1 : 3;
   const currentWeekStart = startOfWeek(today);
+  // Never scroll further back than the week of the earliest capture — with
+  // no captures at all there's nothing to scroll to, so cap at just the
+  // current week.
+  const maxWeeks = earliestDate ? weeksBetween(currentWeekStart, startOfWeek(earliestDate)) + 1 : 1;
+  const [weekCount, setWeekCount] = useState(() => Math.min(step, maxWeeks));
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const weekStarts = Array.from({ length: weekCount }, (_, i) => addDays(currentWeekStart, -7 * i));
 
   useEffect(() => {
@@ -34,21 +57,57 @@ export function WeekZoomView({
     const end = addDays(weekStarts[0], 6);
     ensureLoaded(start, end);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [today]);
+  }, [weekCount]);
+
+  // IntersectionObserver only fires on a boundary *crossing*. A batch this
+  // short can land fully inside the load-margin zone on the very first
+  // render and just stay there as more (still-short) batches are appended —
+  // no crossing ever happens, so the observer alone would go silent forever.
+  // Keep growing right after render for as long as the sentinel is already
+  // inside the zone, so growth isn't waiting on a scroll event that can't
+  // occur because there's nothing left to scroll to yet.
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || weekCount >= maxWeeks) return;
+    if (el.getBoundingClientRect().top <= window.innerHeight + LOAD_MARGIN_PX) {
+      setWeekCount((n) => Math.min(maxWeeks, n + step));
+    }
+  }, [weekCount, step, maxWeeks]);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setWeekCount((n) => Math.min(maxWeeks, n + step));
+        }
+      },
+      { rootMargin: `${LOAD_MARGIN_PX}px` },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [step, maxWeeks]);
 
   const gridClass = variant === "web" ? styles.webGrid : styles.mobileGrid;
 
   return (
     <div>
-      {weekStarts.map((weekStart) => {
+      {weekStarts.map((weekStart, weekIndex) => {
         const weekEnd = addDays(weekStart, 6);
         const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
         const visibleDays = filter ? days.filter((d) => (getDay(d)?.shots.length ?? 0) > 0) : days;
+        const year = weekStart.slice(0, 4);
+        const showYearLabel = weekIndex === 0 || year !== weekStarts[weekIndex - 1].slice(0, 4);
 
         return (
-          <div key={weekStart} className={styles.week}>
-            <span className={styles.label}>{formatMonthDayRange(weekStart, weekEnd)}</span>
-            <div className={gridClass}>
+          <Fragment key={weekStart}>
+            {showYearLabel && <div className={styles.yearLabel}>{year}</div>}
+            <div className={styles.week}>
+              <span className={styles.label}>
+                Week {weekOfYear(weekStart)} ({formatMonthDayRange(weekStart, weekEnd)})
+              </span>
+              <div className={gridClass}>
               {visibleDays.map((date) => {
                 const isToday = date === today;
                 const day = getDay(date);
@@ -91,10 +150,12 @@ export function WeekZoomView({
                   </div>
                 );
               })}
+              </div>
             </div>
-          </div>
+          </Fragment>
         );
       })}
+      {weekCount < maxWeeks && <div ref={sentinelRef} className={styles.sentinel} />}
     </div>
   );
 }

@@ -260,6 +260,7 @@ export function CalendarApp({
     onOpenDay: openDetailFor,
     onJumpToMonth: handleJumpToMonth,
     jumpMonth: jumpMonth?.month,
+    earliestDate: dayKeys.length > 0 ? dayKeys[0] : null,
   };
 
   return (

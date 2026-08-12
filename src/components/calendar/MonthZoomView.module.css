@@ -27,6 +27,14 @@
   align-items: start;
 }
 
+.yearLabel {
+  grid-column: 1 / -1;
+  font-family: var(--font-heading);
+  font-size: 1.375rem;
+  color: var(--color-text);
+  margin: 0 0 14px;
+}
+
 .sentinel {
   height: 1px;
 }

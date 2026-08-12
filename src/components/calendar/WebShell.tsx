@@ -1,6 +1,6 @@
 "use client";
 
-import { addDays, dayOfMonth, formatLongDate, formatTime } from "@/lib/dates";
+import { addDays, dayOfMonth, formatLongDateWithYear, formatTime } from "@/lib/dates";
 import type { AccountInfo, DayData, Stats, ZoomLevel } from "@/lib/types";
 import type { PickerImportState } from "@/hooks/usePickerImport";
 import { WebZoomBar } from "./WebZoomBar";
@@ -23,6 +23,7 @@ interface WebShellProps {
   onOpenDay(date: string): void;
   onJumpToMonth(monthKey: string): void;
   jumpMonth?: string;
+  earliestDate: string | null;
   firstMonthLabel: string | null;
   account?: AccountInfo;
   pickerState?: PickerImportState;
@@ -47,6 +48,7 @@ export function WebShell({
   onOpenDay,
   onJumpToMonth,
   jumpMonth,
+  earliestDate,
   firstMonthLabel,
   account,
   pickerState,
@@ -68,7 +70,7 @@ export function WebShell({
               <h1 className={styles.wordmark}>
                 Sunrise Calendar <span className={styles.version}>v0.1</span>
               </h1>
-              <div className={styles.date}>{formatLongDate(today)}</div>
+              <div className={styles.date}>{formatLongDateWithYear(today)}</div>
               {firstMonthLabel && (
                 <div className={styles.tagline}>Every morning I got up for, since {firstMonthLabel}.</div>
               )}
@@ -87,6 +89,7 @@ export function WebShell({
               today={today}
               variant="web"
               filter={filter}
+              earliestDate={earliestDate}
               getDay={getDay}
               ensureLoaded={ensureLoaded}
               onOpenDay={onOpenDay}
@@ -99,6 +102,7 @@ export function WebShell({
               timezone={timezone}
               variant="web"
               filter={filter}
+              earliestDate={earliestDate}
               getDay={getDay}
               ensureLoaded={ensureLoaded}
               onOpenDay={onOpenDay}
@@ -109,6 +113,7 @@ export function WebShell({
               today={today}
               variant="web"
               filter={filter}
+              earliestDate={earliestDate}
               getDay={getDay}
               ensureLoaded={ensureLoaded}
               onJumpToMonth={onJumpToMonth}

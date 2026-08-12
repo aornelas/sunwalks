@@ -14,7 +14,9 @@ export function buildMonthCells(
   getDay: (date: string) => DayData | undefined,
 ): GridCell[] {
   const firstOfMonth = `${mKey}-01`;
-  const leading = weekdayIndex(firstOfMonth);
+  // Grid rows start Monday, so shift the Sunday-indexed weekday (0 = Sunday)
+  // to a Monday-indexed leading-blank count (0 = Monday ... 6 = Sunday).
+  const leading = (weekdayIndex(firstOfMonth) + 6) % 7;
   const total = daysInMonth(mKey);
   const year = monthKeyToDate(mKey).getUTCFullYear();
   const month = monthKeyToDate(mKey).getUTCMonth();

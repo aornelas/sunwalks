@@ -114,9 +114,17 @@ export function CalendarApp({
       setJustSynced(true);
       window.setTimeout(() => setJustSynced(false), 1600);
       await calendarData.refreshStats();
-      if (added.length > 0) {
-        await calendarData.refreshRange(added[0], today);
+      // Refresh every day the import actually touched, not just ones brand
+      // new to the calendar — adding more shots to an already-captured day
+      // left that day's cached shot list stale until a full page reload,
+      // since it never shows up in the "added" diff above.
+      const touched = new Set([...added, ...(pickerImport.touchedDays ?? [])]);
+      if (touched.size > 0) {
+        const earliest = [...touched].sort()[0];
+        await calendarData.refreshRange(earliest, today);
         if (cancelled) return;
+      }
+      if (added.length > 0) {
         const capped = new Set(added.slice(0, 5));
         setNewDates(capped);
         window.setTimeout(() => setNewDates(undefined), capped.size * 160 + 1240 + 200);

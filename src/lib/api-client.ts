@@ -7,7 +7,9 @@ export interface CalendarApi {
   setDayPhoto?(date: string, shotId: string): Promise<void>;
   createPickerSession?(): Promise<PickerSessionInfo>;
   pollPickerSession?(sessionId: string): Promise<{ ready: boolean }>;
-  importPickerSession?(sessionId: string): Promise<{ ok: boolean; photosAdded?: number; error?: string }>;
+  importPickerSession?(
+    sessionId: string,
+  ): Promise<{ ok: boolean; photosAdded?: number; touchedDays?: string[]; error?: string }>;
   getShareUrl?(): Promise<string>;
   regenerateShareUrl?(): Promise<string>;
 }
@@ -57,7 +59,7 @@ export function createOwnerApi(): CalendarApi {
       const res = await fetch(`/api/picker/session/${sessionId}/import`, { method: "POST" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) return { ok: false, error: data.error ?? "Import failed" };
-      return { ok: true, photosAdded: data.photosAdded };
+      return { ok: true, photosAdded: data.photosAdded, touchedDays: data.touchedDays };
     },
     async getShareUrl() {
       const res = await fetch("/api/share-links");

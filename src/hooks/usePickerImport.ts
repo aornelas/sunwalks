@@ -8,6 +8,8 @@ export type PickerImportState = "idle" | "waiting" | "importing" | "done" | "err
 export interface PickerImportResult {
   state: PickerImportState;
   photosAdded: number | null;
+  /** Every day (existing or brand new) the last successful import wrote a photo into. */
+  touchedDays: string[] | null;
   error: string | null;
   /** Set only while `state === "waiting"` and the popup appears to have been blocked. */
   manualPickerUri: string | null;
@@ -45,6 +47,7 @@ const CLOSE_GRACE_MS = 20_000;
 export function usePickerImport(api: CalendarApi): PickerImportResult {
   const [state, setState] = useState<PickerImportState>("idle");
   const [photosAdded, setPhotosAdded] = useState<number | null>(null);
+  const [touchedDays, setTouchedDays] = useState<string[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [manualPickerUri, setManualPickerUri] = useState<string | null>(null);
   const runIdRef = useRef(0);
@@ -52,6 +55,7 @@ export function usePickerImport(api: CalendarApi): PickerImportResult {
   const reset = useCallback(() => {
     setState("idle");
     setPhotosAdded(null);
+    setTouchedDays(null);
     setError(null);
     setManualPickerUri(null);
   }, []);
@@ -62,6 +66,7 @@ export function usePickerImport(api: CalendarApi): PickerImportResult {
     setState("waiting");
     setError(null);
     setPhotosAdded(null);
+    setTouchedDays(null);
     setManualPickerUri(null);
 
     try {
@@ -125,6 +130,7 @@ export function usePickerImport(api: CalendarApi): PickerImportResult {
       }
       popup?.close();
       setPhotosAdded(result.photosAdded ?? 0);
+      setTouchedDays(result.touchedDays ?? []);
       setState("done");
     } catch (err) {
       if (runIdRef.current !== runId) return;
@@ -133,5 +139,5 @@ export function usePickerImport(api: CalendarApi): PickerImportResult {
     }
   }, [api]);
 
-  return { state, photosAdded, error, manualPickerUri, start, reset };
+  return { state, photosAdded, touchedDays, error, manualPickerUri, start, reset };
 }

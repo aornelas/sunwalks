@@ -18,7 +18,9 @@ const FULL_SUFFIX = "=w1600";
  * only valid while the session is alive, so both derivatives are downloaded
  * and stored locally here rather than proxied on demand later.
  */
-export async function importFromPickerSession(sessionId: string): Promise<{ photosAdded: number }> {
+export async function importFromPickerSession(
+  sessionId: string,
+): Promise<{ photosAdded: number; touchedDays: string[] }> {
   const [logRow] = await db.insert(syncLog).values({ status: "running" }).returning();
 
   try {
@@ -88,7 +90,7 @@ export async function importFromPickerSession(sessionId: string): Promise<{ phot
 
     await deletePickerSession(accessToken, sessionId);
 
-    return { photosAdded: added };
+    return { photosAdded: added, touchedDays: [...touchedDays] };
   } catch (err) {
     await db
       .update(syncLog)

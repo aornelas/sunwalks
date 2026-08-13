@@ -21,33 +21,48 @@ export function usePhotoOpenAnimation(origin: PhotoOrigin | null) {
   useLayoutEffect(() => {
     const stage = stageRef.current;
     const reduced = prefersReducedMotion();
-    scrimRef.current?.animate([{ opacity: 0 }, { opacity: 1 }], {
+    const scrimAnim = scrimRef.current?.animate([{ opacity: 0 }, { opacity: 1 }], {
       duration: reduced ? 240 : 480,
       fill: "backwards",
     });
-    if (!stage) return;
+    // Cancel on cleanup so a double-invoke (React Strict Mode in dev, or any
+    // other re-run) can't leave two `.animate()` calls stacked on the same
+    // element. The second call would measure `stage` AFTER the first one's
+    // fill:"backwards" had already shrunk it, computing near-identity deltas
+    // that — being the most recently created effect — win the composite and
+    // silently swallow the real scale-up, leaving the stage sitting at full
+    // size for the whole "animation."
+    if (!stage) return () => scrimAnim?.cancel();
     if (reduced) {
       // "Motion 2 becomes a plain fade — no scale, no travel."
-      stage.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 240, fill: "backwards" });
-      return;
+      const stageAnim = stage.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 240, fill: "backwards" });
+      return () => {
+        scrimAnim?.cancel();
+        stageAnim.cancel();
+      };
     }
+    let stageAnim: Animation;
     if (origin) {
       const target = stage.getBoundingClientRect();
       const dx = origin.rect.left - target.left;
       const dy = origin.rect.top - target.top;
       const sx = origin.rect.width / Math.max(target.width, 1);
       const sy = origin.rect.height / Math.max(target.height, 1);
-      stage.animate(
+      stageAnim = stage.animate(
         [{ transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` }, { transform: "none" }],
         { duration: 760, easing: EASE_STANDARD, fill: "backwards" },
       );
     } else {
-      stage.animate([{ opacity: 0, transform: "scale(.97)" }, { opacity: 1, transform: "none" }], {
+      stageAnim = stage.animate([{ opacity: 0, transform: "scale(.97)" }, { opacity: 1, transform: "none" }], {
         duration: 480,
         easing: EASE_STANDARD,
         fill: "backwards",
       });
     }
+    return () => {
+      scrimAnim?.cancel();
+      stageAnim.cancel();
+    };
     // Mount-only: this is the entrance, not a response to origin identity
     // changing (origin never changes for the life of one open view).
     // eslint-disable-next-line react-hooks/exhaustive-deps

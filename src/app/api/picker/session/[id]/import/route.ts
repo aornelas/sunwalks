@@ -8,8 +8,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
   const { id } = await params;
   try {
-    const result = await importFromPickerSession(id);
-    return NextResponse.json({ ok: true, ...result });
+    const { photosAdded, touchedDays } = await importFromPickerSession(id);
+    return NextResponse.json({ ok: true, photosAdded, touchedDays });
   } catch (err) {
     console.error("Failed to import picker session", err);
     return NextResponse.json(

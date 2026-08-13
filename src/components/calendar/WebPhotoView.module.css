@@ -92,8 +92,16 @@
   inset: 0;
   border-radius: 14px;
   overflow: hidden;
-  background-size: cover;
+  /* contain, not cover: origin.thumbSrc is the square day-tile crop, not
+     the photo's real aspect ratio. cover would stretch/crop that square to
+     fill the whole (usually non-square) growing box, opaquely papering over
+     the letterbox area the real photo will leave empty — reading as the
+     photo itself being used as the dimming backdrop instead of the scrim
+     underneath. contain keeps it to its own true shape so the scrim shows
+     through everywhere the thumbnail doesn't, from the first frame. */
+  background-size: contain;
   background-position: center;
+  background-repeat: no-repeat;
   /* A sibling of .stage, not a child — see usePhotoOpenAnimation's comment
      on why. Driven by its own identical translate/scale animation, so it
      needs the same transform-origin the deltas are computed against, and
@@ -101,11 +109,9 @@
      provide for free when this was nested inside it. */
   will-change: transform;
   transform-origin: 0 0;
-  /* Only needed to keep the dissolve continuous while the full photo loads
-     and the shared-element transform is still running — once it's landed,
-     this needs to get out of the way, or its cover-fit crop shows through
-     as an enlarged backdrop behind the real (contain-fit, letterboxed)
-     photo instead of the dark ground. */
+  /* Keeps the dissolve continuous while the full photo loads and the
+     shared-element transform is still running, then gets out of the way
+     once it's landed. */
   animation: stage-thumb-out calc(160ms + var(--motion-scale) * 320ms) var(--ease-standard) both;
   animation-delay: calc(160ms + var(--motion-scale) * 600ms);
 }

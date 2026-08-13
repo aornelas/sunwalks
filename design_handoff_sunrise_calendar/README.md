@@ -110,7 +110,7 @@ Then kicker "YOUR ALBUMS" and three rows (`--color-neutral-100`, `border-radius:
 | Copy link | Copy the share URL, flip the label to "Link copied" for ~1.8s |
 | Gear | Open the Source & sharing sheet |
 
-Motion should stay quiet: 150–200ms ease for pill/toggle state, 200–250ms for the photo overlay (fade + slight scale-up from the tapped square is a nice touch), no bounce, no confetti. Scrolling is native and continuous through months — infinite scroll backwards through history, loading a month at a time.
+Motion should stay quiet and unhurried — no bounce, no confetti. **`MOTION.md` supersedes this paragraph and is the authority on all timing**; the durations there are deliberately about twice a conventional UI's, because the app is used slowly at dawn. Scrolling is native and continuous through months — infinite scroll backwards through history, loading a month at a time.
 
 Copy tone: quiet, personal, no gamification. Never "streak!", never a badge or a trophy. "days in a row now" is as far as it goes.
 

@@ -10,7 +10,7 @@ export default async function LoginPage({
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        <h1 className={styles.wordmark}>Sunrise</h1>
+        <h1 className={styles.wordmark}>Sunrise Calendar</h1>
         <p className={styles.tagline}>
           One square for every morning you were out there. Sign in with the Google account that
           holds your sunrise album.

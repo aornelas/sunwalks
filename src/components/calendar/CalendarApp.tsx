@@ -6,7 +6,6 @@ import { useLandscapePhoto } from "@/hooks/useLandscapePhoto";
 import { useCalendarData } from "@/hooks/useCalendarData";
 import { usePickerImport } from "@/hooks/usePickerImport";
 import { createOwnerApi, createShareApi } from "@/lib/api-client";
-import { monthKey as toMonthKey, monthName } from "@/lib/dates";
 import type { AccountInfo, DayData, Stats, ZoomLevel } from "@/lib/types";
 import { MobileShell } from "./MobileShell";
 import { WebShell } from "./WebShell";
@@ -53,12 +52,44 @@ export function CalendarApp({
   const dayKeys = initialDayKeys;
   const accountState = account;
 
+  // Month + (for a shared, read-only viewer) sunrise-days-only is the
+  // sensible first impression; a returning visitor's actual choice then
+  // overrides this once the cookie-read effect below runs.
   const [zoom, setZoom] = useState<ZoomLevel>("month");
-  const [filter, setFilter] = useState(false);
+  const [filter, setFilter] = useState(readOnly);
+  const [prefsReady, setPrefsReady] = useState(false);
   const [detail, setDetail] = useState<DetailState | null>(null);
   const [jumpMonth, setJumpMonth] = useState<{ month: string; nonce: number } | undefined>();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+
+  // Remembers the visitor's own zoom/filter choice across visits (a browser
+  // cookie, not localStorage) — read once on mount, then kept in sync
+  // thereafter. Gated on prefsReady (state, not a ref) so the write effects
+  // below only fire once this initial read has already applied any saved
+  // value — otherwise they'd race it and briefly write the pre-cookie
+  // default back over a real saved preference.
+  useEffect(() => {
+    const cookies = document.cookie;
+    const savedZoom = cookies.match(/(?:^|; )sc_zoom=([^;]+)/)?.[1];
+    const savedFilter = cookies.match(/(?:^|; )sc_filter=([^;]+)/)?.[1];
+    // Legitimate one-time sync from a cookie the page loaded with, not a
+    // derived-state loop — see https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (savedZoom === "week" || savedZoom === "month" || savedZoom === "year") setZoom(savedZoom);
+    if (savedFilter) setFilter(savedFilter === "1");
+    setPrefsReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!prefsReady) return;
+    document.cookie = `sc_zoom=${zoom}; path=/; max-age=31536000; samesite=lax`;
+  }, [zoom, prefsReady]);
+
+  useEffect(() => {
+    if (!prefsReady) return;
+    document.cookie = `sc_filter=${filter ? "1" : "0"}; path=/; max-age=31536000; samesite=lax`;
+  }, [filter, prefsReady]);
 
   // Once a picker import finishes, newly-added days need to show up
   // everywhere: the grid cache, stats, the prev/next day-key list, the "last
@@ -88,10 +119,11 @@ export function CalendarApp({
   }, [detail, sheetOpen]);
 
   useEffect(() => {
-    // The calendar itself is portrait-locked (the manifest also declares
-    // this for installed launches); only the photo view unlocks rotation
-    // while it's open. Both calls reject when not installed/fullscreen —
-    // that's expected and silently ignored.
+    // The calendar itself is portrait-locked at runtime (manifest.json
+    // deliberately declares no static orientation — see the comment there);
+    // only the photo view unlocks rotation while it's open. Both calls
+    // reject when not installed/fullscreen — that's expected and silently
+    // ignored.
     const orientation = screen.orientation as ScreenOrientation & {
       lock?: (o: string) => Promise<void>;
       unlock?: () => void;
@@ -105,6 +137,15 @@ export function CalendarApp({
     } else {
       orientation?.lock?.("portrait").catch(() => {});
     }
+  }, [detail]);
+
+  useEffect(() => {
+    // The photo view is a near-black overlay; without this the Android
+    // status bar (and installed app's task-switcher chrome) stays the
+    // app's light theme color and reads as a pale bar floating over dark
+    // content. #17140f matches --photo-ground exactly.
+    const meta = document.querySelector('meta[name="theme-color"]');
+    meta?.setAttribute("content", detail ? "#17140f" : "#f5ead8");
   }, [detail]);
 
   const openDetailFor = useCallback(
@@ -231,8 +272,6 @@ export function CalendarApp({
     if (url) await navigator.clipboard.writeText(url).catch(() => {});
   }, [shareUrl, fetchShareUrl]);
 
-  const firstMonthLabel = dayKeys.length > 0 ? monthName(toMonthKey(dayKeys[0])) : null;
-
   const detailDay = detail ? calendarData.getDay(detail.date) : undefined;
 
   const shellProps = {
@@ -257,7 +296,6 @@ export function CalendarApp({
       {isDesktop ? (
         <WebShell
           {...shellProps}
-          firstMonthLabel={firstMonthLabel}
           account={accountState}
           pickerState={pickerImport.state}
           pickerPhotosAdded={pickerImport.photosAdded}

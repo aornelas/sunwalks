@@ -1,6 +1,6 @@
 "use client";
 
-import { RefreshCw, Settings } from "lucide-react";
+import { Import, Settings } from "lucide-react";
 import { formatLongDateWithYear } from "@/lib/dates";
 import styles from "./MobileHeader.module.css";
 
@@ -17,7 +17,7 @@ export function MobileHeader({ today, readOnly, syncing, onRefresh, onOpenSettin
     <div className={styles.header}>
       <div>
         <h3 className={styles.wordmark}>
-          Sunrise Calendar <span className={styles.version}>v0.1</span>
+          Sunrise Calendar <span className={styles.version}>v1.0</span>
         </h3>
         <div className={styles.date}>{formatLongDateWithYear(today)}</div>
       </div>
@@ -28,9 +28,9 @@ export function MobileHeader({ today, readOnly, syncing, onRefresh, onOpenSettin
             className={styles.iconButton}
             onClick={onRefresh}
             disabled={syncing}
-            aria-label="Fetch new photos"
+            aria-label="Import new photos"
           >
-            <RefreshCw size={16} strokeWidth={2.75} className={syncing ? styles.spin : ""} />
+            <Import size={16} strokeWidth={2.75} className={syncing ? styles.spin : ""} />
           </button>
           <button type="button" className={styles.iconButton} onClick={onOpenSettings} aria-label="Source and sharing">
             <Settings size={17} strokeWidth={1.9} />

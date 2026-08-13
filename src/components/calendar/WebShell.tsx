@@ -25,7 +25,6 @@ interface WebShellProps {
   onJumpToMonth(monthKey: string): void;
   jumpMonth?: string;
   earliestDate: string | null;
-  firstMonthLabel: string | null;
   account?: AccountInfo;
   pickerState?: PickerImportState;
   pickerPhotosAdded?: number | null;
@@ -51,7 +50,6 @@ export function WebShell({
   onJumpToMonth,
   jumpMonth,
   earliestDate,
-  firstMonthLabel,
   account,
   pickerState,
   pickerPhotosAdded,
@@ -86,12 +84,9 @@ export function WebShell({
           <div className={styles.header}>
             <div>
               <h1 className={styles.wordmark}>
-                Sunrise Calendar <span className={styles.version}>v0.1</span>
+                Sunrise Calendar <span className={styles.version}>v1.0</span>
               </h1>
               <div className={styles.date}>{formatLongDateWithYear(today)}</div>
-              {firstMonthLabel && (
-                <div className={styles.tagline}>Every morning I got up for, since {firstMonthLabel}.</div>
-              )}
             </div>
             <WebZoomBar zoom={zoom} onZoomChange={onZoomChange} filter={filter} onFilterChange={onFilterChange} />
           </div>

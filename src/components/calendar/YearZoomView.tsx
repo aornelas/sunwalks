@@ -81,13 +81,21 @@ export function YearZoomView({
     <div>
       {years.map((year) => {
         const monthKeys = Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, "0")}`);
+        const monthsData = monthKeys.map((mKey) => {
+          const cells = buildMonthCells(mKey, today, getDay);
+          const capturedCount = cells.filter((c) => c.state === "captured").length;
+          return { mKey, cells, capturedCount };
+        });
+        const yearCapturedCount = monthsData.reduce((sum, m) => sum + m.capturedCount, 0);
+
         return (
           <div key={year} className={styles.yearBlock}>
-            <div className={styles.yearHeading}>{year}</div>
+            <div className={styles.yearHeadingRow}>
+              <span className={styles.yearHeading}>{year}</span>
+              <span className={styles.yearCount}>{yearCapturedCount} CAPTURED</span>
+            </div>
             <div className={gridClass}>
-              {monthKeys.map((mKey) => {
-                const cells = buildMonthCells(mKey, today, getDay);
-                const capturedCount = cells.filter((c) => c.state === "captured").length;
+              {monthsData.map(({ mKey, cells, capturedCount }) => {
                 const visibleCells = filter ? cells.filter((c) => c.state === "captured") : cells;
 
                 return (
@@ -98,8 +106,8 @@ export function YearZoomView({
                     </div>
                     <div className={styles.dotGrid}>
                       {visibleCells.map((cell, i) => {
-                        if (cell.state === "blank" || cell.state === "future") {
-                          return <div key={cell.date ?? `b-${i}`} className={styles.dot} />;
+                        if (cell.state === "blank") {
+                          return <div key={`b-${i}`} className={styles.dot} />;
                         }
                         const isToday = cell.date === today;
                         const day = cell.state === "captured" ? getDay(cell.date!) : undefined;
@@ -109,7 +117,7 @@ export function YearZoomView({
                             key={cell.date}
                             className={[
                               styles.dot,
-                              cell.state === "missed" ? styles.missed : "",
+                              cell.state === "missed" ? styles.missed : cell.state === "future" ? styles.future : "",
                               isToday ? styles.today : "",
                             ].join(" ")}
                           >

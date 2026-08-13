@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Sunrise",
+  title: "Sunrise Calendar",
   description: "Every day square is the sunrise photo you were out for that morning.",
   manifest: "/manifest.json",
   icons: {
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    title: "Sunrise",
+    title: "Sunrise Calendar",
     statusBarStyle: "default",
   },
   other: {

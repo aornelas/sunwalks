@@ -1,6 +1,6 @@
 {
-  "name": "Sunrise",
-  "short_name": "Sunrise",
+  "name": "Sunrise Calendar",
+  "short_name": "Sunrise Calendar",
   "description": "Every day square is the sunrise photo you were out for that morning.",
   "start_url": "/?source=pwa",
   "display": "standalone",

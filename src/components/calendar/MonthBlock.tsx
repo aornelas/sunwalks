@@ -29,8 +29,8 @@ export function MonthBlock({ monthKey, today, variant, filter, eager, getDay, on
       </div>
       <div className={styles.grid}>
         {cells.map((cell, i) => {
-          if (cell.state === "blank" || cell.state === "future") {
-            return <div key={cell.date ?? `blank-${i}`} className={styles.cell} />;
+          if (cell.state === "blank") {
+            return <div key={`blank-${i}`} className={styles.cell} />;
           }
           const isToday = cell.date === today;
           const day = getDay(cell.date!);
@@ -38,16 +38,14 @@ export function MonthBlock({ monthKey, today, variant, filter, eager, getDay, on
             cell.state === "captured" && day
               ? (day.shots.find((s) => s.id === day.dayShotId) ?? day.shots[0])
               : undefined;
+          const stateClass =
+            cell.state === "captured" ? styles.captured : cell.state === "future" ? styles.future : styles.missed;
 
           return (
             <button
               key={cell.date}
               type="button"
-              className={[
-                styles.cell,
-                cell.state === "captured" ? styles.captured : styles.missed,
-                isToday ? styles.today : "",
-              ].join(" ")}
+              className={[styles.cell, stateClass, isToday ? styles.today : ""].join(" ")}
               onClick={() => cell.state === "captured" && onOpenDay(cell.date!)}
               disabled={cell.state !== "captured"}
               aria-label={cell.date!}
@@ -61,7 +59,12 @@ export function MonthBlock({ monthKey, today, variant, filter, eager, getDay, on
                 />
               )}
               <span className={styles.dateNumber}>{dayOfMonth(cell.date!)}</span>
-              {day && day.shots.length > 1 && <span className={styles.multiDot} />}
+              {day && day.shots.length > 1 && (
+                <svg className={styles.multiStack} viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <rect x="4" y="0" width="9" height="9" rx="3" fill="#fff" fillOpacity="0.6" />
+                  <rect x="0" y="4" width="9" height="9" rx="3" fill="#fff" />
+                </svg>
+              )}
             </button>
           );
         })}

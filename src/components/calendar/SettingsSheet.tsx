@@ -17,6 +17,7 @@ interface SettingsSheetProps {
   onClose(): void;
   onAddPhotos(): void;
   onCopyLink(): void;
+  onRegenerateLink(): Promise<void>;
   onChangeAccount(): void;
 }
 
@@ -31,14 +32,29 @@ export function SettingsSheet({
   onClose,
   onAddPhotos,
   onCopyLink,
+  onRegenerateLink,
   onChangeAccount,
 }: SettingsSheetProps) {
   const [copied, setCopied] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
 
   const handleCopy = () => {
     onCopyLink();
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
+  };
+
+  const handleRegenerate = async () => {
+    const confirmed = window.confirm(
+      "Generate a new link? The current link will stop working immediately for anyone who has it.",
+    );
+    if (!confirmed) return;
+    setRegenerating(true);
+    try {
+      await onRegenerateLink();
+    } finally {
+      setRegenerating(false);
+    }
   };
 
   const busy = pickerState === "waiting" || pickerState === "importing";
@@ -98,6 +114,14 @@ export function SettingsSheet({
               {copied ? "Link copied" : "Copy link"}
             </button>
           </div>
+          <button
+            type="button"
+            className={styles.regenerateAction}
+            onClick={handleRegenerate}
+            disabled={!shareUrl || regenerating}
+          >
+            {regenerating ? "Generating…" : "Generate new link"}
+          </button>
         </div>
 
         {manualPickerUri && (

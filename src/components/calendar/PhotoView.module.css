@@ -44,8 +44,8 @@
 }
 
 .topActions {
-  display: flex;
-  gap: 8px;
+  width: 34px;
+  height: 34px;
 }
 
 .center {

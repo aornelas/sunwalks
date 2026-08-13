@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { addDays, dayOfMonth, formatLongDateWithYear, formatTime } from "@/lib/dates";
 import type { AccountInfo, DayData, Stats, ZoomLevel } from "@/lib/types";
 import type { PickerImportState } from "@/hooks/usePickerImport";
@@ -32,6 +33,7 @@ interface WebShellProps {
   shareUrl?: string | null;
   onAddPhotos?(): void;
   onCopyShareLink?(): void;
+  onRegenerateShareLink?(): Promise<void>;
 }
 
 export function WebShell({
@@ -57,9 +59,25 @@ export function WebShell({
   shareUrl,
   onAddPhotos,
   onCopyShareLink,
+  onRegenerateShareLink,
 }: WebShellProps) {
+  const [regenerating, setRegenerating] = useState(false);
   const busy = pickerState === "waiting" || pickerState === "importing";
   const last7 = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6));
+
+  const handleRegenerate = async () => {
+    if (!onRegenerateShareLink) return;
+    const confirmed = window.confirm(
+      "Generate a new link? The current link will stop working immediately for anyone who has it.",
+    );
+    if (!confirmed) return;
+    setRegenerating(true);
+    try {
+      await onRegenerateShareLink();
+    } finally {
+      setRegenerating(false);
+    }
+  };
 
   return (
     <div className={styles.page}>
@@ -186,7 +204,19 @@ export function WebShell({
                   Copy link
                 </button>
               </div>
-              {shareUrl && <div className={styles.shareUrl}>{shareUrl}</div>}
+              {shareUrl && (
+                <>
+                  <div className={styles.shareUrl}>{shareUrl}</div>
+                  <button
+                    type="button"
+                    className={styles.regenerateAction}
+                    onClick={handleRegenerate}
+                    disabled={regenerating}
+                  >
+                    {regenerating ? "Generating…" : "Generate new link"}
+                  </button>
+                </>
+              )}
             </>
           )}
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Maximize, Minimize, Share2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize, Minimize, X } from "lucide-react";
 import { formatLongDate, formatTime } from "@/lib/dates";
 import { buildSrcSet } from "@/lib/image";
 import type { DayData } from "@/lib/types";
@@ -18,7 +18,6 @@ interface LandscapePhotoViewProps {
   onNavigate(date: string): void;
   onChangeShotIndex(index: number): void;
   onSetDayPhoto(shotId: string): void;
-  onShare(): void;
 }
 
 export function LandscapePhotoView({
@@ -32,7 +31,6 @@ export function LandscapePhotoView({
   onNavigate,
   onChangeShotIndex,
   onSetDayPhoto,
-  onShare,
 }: LandscapePhotoViewProps) {
   const [chromeVisible, setChromeVisible] = useState(true);
   const [fit, setFit] = useState(false);
@@ -77,9 +75,6 @@ export function LandscapePhotoView({
                 aria-label={fit ? "Fill frame" : "Fit whole photo"}
               >
                 {fit ? <Maximize size={17} strokeWidth={2.75} /> : <Minimize size={17} strokeWidth={2.75} />}
-              </button>
-              <button type="button" className={styles.chromeButton} onClick={onShare} aria-label="Share">
-                <Share2 size={16} strokeWidth={2.75} />
               </button>
             </div>
           </div>

@@ -6,7 +6,7 @@ import { useLandscapePhoto } from "@/hooks/useLandscapePhoto";
 import { useCalendarData } from "@/hooks/useCalendarData";
 import { usePickerImport } from "@/hooks/usePickerImport";
 import { createOwnerApi, createShareApi } from "@/lib/api-client";
-import { dayOfMonth, monthKey as toMonthKey, monthName } from "@/lib/dates";
+import { monthKey as toMonthKey, monthName } from "@/lib/dates";
 import type { AccountInfo, DayData, Stats, ZoomLevel } from "@/lib/types";
 import { MobileShell } from "./MobileShell";
 import { WebShell } from "./WebShell";
@@ -164,22 +164,11 @@ export function CalendarApp({
     return url;
   }, [api]);
 
-  const handleShare = useCallback(async () => {
-    const base = readOnly
-      ? `${window.location.origin}${window.location.pathname}`
-      : (shareUrl ?? (await fetchShareUrl()) ?? window.location.href);
-    const url = detail ? `${base}?d=${detail.date}` : base;
-    const title = detail ? `Sunrise — ${monthName(toMonthKey(detail.date))} ${dayOfMonth(detail.date)}` : "Sunrise";
-    if (navigator.share) {
-      try {
-        await navigator.share({ title, url });
-        return;
-      } catch {
-        // fall through to clipboard
-      }
-    }
-    await navigator.clipboard.writeText(url).catch(() => {});
-  }, [readOnly, shareUrl, fetchShareUrl, detail]);
+  const handleRegenerateShareLink = useCallback(async () => {
+    if (!api.regenerateShareUrl) return;
+    const url = await api.regenerateShareUrl();
+    setShareUrl(url);
+  }, [api]);
 
   const handleOpenSettings = useCallback(() => {
     setSheetOpen(true);
@@ -276,6 +265,7 @@ export function CalendarApp({
           shareUrl={shareUrl}
           onAddPhotos={pickerImport.start}
           onCopyShareLink={handleCopyLink}
+          onRegenerateShareLink={handleRegenerateShareLink}
         />
       ) : (
         <MobileShell
@@ -302,7 +292,6 @@ export function CalendarApp({
             onNavigate={(d) => openDetailFor(d, undefined, "replace")}
             onChangeShotIndex={changeShotIndex}
             onSetDayPhoto={handleSetDayPhoto}
-            onShare={handleShare}
           />
         ) : isDesktop ? (
           <WebPhotoView
@@ -316,7 +305,6 @@ export function CalendarApp({
             onNavigate={(d) => openDetailFor(d, undefined, "replace")}
             onChangeShotIndex={changeShotIndex}
             onSetDayPhoto={handleSetDayPhoto}
-            onShare={handleShare}
           />
         ) : (
           <PhotoView
@@ -330,7 +318,6 @@ export function CalendarApp({
             onNavigate={(d) => openDetailFor(d, undefined, "replace")}
             onChangeShotIndex={changeShotIndex}
             onSetDayPhoto={handleSetDayPhoto}
-            onShare={handleShare}
           />
         )
       )}
@@ -347,6 +334,7 @@ export function CalendarApp({
           onClose={closeSheet}
           onAddPhotos={pickerImport.start}
           onCopyLink={handleCopyLink}
+          onRegenerateLink={handleRegenerateShareLink}
           onChangeAccount={() => {
             window.location.href = "/api/auth/google/login";
           }}

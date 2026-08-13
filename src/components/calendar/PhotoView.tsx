@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Share2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { formatLongDate, formatTime } from "@/lib/dates";
 import { buildSrcSet } from "@/lib/image";
 import type { DayData } from "@/lib/types";
@@ -26,7 +26,6 @@ interface PhotoViewProps {
   onNavigate(date: string): void;
   onChangeShotIndex(index: number): void;
   onSetDayPhoto(shotId: string): void;
-  onShare(): void;
 }
 
 export function PhotoView({
@@ -40,7 +39,6 @@ export function PhotoView({
   onNavigate,
   onChangeShotIndex,
   onSetDayPhoto,
-  onShare,
 }: PhotoViewProps) {
   const shots = day.shots;
   const shot = shots[shotIndex] ?? shots[0];
@@ -106,11 +104,9 @@ export function PhotoView({
           <div className={styles.dateLine}>{formatLongDate(date)}</div>
           <div className={styles.metaLine}>{metaParts}</div>
         </div>
-        <div className={styles.topActions}>
-          <button type="button" className={styles.iconButton} onClick={onShare} aria-label="Share">
-            <Share2 size={16} strokeWidth={2.75} />
-          </button>
-        </div>
+        {/* Empty spacer matching the close button's footprint, so the
+            centered date/meta text stays visually centered. */}
+        <div className={styles.topActions} />
       </div>
 
       <div

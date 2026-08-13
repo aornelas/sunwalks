@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Share2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { formatLongDate, formatTime } from "@/lib/dates";
 import { buildSrcSet } from "@/lib/image";
 import type { DayData } from "@/lib/types";
@@ -17,7 +17,6 @@ interface WebPhotoViewProps {
   onNavigate(date: string): void;
   onChangeShotIndex(index: number): void;
   onSetDayPhoto(shotId: string): void;
-  onShare(): void;
 }
 
 export function WebPhotoView({
@@ -31,7 +30,6 @@ export function WebPhotoView({
   onNavigate,
   onChangeShotIndex,
   onSetDayPhoto,
-  onShare,
 }: WebPhotoViewProps) {
   const shots = day.shots;
   const shot = shots[shotIndex] ?? shots[0];
@@ -53,9 +51,6 @@ export function WebPhotoView({
           <div className={styles.metaLine}>{captionParts}</div>
         </div>
         <div className={styles.topActions}>
-          <button type="button" className={styles.iconButton} onClick={onShare} aria-label="Share">
-            <Share2 size={16} strokeWidth={2.75} />
-          </button>
           <button type="button" className={styles.iconButton} onClick={onClose} aria-label="Close">
             <X size={18} strokeWidth={2.75} />
           </button>

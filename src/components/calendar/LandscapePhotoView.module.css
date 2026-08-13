@@ -2,14 +2,33 @@
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: var(--photo-ground);
   overflow: hidden;
-  animation: photoIn 220ms ease;
 }
 
-@keyframes photoIn {
-  from { opacity: 0; transform: scale(0.97); }
-  to { opacity: 1; transform: scale(1); }
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--photo-ground);
+}
+
+@keyframes chrome-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  will-change: transform;
+}
+
+.stageThumb {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
 }
 
 .photo {
@@ -24,22 +43,28 @@
 
 .scrimTop {
   position: absolute;
+  z-index: 2;
   top: 0;
   left: 0;
   right: 0;
   height: 96px;
   background: linear-gradient(to bottom, rgba(23, 20, 15, 0.55), transparent);
   pointer-events: none;
+  animation: chrome-in calc(160ms + var(--motion-scale) * 200ms) var(--ease-standard) both;
+  animation-delay: calc(var(--motion-scale) * 360ms);
 }
 
 .scrimBottom {
   position: absolute;
+  z-index: 2;
   bottom: 0;
   left: 0;
   right: 0;
   height: 140px;
   background: linear-gradient(to top, rgba(23, 20, 15, 0.7), transparent);
   pointer-events: none;
+  animation: chrome-in calc(160ms + var(--motion-scale) * 200ms) var(--ease-standard) both;
+  animation-delay: calc(var(--motion-scale) * 360ms);
 }
 
 .chromeButton {
@@ -61,12 +86,15 @@
 
 .topRow {
   position: absolute;
+  z-index: 2;
   top: 16px;
   left: calc(env(safe-area-inset-left, 0px) + 22px);
   right: calc(env(safe-area-inset-right, 0px) + 22px);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  animation: chrome-in calc(160ms + var(--motion-scale) * 200ms) var(--ease-standard) both;
+  animation-delay: calc(var(--motion-scale) * 360ms);
 }
 
 .topActions {
@@ -78,6 +106,7 @@
   /* 36px visual size, 48px tap target — see ANDROID_UPDATE.md §5. */
   box-sizing: content-box;
   position: absolute;
+  z-index: 2;
   top: 50%;
   transform: translateY(-50%);
   width: 36px;
@@ -92,6 +121,10 @@
   justify-content: center;
 }
 
+.chevronDisabled {
+  opacity: 0.3;
+}
+
 /* No more iOS-island offset — both chevrons sit the same distance from
    their edge, plus whatever safe-area inset the device reports. */
 .chevronPrev { left: calc(env(safe-area-inset-left, 0px) + 16px); }
@@ -99,6 +132,7 @@
 
 .bottomRow {
   position: absolute;
+  z-index: 2;
   bottom: calc(env(safe-area-inset-bottom, 0px) + 22px);
   left: calc(env(safe-area-inset-left, 0px) + 26px);
   right: calc(env(safe-area-inset-right, 0px) + 26px);
@@ -106,6 +140,8 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
+  animation: chrome-in calc(160ms + var(--motion-scale) * 200ms) var(--ease-standard) both;
+  animation-delay: calc(var(--motion-scale) * 360ms);
 }
 
 .dateBlock { min-width: 0; }
@@ -149,11 +185,24 @@
 .pillInert {
   background: rgba(255, 255, 255, 0.1);
   color: #f5ead8;
+  animation: pill-settle 400ms var(--ease-standard) both;
+}
+
+@keyframes pill-settle {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .thumbRow {
+  position: relative;
   display: flex;
   gap: 7px;
+}
+
+.viewingRing {
+  border-radius: 10px;
+  box-shadow: 0 0 0 2.5px #f5ead8;
+  z-index: 1;
 }
 
 .thumb {
@@ -169,10 +218,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.thumbViewing {
-  box-shadow: inset 0 0 0 2.5px #f5ead8;
 }
 
 .thumbDimmed::after {

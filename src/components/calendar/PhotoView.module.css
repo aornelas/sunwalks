@@ -2,28 +2,37 @@
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: var(--photo-ground);
   display: flex;
   flex-direction: column;
   color: #f5ead8;
-  animation: photoIn 220ms ease;
 }
 
 .settling {
   transition: transform 200ms ease, opacity 200ms ease;
 }
 
-@keyframes photoIn {
-  from { opacity: 0; transform: scale(0.97); }
-  to { opacity: 1; transform: scale(1); }
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--photo-ground);
+}
+
+@keyframes chrome-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .topBar {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
   padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 10px;
+  animation: chrome-in calc(160ms + var(--motion-scale) * 200ms) var(--ease-standard) both;
+  animation-delay: calc(var(--motion-scale) * 360ms);
 }
 
 .iconButton {
@@ -73,6 +82,7 @@
 .photoArea {
   flex: 1;
   position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -82,7 +92,21 @@
   touch-action: pan-x;
 }
 
-.photoArea img {
+.stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+
+.stageThumb {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+
+.stage img {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -92,6 +116,7 @@
   /* 32px visual size, 48px tap target — see ANDROID_UPDATE.md §5. */
   box-sizing: content-box;
   position: absolute;
+  z-index: 2;
   top: 50%;
   transform: translateY(-50%);
   width: 32px;
@@ -106,7 +131,8 @@
   justify-content: center;
 }
 
-.chevron:disabled {
+.chevron:disabled,
+.chevronDisabled {
   opacity: 0.3;
 }
 
@@ -114,7 +140,11 @@
 .chevronNext { right: 4px; }
 
 .bottomBlock {
+  position: relative;
+  z-index: 1;
   padding: 12px 16px calc(env(safe-area-inset-bottom, 0px) + 26px);
+  animation: chrome-in calc(160ms + var(--motion-scale) * 200ms) var(--ease-standard) both;
+  animation-delay: calc(var(--motion-scale) * 360ms);
 }
 
 .caption {
@@ -157,12 +187,25 @@
 .pillInert {
   background: rgba(255, 255, 255, 0.1);
   color: #f5ead8;
+  animation: pill-settle 400ms var(--ease-standard) both;
+}
+
+@keyframes pill-settle {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .thumbRow {
+  position: relative;
   display: flex;
   gap: 8px;
   overflow-x: auto;
+}
+
+.viewingRing {
+  border-radius: 12px;
+  box-shadow: 0 0 0 2.5px #f5ead8;
+  z-index: 1;
 }
 
 .thumb {
@@ -178,10 +221,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.thumbViewing {
-  box-shadow: inset 0 0 0 2.5px #f5ead8;
 }
 
 .thumbDimmed::after {

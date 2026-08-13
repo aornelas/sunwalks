@@ -1,10 +1,16 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { formatLongDate, formatTime } from "@/lib/dates";
 import { buildSrcSet } from "@/lib/image";
+import { EASE_SOFT, prefersReducedMotion } from "@/lib/motion";
+import { usePhotoOpenAnimation } from "@/hooks/usePhotoOpenAnimation";
+import type { PhotoOrigin } from "@/lib/photo-origin";
 import type { DayData } from "@/lib/types";
+import { ViewingRing } from "./ViewingRing";
+import { SteppingPhoto } from "./SteppingPhoto";
+import { CrossfadeText } from "./CrossfadeText";
 import styles from "./PhotoView.module.css";
 
 const DISMISS_THRESHOLD = 110;
@@ -22,6 +28,7 @@ interface PhotoViewProps {
   timezone: string;
   dayKeys: string[];
   readOnly: boolean;
+  origin?: PhotoOrigin | null;
   onClose(): void;
   onNavigate(date: string): void;
   onChangeShotIndex(index: number): void;
@@ -35,6 +42,7 @@ export function PhotoView({
   timezone,
   dayKeys,
   readOnly,
+  origin,
   onClose,
   onNavigate,
   onChangeShotIndex,
@@ -52,6 +60,30 @@ export function PhotoView({
   const captionParts = [time, shot.place, shots.length > 1 ? `shot ${shotIndex + 1} of ${shots.length}` : null]
     .filter(Boolean)
     .join(" · ");
+
+  const { stageRef, scrimRef, closing, requestClose } = usePhotoOpenAnimation(origin ?? null);
+
+  // Motion 9: direction of travel, derived from the date the view just had
+  // vs. what it has now (day keys sort lexically). Adjusting state during
+  // render, not a ref — see https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [lastDate, setLastDate] = useState(date);
+  let direction: 1 | -1 | 0 = 0;
+  if (date !== lastDate) {
+    direction = date > lastDate ? 1 : -1;
+    setLastDate(date);
+  }
+
+  const photoAreaRef = useRef<HTMLDivElement>(null);
+  const rubberBand = (dir: 1 | -1) => {
+    if (prefersReducedMotion()) return;
+    photoAreaRef.current?.animate(
+      [{ transform: "translateX(0)" }, { transform: `translateX(${dir * 12}px)` }, { transform: "translateX(0)" }],
+      { duration: 400, easing: EASE_SOFT },
+    );
+  };
+
+  const thumbRowRef = useRef<HTMLDivElement>(null);
+  const thumbRefs = useRef(new Map<string, HTMLElement>());
 
   // Vertical swipe-down-to-dismiss (ANDROID_UPDATE.md §4/§5). Horizontal
   // drags are released immediately so the system's edge back-gesture still
@@ -90,19 +122,41 @@ export function PhotoView({
     setDragY(0);
   };
 
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "ArrowLeft") {
+        if (prevDate) onNavigate(prevDate);
+        else rubberBand(1);
+      } else if (e.key === "ArrowRight") {
+        if (nextDate) onNavigate(nextDate);
+        else rubberBand(-1);
+      } else if (e.key === "Escape") requestClose(onClose);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prevDate, nextDate]);
+
   return (
     <div
-      className={`${styles.overlay} ${settling ? styles.settling : ""}`}
+      className={`${styles.overlay} ${settling ? styles.settling : ""} ${closing ? styles.closing : ""}`}
       style={dragY ? { transform: `translateY(${dragY}px)`, opacity: Math.max(1 - dragY / 400, 0.4) } : undefined}
       onTransitionEnd={() => setSettling(false)}
     >
+      <div ref={scrimRef} className={styles.scrim} />
+
       <div className={styles.topBar}>
-        <button type="button" className={styles.iconButton} onClick={onClose} aria-label="Close">
+        <button
+          type="button"
+          className={styles.iconButton}
+          onClick={() => requestClose(onClose)}
+          aria-label="Close"
+        >
           <X size={18} strokeWidth={2.75} />
         </button>
         <div className={styles.center}>
-          <div className={styles.dateLine}>{formatLongDate(date)}</div>
-          <div className={styles.metaLine}>{metaParts}</div>
+          <CrossfadeText className={styles.dateLine} text={formatLongDate(date)} />
+          <CrossfadeText className={styles.metaLine} text={metaParts} />
         </div>
         {/* Empty spacer matching the close button's footprint, so the
             centered date/meta text stays visually centered. */}
@@ -110,37 +164,43 @@ export function PhotoView({
       </div>
 
       <div
+        ref={photoAreaRef}
         className={styles.photoArea}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
       >
-        {prevDate && (
-          <button
-            type="button"
-            className={`${styles.chevron} ${styles.chevronPrev}`}
-            onClick={() => onNavigate(prevDate)}
-            aria-label="Previous sunrise"
-          >
-            <ChevronLeft size={20} strokeWidth={2.75} />
-          </button>
-        )}
-        <img {...buildSrcSet(shot.id, "full")} sizes="100vw" alt={formatLongDate(date)} fetchPriority="high" />
-        {nextDate && (
-          <button
-            type="button"
-            className={`${styles.chevron} ${styles.chevronNext}`}
-            onClick={() => onNavigate(nextDate)}
-            aria-label="Next sunrise"
-          >
-            <ChevronRight size={20} strokeWidth={2.75} />
-          </button>
-        )}
+        <button
+          type="button"
+          className={`${styles.chevron} ${styles.chevronPrev} ${!prevDate ? styles.chevronDisabled : ""}`}
+          onClick={() => (prevDate ? onNavigate(prevDate) : rubberBand(1))}
+          aria-label="Previous sunrise"
+          aria-disabled={!prevDate}
+        >
+          <ChevronLeft size={20} strokeWidth={2.75} />
+        </button>
+
+        <div ref={stageRef} className={styles.stage}>
+          <div className={styles.stageThumb} style={origin ? { backgroundImage: `url(${origin.thumbSrc})` } : undefined} />
+          <SteppingPhoto stepKey={`${date}:${shot.id}`} direction={direction}>
+            <img {...buildSrcSet(shot.id, "full")} sizes="100vw" alt={formatLongDate(date)} fetchPriority="high" />
+          </SteppingPhoto>
+        </div>
+
+        <button
+          type="button"
+          className={`${styles.chevron} ${styles.chevronNext} ${!nextDate ? styles.chevronDisabled : ""}`}
+          onClick={() => (nextDate ? onNavigate(nextDate) : rubberBand(-1))}
+          aria-label="Next sunrise"
+          aria-disabled={!nextDate}
+        >
+          <ChevronRight size={20} strokeWidth={2.75} />
+        </button>
       </div>
 
       <div className={styles.bottomBlock}>
-        <div className={styles.caption}>{captionParts}</div>
+        <CrossfadeText className={styles.caption} text={captionParts} />
 
         {shots.length > 1 && (
           <>
@@ -159,15 +219,22 @@ export function PhotoView({
                   </button>
                 ))}
             </div>
-            <div className={styles.thumbRow}>
+            <div ref={thumbRowRef} className={styles.thumbRow}>
+              <ViewingRing
+                className={styles.viewingRing}
+                containerRef={thumbRowRef}
+                thumbRefs={thumbRefs}
+                activeKey={shot.id}
+              />
               {shots.map((s, i) => (
                 <button
                   key={s.id}
+                  ref={(el) => {
+                    if (el) thumbRefs.current.set(s.id, el);
+                    else thumbRefs.current.delete(s.id);
+                  }}
                   type="button"
-                  className={[
-                    styles.thumb,
-                    i === shotIndex ? styles.thumbViewing : styles.thumbDimmed,
-                  ].join(" ")}
+                  className={[styles.thumb, i === shotIndex ? "" : styles.thumbDimmed].join(" ")}
                   onClick={() => onChangeShotIndex(i)}
                 >
                   <img src={s.thumbUrl} alt="" />

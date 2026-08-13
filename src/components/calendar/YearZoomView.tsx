@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { buildMonthCells } from "@/lib/calendar-grid";
 import { monthShort } from "@/lib/dates";
 import { buildSrcSet } from "@/lib/image";
+import { useFirstPaintEntrance } from "@/lib/motion";
 import type { DayData } from "@/lib/types";
 import styles from "./YearZoomView.module.css";
 
@@ -35,8 +36,10 @@ export function YearZoomView({
   const earliestYear = earliestDate ? Number(earliestDate.slice(0, 4)) : currentYear;
   const maxYears = currentYear - earliestYear + 1;
 
+  const playEntrance = useFirstPaintEntrance();
   const [yearsShown, setYearsShown] = useState(() => Math.min(1, maxYears));
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const [initialBatch] = useState(() => yearsShown);
   const years = Array.from({ length: yearsShown }, (_, i) => String(currentYear - i));
 
   useEffect(() => {
@@ -79,7 +82,7 @@ export function YearZoomView({
 
   return (
     <div>
-      {years.map((year) => {
+      {years.map((year, yearIndex) => {
         const monthKeys = Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, "0")}`);
         const monthsData = monthKeys.map((mKey) => {
           const cells = buildMonthCells(mKey, today, getDay);
@@ -87,19 +90,29 @@ export function YearZoomView({
           return { mKey, cells, capturedCount };
         });
         const yearCapturedCount = monthsData.reduce((sum, m) => sum + m.capturedCount, 0);
+        const animateIn = playEntrance && yearIndex < initialBatch;
 
         return (
-          <div key={year} className={styles.yearBlock}>
+          <div
+            key={year}
+            className={`${styles.yearBlock} ${!animateIn && yearIndex >= initialBatch ? "motionPlainFade" : ""}`}
+          >
             <div className={styles.yearHeadingRow}>
               <span className={styles.yearHeading}>{year}</span>
               <span className={styles.yearCount}>{yearCapturedCount} CAPTURED</span>
             </div>
             <div className={gridClass}>
-              {monthsData.map(({ mKey, cells, capturedCount }) => {
+              {monthsData.map(({ mKey, cells, capturedCount }, monthIndex) => {
                 const visibleCells = filter ? cells.filter((c) => c.state === "captured") : cells;
 
                 return (
-                  <button key={mKey} type="button" className={styles.month} onClick={() => onJumpToMonth(mKey)}>
+                  <button
+                    key={mKey}
+                    type="button"
+                    className={`${styles.month} ${animateIn ? "motionSettleIn motionPressable" : ""}`}
+                    style={animateIn ? ({ "--cell-delay": `${monthIndex * 52}ms` } as React.CSSProperties) : undefined}
+                    onClick={() => onJumpToMonth(mKey)}
+                  >
                     <div className={styles.header}>
                       <span className={styles.name}>{monthShort(mKey)}</span>
                       <span className={styles.count}>{capturedCount > 0 ? capturedCount : "—"}</span>

@@ -65,7 +65,30 @@
   --photo-ground: #17140f;
   --overlay-scrim: rgba(23, 20, 15, 0.4);
 
+  /* Motion — see design_handoff_sunrise_calendar/MOTION.md. Durations are
+     deliberately about twice a conventional UI's; do not "optimise" them
+     down. --motion-scale is the single reduced-motion switch: every
+     duration/delay/transform below is written as a calc() blend against it
+     so 1 = full motion, 0 = the reduced-motion spec for that motion. */
+  --dur-instant: 240ms;
+  --dur-quick: 360ms;
+  --dur-base: 480ms;
+  --dur-expressive: 760ms;
+  --dur-entrance: 1040ms;
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-soft: cubic-bezier(0.34, 0.9, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  --motion-scale: 1;
+
   color-scheme: light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-scale: 0;
+  }
 }
 
 *,
@@ -124,3 +147,75 @@ input { font: inherit; }
 ::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
 
 .washed { filter: saturate(0.6) contrast(0.85) brightness(1.1) opacity(0.94); }
+
+/* — Motion 1: calendar settles in — first paint only, staggered by
+   (row + col). --motion-scale blends the full entrance (scale .68→1, 720ms
+   soft, staggered) down to the reduced-motion spec (240ms opacity-only
+   fade, no stagger, no scale) from a single switch. */
+@keyframes motion-settle-in {
+  from {
+    opacity: 0;
+    transform: scale(calc(1 - 0.32 * var(--motion-scale)));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.motionSettleIn {
+  animation-name: motion-settle-in;
+  animation-duration: calc(240ms + var(--motion-scale) * 480ms);
+  animation-timing-function: var(--ease-soft);
+  animation-delay: calc(var(--cell-delay, 0ms) * var(--motion-scale));
+  animation-fill-mode: both;
+}
+
+/* Scroll-loaded content (months/weeks/years appended past the initial
+   batch): a plain fade, never the settle-in stagger — see MOTION.md
+   §Micro-states. */
+@keyframes motion-plain-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.motionPlainFade {
+  animation: motion-plain-fade calc(120ms + var(--motion-scale) * 240ms) linear both;
+}
+
+/* — Motion 5: a new morning lands — accent ripple + pop, reduced motion
+   keeps the ripple but drops the pop (handled by --motion-scale zeroing the
+   overshoot). */
+@keyframes motion-pop {
+  0% { transform: scale(1); }
+  35% { transform: scale(calc(1 + 0.07 * var(--motion-scale))); }
+  60% { transform: scale(calc(1 - 0.02 * var(--motion-scale))); }
+  100% { transform: scale(1); }
+}
+.motionPop {
+  animation: motion-pop calc(400ms + var(--motion-scale) * 440ms) var(--ease-soft) both;
+}
+
+@keyframes motion-ripple {
+  from { box-shadow: 0 0 0 0 rgba(198, 113, 57, 0.55); }
+  to { box-shadow: 0 0 0 14px rgba(198, 113, 57, 0); }
+}
+.motionRipple::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  animation: motion-ripple 1240ms var(--ease-standard) both;
+  pointer-events: none;
+}
+
+/* — Micro-state: press. Tappable squares/pills scale down while held;
+   icon buttons tint instead (handled locally where they're defined). */
+.motionPressable {
+  /* Release uses this (the "after" state when leaving :active). */
+  transition: transform var(--dur-quick) var(--ease-soft);
+}
+.motionPressable:active {
+  transform: scale(0.97);
+  /* Press-in uses this (the "after" state when entering :active). */
+  transition-duration: 200ms;
+  transition-timing-function: var(--ease-standard);
+}

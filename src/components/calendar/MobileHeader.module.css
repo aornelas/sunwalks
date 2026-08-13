@@ -61,7 +61,7 @@
 }
 
 .spin {
-  animation: spin 900ms linear infinite;
+  animation: spin 1800ms linear infinite;
 }
 
 @keyframes spin {

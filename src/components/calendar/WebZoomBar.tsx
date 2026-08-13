@@ -1,6 +1,8 @@
 "use client";
 
+import { useLayoutEffect, useRef } from "react";
 import type { ZoomLevel } from "@/lib/types";
+import { EASE_SOFT, prefersReducedMotion } from "@/lib/motion";
 import styles from "./WebZoomBar.module.css";
 
 const ZOOMS: { key: ZoomLevel; label: string }[] = [
@@ -17,21 +19,52 @@ interface WebZoomBarProps {
 }
 
 export function WebZoomBar({ zoom, onZoomChange, filter, onFilterChange }: WebZoomBarProps) {
+  const pillRefs = useRef(new Map<string, HTMLButtonElement>());
+  const fillRef = useRef<HTMLSpanElement>(null);
+  const mountedRef = useRef(false);
+
+  useLayoutEffect(() => {
+    const fill = fillRef.current;
+    const target = pillRefs.current.get(zoom);
+    if (!fill || !target) return;
+    const left = target.offsetLeft;
+    const width = target.offsetWidth;
+    if (!mountedRef.current || prefersReducedMotion()) {
+      fill.style.transform = `translateX(${left}px)`;
+      fill.style.width = `${width}px`;
+      mountedRef.current = true;
+      return;
+    }
+    fill.animate(
+      [{ transform: fill.style.transform, width: fill.style.width }, { transform: `translateX(${left}px)`, width: `${width}px` }],
+      { duration: 560, easing: EASE_SOFT, fill: "forwards" },
+    );
+    fill.style.transform = `translateX(${left}px)`;
+    fill.style.width = `${width}px`;
+  }, [zoom]);
+
   return (
     <div className={styles.bar}>
-      {ZOOMS.map(({ key, label }) => (
-        <button
-          key={key}
-          type="button"
-          className={`${styles.pill} ${zoom === key ? styles.pillSelected : ""}`}
-          onClick={() => onZoomChange(key)}
-        >
-          {label}
-        </button>
-      ))}
+      <div className={styles.zoomGroup}>
+        <span ref={fillRef} className={styles.pillFill} aria-hidden="true" />
+        {ZOOMS.map(({ key, label }) => (
+          <button
+            key={key}
+            ref={(el) => {
+              if (el) pillRefs.current.set(key, el);
+              else pillRefs.current.delete(key);
+            }}
+            type="button"
+            className={`${styles.pill} motionPressable ${zoom === key ? styles.pillSelected : ""}`}
+            onClick={() => onZoomChange(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       <button
         type="button"
-        className={`${styles.pill} ${styles.filterPill} ${filter ? styles.pillSelected : ""}`}
+        className={`${styles.pill} motionPressable ${styles.filterPill} ${filter ? styles.pillSelectedSolid : ""}`}
         onClick={() => onFilterChange(!filter)}
         aria-pressed={filter}
       >

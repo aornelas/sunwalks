@@ -14,11 +14,27 @@
 }
 
 .circleButton {
+  position: relative;
   width: 100%;
   display: block;
 }
 
+.ripple::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  animation: ripple 1240ms var(--ease-standard) both;
+  pointer-events: none;
+}
+
+@keyframes ripple {
+  from { box-shadow: 0 0 0 0 rgba(198, 113, 57, 0.55); }
+  to { box-shadow: 0 0 0 14px rgba(198, 113, 57, 0); }
+}
+
 .circle {
+  position: relative;
   width: 100%;
   aspect-ratio: 1;
   border-radius: 999px;

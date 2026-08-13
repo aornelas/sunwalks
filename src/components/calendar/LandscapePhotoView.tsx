@@ -1,10 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Maximize, Minimize, X } from "lucide-react";
 import { formatLongDate, formatTime } from "@/lib/dates";
 import { buildSrcSet } from "@/lib/image";
+import { EASE_SOFT, prefersReducedMotion } from "@/lib/motion";
+import { usePhotoOpenAnimation } from "@/hooks/usePhotoOpenAnimation";
+import type { PhotoOrigin } from "@/lib/photo-origin";
 import type { DayData } from "@/lib/types";
+import { ViewingRing } from "./ViewingRing";
+import { SteppingPhoto } from "./SteppingPhoto";
+import { CrossfadeText } from "./CrossfadeText";
 import styles from "./LandscapePhotoView.module.css";
 
 interface LandscapePhotoViewProps {
@@ -14,6 +20,7 @@ interface LandscapePhotoViewProps {
   timezone: string;
   dayKeys: string[];
   readOnly: boolean;
+  origin?: PhotoOrigin | null;
   onClose(): void;
   onNavigate(date: string): void;
   onChangeShotIndex(index: number): void;
@@ -27,6 +34,7 @@ export function LandscapePhotoView({
   timezone,
   dayKeys,
   readOnly,
+  origin,
   onClose,
   onNavigate,
   onChangeShotIndex,
@@ -47,16 +55,58 @@ export function LandscapePhotoView({
     .filter(Boolean)
     .join(" · ");
 
+  const { stageRef, scrimRef, closing, requestClose } = usePhotoOpenAnimation(origin ?? null);
+
+  const [lastDate, setLastDate] = useState(date);
+  let direction: 1 | -1 | 0 = 0;
+  if (date !== lastDate) {
+    direction = date > lastDate ? 1 : -1;
+    setLastDate(date);
+  }
+
+  const rubberBand = (dir: 1 | -1) => {
+    if (prefersReducedMotion()) return;
+    stageRef.current?.animate(
+      [{ transform: "translateX(0)" }, { transform: `translateX(${dir * 12}px)` }, { transform: "translateX(0)" }],
+      { duration: 400, easing: EASE_SOFT },
+    );
+  };
+
+  const thumbRowRef = useRef<HTMLDivElement>(null);
+  const thumbRefs = useRef(new Map<string, HTMLElement>());
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "ArrowLeft") {
+        if (prevDate) onNavigate(prevDate);
+        else rubberBand(1);
+      } else if (e.key === "ArrowRight") {
+        if (nextDate) onNavigate(nextDate);
+        else rubberBand(-1);
+      } else if (e.key === "Escape") requestClose(onClose);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prevDate, nextDate]);
+
   return (
-    <div className={styles.overlay}>
-      <img
-        className={`${styles.photo} ${fit ? styles.photoContain : styles.photoCover}`}
-        {...buildSrcSet(shot.id, "full")}
-        sizes="100vw"
-        alt={formatLongDate(date)}
-        fetchPriority="high"
-        onClick={() => setChromeVisible((v) => !v)}
-      />
+    <div className={`${styles.overlay} ${closing ? styles.closing : ""}`}>
+      <div ref={scrimRef} className={styles.scrim} />
+
+      <div ref={stageRef} className={styles.stage}>
+        <div className={styles.stageThumb} style={origin ? { backgroundImage: `url(${origin.thumbSrc})` } : undefined} />
+        <SteppingPhoto stepKey={`${date}:${shot.id}`} direction={direction}>
+          <img
+            className={`${styles.photo} ${fit ? styles.photoContain : styles.photoCover}`}
+            {...buildSrcSet(shot.id, "full")}
+            sizes="100vw"
+            alt={formatLongDate(date)}
+            fetchPriority="high"
+            onClick={() => setChromeVisible((v) => !v)}
+          />
+        </SteppingPhoto>
+      </div>
 
       {chromeVisible && (
         <>
@@ -64,7 +114,12 @@ export function LandscapePhotoView({
           <div className={styles.scrimBottom} />
 
           <div className={styles.topRow}>
-            <button type="button" className={styles.chromeButton} onClick={onClose} aria-label="Close">
+            <button
+              type="button"
+              className={styles.chromeButton}
+              onClick={() => requestClose(onClose)}
+              aria-label="Close"
+            >
               <X size={17} strokeWidth={2.75} />
             </button>
             <div className={styles.topActions}>
@@ -79,31 +134,29 @@ export function LandscapePhotoView({
             </div>
           </div>
 
-          {prevDate && (
-            <button
-              type="button"
-              className={`${styles.chevron} ${styles.chevronPrev}`}
-              onClick={() => onNavigate(prevDate)}
-              aria-label="Previous sunrise"
-            >
-              <ChevronLeft size={20} strokeWidth={2.75} />
-            </button>
-          )}
-          {nextDate && (
-            <button
-              type="button"
-              className={`${styles.chevron} ${styles.chevronNext}`}
-              onClick={() => onNavigate(nextDate)}
-              aria-label="Next sunrise"
-            >
-              <ChevronRight size={20} strokeWidth={2.75} />
-            </button>
-          )}
+          <button
+            type="button"
+            className={`${styles.chevron} ${styles.chevronPrev} ${!prevDate ? styles.chevronDisabled : ""}`}
+            onClick={() => (prevDate ? onNavigate(prevDate) : rubberBand(1))}
+            aria-label="Previous sunrise"
+            aria-disabled={!prevDate}
+          >
+            <ChevronLeft size={20} strokeWidth={2.75} />
+          </button>
+          <button
+            type="button"
+            className={`${styles.chevron} ${styles.chevronNext} ${!nextDate ? styles.chevronDisabled : ""}`}
+            onClick={() => (nextDate ? onNavigate(nextDate) : rubberBand(-1))}
+            aria-label="Next sunrise"
+            aria-disabled={!nextDate}
+          >
+            <ChevronRight size={20} strokeWidth={2.75} />
+          </button>
 
           <div className={styles.bottomRow}>
             <div className={styles.dateBlock}>
-              <div className={styles.dateLine}>{formatLongDate(date)}</div>
-              <div className={styles.metaLine}>{metaParts}</div>
+              <CrossfadeText className={styles.dateLine} text={formatLongDate(date)} />
+              <CrossfadeText className={styles.metaLine} text={metaParts} />
             </div>
 
             {shots.length > 1 && (
@@ -120,12 +173,22 @@ export function LandscapePhotoView({
                       Set as day photo
                     </button>
                   ))}
-                <div className={styles.thumbRow}>
+                <div ref={thumbRowRef} className={styles.thumbRow}>
+                  <ViewingRing
+                    className={styles.viewingRing}
+                    containerRef={thumbRowRef}
+                    thumbRefs={thumbRefs}
+                    activeKey={shot.id}
+                  />
                   {shots.map((s, i) => (
                     <button
                       key={s.id}
+                      ref={(el) => {
+                        if (el) thumbRefs.current.set(s.id, el);
+                        else thumbRefs.current.delete(s.id);
+                      }}
                       type="button"
-                      className={[styles.thumb, i === shotIndex ? styles.thumbViewing : styles.thumbDimmed].join(" ")}
+                      className={[styles.thumb, i === shotIndex ? "" : styles.thumbDimmed].join(" ")}
                       onClick={() => onChangeShotIndex(i)}
                     >
                       <img src={s.thumbUrl} alt="" />

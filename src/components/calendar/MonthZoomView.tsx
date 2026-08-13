@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useRef, useState } from "react";
 import { addMonths, monthKey as toMonthKey } from "@/lib/dates";
+import { useFirstPaintEntrance } from "@/lib/motion";
 import type { DayData } from "@/lib/types";
 import { MonthBlock } from "./MonthBlock";
 import styles from "./MonthZoomView.module.css";
@@ -18,6 +19,7 @@ interface MonthZoomViewProps {
   ensureLoaded(start: string, end: string): Promise<void>;
   onOpenDay(date: string): void;
   onJumpMonth?: string; // when set, resets the visible window to include this month
+  newDates?: ReadonlySet<string>;
 }
 
 function monthsBetween(fromKey: string, toKey: string): number {
@@ -36,7 +38,9 @@ export function MonthZoomView({
   ensureLoaded,
   onOpenDay,
   onJumpMonth,
+  newDates,
 }: MonthZoomViewProps) {
+  const playEntrance = useFirstPaintEntrance();
   const currentMonth = toMonthKey(today);
   const step = variant === "web" ? 2 : 1;
   // Never scroll further back than the month of the earliest capture — with
@@ -53,6 +57,10 @@ export function MonthZoomView({
     return Math.min(maxMonths, Math.max(base, monthsBetween(currentMonth, onJumpMonth) + 1));
   });
   const sentinelRef = useRef<HTMLDivElement>(null);
+  // Months at/after this index were appended by infinite scroll (or a jump),
+  // not present in the initial batch — they get a plain fade, never the
+  // entrance stagger (MOTION.md: "never on scroll").
+  const [initialBatch] = useState(() => monthsShown);
 
   // Adjust state in response to a prop change, computed during render rather
   // than in an effect (see https://react.dev/learn/you-might-not-need-an-effect).
@@ -142,8 +150,11 @@ export function MonthZoomView({
                 variant={variant}
                 filter={filter}
                 eager={i < 2}
+                animateIn={playEntrance && i < initialBatch}
+                scrollLoaded={i >= initialBatch}
                 getDay={getDay}
                 onOpenDay={onOpenDay}
+                newDates={newDates}
               />
             </Fragment>
           );

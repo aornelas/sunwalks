@@ -8,6 +8,8 @@ export interface CalendarData {
   daysByDate: Map<string, DayData>;
   getDay(date: string): DayData | undefined;
   ensureLoaded(start: string, end: string): Promise<void>;
+  /** Unlike ensureLoaded, always refetches — used after a sync brings new photos into an already-loaded range. */
+  refreshRange(start: string, end: string): Promise<void>;
   isLoading(start: string, end: string): boolean;
   stats: Stats;
   refreshStats(): Promise<void>;
@@ -42,6 +44,18 @@ export function useCalendarData(api: CalendarApi, initialDays: DayData[], initia
     [api],
   );
 
+  const refreshRange = useCallback(
+    async (start: string, end: string) => {
+      const fresh = await api.fetchDays(start, end);
+      setDaysByDate((prev) => {
+        const next = new Map(prev);
+        for (const d of fresh) next.set(d.date, d);
+        return next;
+      });
+    },
+    [api],
+  );
+
   const isLoading = useCallback((start: string, end: string) => {
     return loadedRanges.current.has(`${start}:${end}`) === false;
   }, []);
@@ -64,7 +78,7 @@ export function useCalendarData(api: CalendarApi, initialDays: DayData[], initia
   }, []);
 
   return useMemo(
-    () => ({ daysByDate, getDay, ensureLoaded, isLoading, stats, refreshStats, applyDayPhoto }),
-    [daysByDate, getDay, ensureLoaded, isLoading, stats, refreshStats, applyDayPhoto],
+    () => ({ daysByDate, getDay, ensureLoaded, refreshRange, isLoading, stats, refreshStats, applyDayPhoto }),
+    [daysByDate, getDay, ensureLoaded, refreshRange, isLoading, stats, refreshStats, applyDayPhoto],
   );
 }

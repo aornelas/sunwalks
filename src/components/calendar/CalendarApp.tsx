@@ -6,6 +6,7 @@ import { useLandscapePhoto } from "@/hooks/useLandscapePhoto";
 import { useCalendarData } from "@/hooks/useCalendarData";
 import { usePickerImport } from "@/hooks/usePickerImport";
 import { createOwnerApi, createShareApi } from "@/lib/api-client";
+import { consumePendingOrigin, type PhotoOrigin } from "@/lib/photo-origin";
 import type { AccountInfo, DayData, Stats, ZoomLevel } from "@/lib/types";
 import { MobileShell } from "./MobileShell";
 import { WebShell } from "./WebShell";
@@ -47,9 +48,12 @@ export function CalendarApp({
   const calendarData = useCalendarData(api, initialDays, initialStats);
   const pickerImport = usePickerImport(api);
 
-  // Neither needs to be mutable client state: a picker import triggers a
-  // full reload (see below), and a fresh server render is what updates them.
-  const dayKeys = initialDayKeys;
+  // A picker import refreshes just the affected range in place (see the
+  // "done" effect below) rather than reloading the page, so this needs to
+  // be mutable state now — it's what feeds motion 5's "new morning lands".
+  const [dayKeys, setDayKeys] = useState<string[]>(initialDayKeys);
+  const [newDates, setNewDates] = useState<ReadonlySet<string> | undefined>(undefined);
+  const [justSynced, setJustSynced] = useState(false);
   const accountState = account;
 
   // Month + (for a shared, read-only viewer) sunrise-days-only is the
@@ -59,6 +63,7 @@ export function CalendarApp({
   const [filter, setFilter] = useState(readOnly);
   const [prefsReady, setPrefsReady] = useState(false);
   const [detail, setDetail] = useState<DetailState | null>(null);
+  const [photoOrigin, setPhotoOrigin] = useState<PhotoOrigin | null>(null);
   const [jumpMonth, setJumpMonth] = useState<{ month: string; nonce: number } | undefined>();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -92,15 +97,37 @@ export function CalendarApp({
   }, [filter, prefsReady]);
 
   // Once a picker import finishes, newly-added days need to show up
-  // everywhere: the grid cache, stats, the prev/next day-key list, the "last
-  // added" line. The grid cache is keyed by already-fetched date ranges, so
-  // rather than guess which ranges need invalidating, show the "Added N
-  // photos" confirmation briefly and then do a full reload — imports are a
-  // deliberate, infrequent action, not a hot path worth hand-patching.
+  // everywhere: the grid, stats, the prev/next day-key list, the "last
+  // added" line — and, per motion 5 ("a new morning lands"), the squares
+  // that just flipped from missed/future to captured get a pop + ripple.
+  // That reveal only works if the page stays alive through it, so this
+  // refreshes just the affected range in place instead of reloading.
   useEffect(() => {
     if (pickerImport.state !== "done") return;
-    const id = window.setTimeout(() => window.location.reload(), 1400);
-    return () => window.clearTimeout(id);
+    let cancelled = false;
+    (async () => {
+      const freshDayKeys = await api.fetchDayKeys();
+      if (cancelled) return;
+      const oldSet = new Set(dayKeys);
+      const added = freshDayKeys.filter((d) => !oldSet.has(d)).sort();
+      setDayKeys(freshDayKeys);
+      setJustSynced(true);
+      window.setTimeout(() => setJustSynced(false), 1600);
+      await calendarData.refreshStats();
+      if (added.length > 0) {
+        await calendarData.refreshRange(added[0], today);
+        if (cancelled) return;
+        const capped = new Set(added.slice(0, 5));
+        setNewDates(capped);
+        window.setTimeout(() => setNewDates(undefined), capped.size * 160 + 1240 + 200);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // dayKeys/calendarData/today are read, not depended on — this should
+    // only ever fire on the state transition into "done".
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pickerImport.state]);
 
   const isDesktop = useIsDesktop();
@@ -150,6 +177,10 @@ export function CalendarApp({
 
   const openDetailFor = useCallback(
     async (date: string, shotIndex?: number, historyMode: "push" | "replace" = "push") => {
+      // Consumed synchronously, before any await, so it reflects whatever
+      // the triggering click handler set this same tick — never a stale
+      // origin from a previous open (see photo-origin.ts).
+      const origin = consumePendingOrigin();
       if (!calendarData.getDay(date)) {
         await calendarData.ensureLoaded(date, date);
       }
@@ -157,6 +188,7 @@ export function CalendarApp({
       if (!day || day.shots.length === 0) return;
       const defaultIdx = day.shots.findIndex((s) => s.id === day.dayShotId);
       setDetail({ date, shotIndex: shotIndex ?? Math.max(0, defaultIdx) });
+      setPhotoOrigin(origin);
 
       const url = new URL(window.location.href);
       url.searchParams.set("d", date);
@@ -178,6 +210,7 @@ export function CalendarApp({
       window.history.back();
     }
     setDetail(null);
+    setPhotoOrigin(null);
   }, []);
 
   const changeShotIndex = useCallback((index: number) => {
@@ -289,6 +322,8 @@ export function CalendarApp({
     onJumpToMonth: handleJumpToMonth,
     jumpMonth: jumpMonth?.month,
     earliestDate: dayKeys.length > 0 ? dayKeys[0] : null,
+    newDates,
+    animateStats: justSynced,
   };
 
   return (
@@ -326,6 +361,7 @@ export function CalendarApp({
             timezone={timezone}
             dayKeys={dayKeys}
             readOnly={readOnly}
+            origin={photoOrigin}
             onClose={closeDetail}
             onNavigate={(d) => openDetailFor(d, undefined, "replace")}
             onChangeShotIndex={changeShotIndex}
@@ -339,6 +375,7 @@ export function CalendarApp({
             timezone={timezone}
             dayKeys={dayKeys}
             readOnly={readOnly}
+            origin={photoOrigin}
             onClose={closeDetail}
             onNavigate={(d) => openDetailFor(d, undefined, "replace")}
             onChangeShotIndex={changeShotIndex}
@@ -352,6 +389,7 @@ export function CalendarApp({
             timezone={timezone}
             dayKeys={dayKeys}
             readOnly={readOnly}
+            origin={photoOrigin}
             onClose={closeDetail}
             onNavigate={(d) => openDetailFor(d, undefined, "replace")}
             onChangeShotIndex={changeShotIndex}

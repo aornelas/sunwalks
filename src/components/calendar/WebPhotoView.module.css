@@ -2,24 +2,33 @@
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgba(23, 20, 15, 0.93);
   display: flex;
   flex-direction: column;
   padding: 22px 26px 24px;
   color: #f5ead8;
-  animation: photoIn 220ms ease;
 }
 
-@keyframes photoIn {
-  from { opacity: 0; transform: scale(0.98); }
-  to { opacity: 1; transform: scale(1); }
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: rgba(23, 20, 15, 0.93);
+}
+
+@keyframes chrome-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .topRow {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
+  animation: chrome-in calc(160ms + var(--motion-scale) * 200ms) var(--ease-standard) both;
+  animation-delay: calc(var(--motion-scale) * 360ms);
 }
 
 .dateBlock { min-width: 0; }
@@ -57,6 +66,7 @@
 .photoArea {
   flex: 1;
   position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -64,17 +74,31 @@
   margin: 16px 0;
 }
 
-.photoArea img {
-  max-width: 100%;
-  max-height: 100%;
+.stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  will-change: transform;
+}
+
+.stageThumb {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+
+.stage img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  border-radius: 14px;
 }
 
 .chevron {
   position: absolute;
+  z-index: 2;
   top: 50%;
   transform: translateY(-50%);
   width: 40px;
@@ -87,12 +111,17 @@
   justify-content: center;
 }
 
-.chevron:disabled { opacity: 0.3; }
+.chevron:disabled,
+.chevronDisabled { opacity: 0.3; }
 .chevronPrev { left: 8px; }
 .chevronNext { right: 8px; }
 
 .bottomBlock {
+  position: relative;
+  z-index: 1;
   flex: none;
+  animation: chrome-in calc(160ms + var(--motion-scale) * 200ms) var(--ease-standard) both;
+  animation-delay: calc(var(--motion-scale) * 360ms);
 }
 
 .shotsRow {
@@ -121,11 +150,27 @@
 }
 
 .pillCommit { background: var(--color-accent); color: var(--color-bg); }
-.pillInert { background: rgba(255, 255, 255, 0.1); color: #f5ead8; }
+.pillInert {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f5ead8;
+  animation: pill-settle 400ms var(--ease-standard) both;
+}
+
+@keyframes pill-settle {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 .thumbRow {
+  position: relative;
   display: flex;
   gap: 8px;
+}
+
+.viewingRing {
+  border-radius: 12px;
+  box-shadow: 0 0 0 2.5px #f5ead8;
+  z-index: 1;
 }
 
 .thumb {
@@ -139,7 +184,6 @@
 
 .thumb img { width: 100%; height: 100%; object-fit: cover; }
 
-.thumbViewing { box-shadow: inset 0 0 0 2.5px #f5ead8; }
 .thumbDimmed::after {
   content: "";
   position: absolute;

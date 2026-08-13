@@ -4,16 +4,38 @@
   gap: 6px;
 }
 
+.zoomGroup {
+  position: relative;
+  display: flex;
+  gap: 6px;
+}
+
+.pillFill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-accent);
+  will-change: transform, width;
+}
+
 .pill {
+  position: relative;
+  z-index: 1;
   padding: 7px 15px;
   border-radius: 999px;
   font-family: var(--font-heading);
   font-size: 0.8125rem;
   color: var(--color-neutral-700);
-  transition: background 180ms ease, color 180ms ease;
+  transition: color var(--dur-instant) var(--ease-standard), background var(--dur-instant) var(--ease-standard);
 }
 
 .pillSelected {
+  color: var(--color-bg);
+}
+
+.pillSelectedSolid {
   background: var(--color-accent);
   color: var(--color-bg);
 }

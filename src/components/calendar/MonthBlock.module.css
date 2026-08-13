@@ -35,10 +35,30 @@
   grid-template-columns: repeat(7, 1fr);
 }
 
+.gridRelative {
+  position: relative;
+}
+
 .cell {
   position: relative;
   aspect-ratio: 1;
+}
+
+.cellClip {
+  position: absolute;
+  inset: 0;
   overflow: hidden;
+  border-radius: inherit;
+}
+
+.ghost {
+  pointer-events: none;
+  animation: ghost-collapse calc(160ms + var(--motion-scale) * 240ms) var(--ease-exit) both;
+}
+
+@keyframes ghost-collapse {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(calc(1 - 0.6 * var(--motion-scale))); }
 }
 
 .cell img {

@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import { addDays, dayOfMonth, formatLongDateWithYear, formatTime } from "@/lib/dates";
+import { setPendingOrigin } from "@/lib/photo-origin";
 import type { AccountInfo, DayData, Stats, ZoomLevel } from "@/lib/types";
 import type { PickerImportState } from "@/hooks/usePickerImport";
 import { WebZoomBar } from "./WebZoomBar";
 import { MonthZoomView } from "./MonthZoomView";
 import { WeekZoomView } from "./WeekZoomView";
 import { YearZoomView } from "./YearZoomView";
+import { ZoomTransition } from "./ZoomTransition";
+import { CrossfadeText } from "./CrossfadeText";
+import { RollingNumber } from "./RollingNumber";
 import styles from "./WebShell.module.css";
 
 interface WebShellProps {
@@ -33,6 +37,8 @@ interface WebShellProps {
   onAddPhotos?(): void;
   onCopyShareLink?(): void;
   onRegenerateShareLink?(): Promise<void>;
+  newDates?: ReadonlySet<string>;
+  animateStats?: boolean;
 }
 
 export function WebShell({
@@ -58,10 +64,19 @@ export function WebShell({
   onAddPhotos,
   onCopyShareLink,
   onRegenerateShareLink,
+  newDates,
+  animateStats,
 }: WebShellProps) {
   const [regenerating, setRegenerating] = useState(false);
+  const [copied, setCopied] = useState(false);
   const busy = pickerState === "waiting" || pickerState === "importing";
   const last7 = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6));
+
+  const handleCopy = () => {
+    onCopyShareLink?.();
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
 
   const handleRegenerate = async () => {
     if (!onRegenerateShareLink) return;
@@ -97,63 +112,76 @@ export function WebShell({
             </p>
           )}
 
-          {zoom === "month" && (
-            <MonthZoomView
-              today={today}
-              variant="web"
-              filter={filter}
-              earliestDate={earliestDate}
-              getDay={getDay}
-              ensureLoaded={ensureLoaded}
-              onOpenDay={onOpenDay}
-              onJumpMonth={jumpMonth}
-            />
-          )}
-          {zoom === "week" && (
-            <WeekZoomView
-              today={today}
-              timezone={timezone}
-              variant="web"
-              filter={filter}
-              earliestDate={earliestDate}
-              getDay={getDay}
-              ensureLoaded={ensureLoaded}
-              onOpenDay={onOpenDay}
-            />
-          )}
-          {zoom === "year" && (
-            <YearZoomView
-              today={today}
-              variant="web"
-              filter={filter}
-              earliestDate={earliestDate}
-              getDay={getDay}
-              ensureLoaded={ensureLoaded}
-              onJumpToMonth={onJumpToMonth}
-            />
-          )}
+          <ZoomTransition zoomKey={zoom}>
+            {zoom === "month" && (
+              <MonthZoomView
+                today={today}
+                variant="web"
+                filter={filter}
+                earliestDate={earliestDate}
+                getDay={getDay}
+                ensureLoaded={ensureLoaded}
+                onOpenDay={onOpenDay}
+                onJumpMonth={jumpMonth}
+                newDates={newDates}
+              />
+            )}
+            {zoom === "week" && (
+              <WeekZoomView
+                today={today}
+                timezone={timezone}
+                variant="web"
+                filter={filter}
+                earliestDate={earliestDate}
+                getDay={getDay}
+                ensureLoaded={ensureLoaded}
+                onOpenDay={onOpenDay}
+              />
+            )}
+            {zoom === "year" && (
+              <YearZoomView
+                today={today}
+                variant="web"
+                filter={filter}
+                earliestDate={earliestDate}
+                getDay={getDay}
+                ensureLoaded={ensureLoaded}
+                onJumpToMonth={onJumpToMonth}
+              />
+            )}
+          </ZoomTransition>
         </div>
 
         <div className={styles.rail}>
           <span className={styles.kicker}>THIS YEAR SO FAR</span>
-          <div className={styles.totalNumber}>{stats.total}</div>
+          <div className={styles.totalNumber}>
+            <RollingNumber value={stats.total} animate={animateStats} />
+          </div>
           <div className={styles.totalLabel}>sunrises captured</div>
 
           <div className={styles.figureGrid}>
             <div>
-              <div className={styles.figureNumber}>{stats.last7}</div>
+              <div className={styles.figureNumber}>
+                <RollingNumber value={stats.last7} animate={animateStats} />
+              </div>
               <div className={styles.figureLabel}>last 7 days</div>
             </div>
             <div>
-              <div className={styles.figureNumber}>{stats.last30}</div>
+              <div className={styles.figureNumber}>
+                <RollingNumber value={stats.last30} animate={animateStats} />
+              </div>
               <div className={styles.figureLabel}>last 30 days</div>
             </div>
             <div>
-              <div className={styles.figureNumber}>{stats.avgPerWeek}</div>
+              <div className={styles.figureNumber}>
+                <RollingNumber value={stats.avgPerWeek} animate={animateStats} />
+              </div>
               <div className={styles.figureLabel}>a week, on average</div>
             </div>
             <div>
-              <div className={styles.figureNumber}>{stats.currentRun}</div>
+              <div className={styles.figureNumber}>
+                <RollingNumber value={stats.currentRun} animate={animateStats} />
+              </div>
               <div className={styles.figureLabel}>days in a row now</div>
             </div>
           </div>
@@ -168,8 +196,12 @@ export function WebShell({
                 <button
                   key={date}
                   type="button"
-                  className={styles.thumb}
-                  onClick={() => shot && onOpenDay(date)}
+                  className={`${styles.thumb} motionPressable`}
+                  onClick={(e) => {
+                    if (!shot) return;
+                    setPendingOrigin(e.currentTarget.getBoundingClientRect(), shot.thumbUrl);
+                    onOpenDay(date);
+                  }}
                   disabled={!shot}
                 >
                   {shot && <img src={shot.thumbUrl} alt="" />}
@@ -182,21 +214,24 @@ export function WebShell({
           {!readOnly && account && (
             <>
               <div className={styles.divider} />
-              <div className={styles.syncLine}>
-                {pickerState === "error"
-                  ? `Couldn't add photos — ${pickerError ?? "try again"}.`
-                  : pickerState === "done"
-                    ? `Added ${pickerPhotosAdded ?? 0} photos just now.`
-                    : account.lastPickedAt
-                      ? `Last added ${formatTime(new Date(account.lastPickedAt), timezone)} from Google Photos.`
-                      : "Nothing added yet from Google Photos."}
-              </div>
+              <CrossfadeText
+                className={styles.syncLine}
+                text={
+                  pickerState === "error"
+                    ? `Couldn't add photos — ${pickerError ?? "try again"}.`
+                    : pickerState === "done"
+                      ? `Added ${pickerPhotosAdded ?? 0} photos just now.`
+                      : account.lastPickedAt
+                        ? `Last added ${formatTime(new Date(account.lastPickedAt), timezone)} from Google Photos.`
+                        : "Nothing added yet from Google Photos."
+                }
+              />
               <div className={styles.syncActions}>
                 <button type="button" className={styles.secondaryPill} onClick={onAddPhotos} disabled={busy}>
                   {pickerState === "waiting" ? "Waiting…" : pickerState === "importing" ? "Adding…" : "Add photos"}
                 </button>
-                <button type="button" className={styles.accentPill} onClick={onCopyShareLink}>
-                  Copy link
+                <button type="button" className={styles.accentPill} onClick={handleCopy}>
+                  <CrossfadeText text={copied ? "Link copied" : "Copy link"} duration={280} delay={0} />
                 </button>
               </div>
               {shareUrl && (

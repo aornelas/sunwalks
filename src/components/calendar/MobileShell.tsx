@@ -8,6 +8,7 @@ import { MonthZoomView } from "./MonthZoomView";
 import { WeekZoomView } from "./WeekZoomView";
 import { YearZoomView } from "./YearZoomView";
 import { ControlBar } from "./ControlBar";
+import { ZoomTransition } from "./ZoomTransition";
 import styles from "./MobileShell.module.css";
 
 interface MobileShellProps {
@@ -28,6 +29,8 @@ interface MobileShellProps {
   earliestDate: string | null;
   onRefresh(): void;
   onOpenSettings(): void;
+  newDates?: ReadonlySet<string>;
+  animateStats?: boolean;
 }
 
 export function MobileShell({
@@ -48,51 +51,56 @@ export function MobileShell({
   earliestDate,
   onRefresh,
   onOpenSettings,
+  newDates,
+  animateStats,
 }: MobileShellProps) {
   return (
     <div className={styles.page}>
       <MobileHeader today={today} readOnly={readOnly} syncing={syncing} onRefresh={onRefresh} onOpenSettings={onOpenSettings} />
-      <WeekStrip today={today} getDay={getDay} onOpenDay={onOpenDay} />
-      <StatsLine stats={stats} />
+      <WeekStrip today={today} getDay={getDay} onOpenDay={onOpenDay} newDates={newDates} />
+      <StatsLine stats={stats} animate={animateStats} />
       {stats.total === 0 && (
         <p className={styles.emptyNote}>Nothing here yet — mornings will start filling in once your album has photos.</p>
       )}
 
-      {zoom === "month" && (
-        <MonthZoomView
-          today={today}
-          variant="mobile"
-          filter={filter}
-          earliestDate={earliestDate}
-          getDay={getDay}
-          ensureLoaded={ensureLoaded}
-          onOpenDay={onOpenDay}
-          onJumpMonth={jumpMonth}
-        />
-      )}
-      {zoom === "week" && (
-        <WeekZoomView
-          today={today}
-          timezone={timezone}
-          variant="mobile"
-          filter={filter}
-          earliestDate={earliestDate}
-          getDay={getDay}
-          ensureLoaded={ensureLoaded}
-          onOpenDay={onOpenDay}
-        />
-      )}
-      {zoom === "year" && (
-        <YearZoomView
-          today={today}
-          variant="mobile"
-          filter={filter}
-          earliestDate={earliestDate}
-          getDay={getDay}
-          ensureLoaded={ensureLoaded}
-          onJumpToMonth={onJumpToMonth}
-        />
-      )}
+      <ZoomTransition zoomKey={zoom}>
+        {zoom === "month" && (
+          <MonthZoomView
+            today={today}
+            variant="mobile"
+            filter={filter}
+            earliestDate={earliestDate}
+            getDay={getDay}
+            ensureLoaded={ensureLoaded}
+            onOpenDay={onOpenDay}
+            onJumpMonth={jumpMonth}
+            newDates={newDates}
+          />
+        )}
+        {zoom === "week" && (
+          <WeekZoomView
+            today={today}
+            timezone={timezone}
+            variant="mobile"
+            filter={filter}
+            earliestDate={earliestDate}
+            getDay={getDay}
+            ensureLoaded={ensureLoaded}
+            onOpenDay={onOpenDay}
+          />
+        )}
+        {zoom === "year" && (
+          <YearZoomView
+            today={today}
+            variant="mobile"
+            filter={filter}
+            earliestDate={earliestDate}
+            getDay={getDay}
+            ensureLoaded={ensureLoaded}
+            onJumpToMonth={onJumpToMonth}
+          />
+        )}
+      </ZoomTransition>
 
       <ControlBar zoom={zoom} onZoomChange={onZoomChange} filter={filter} onFilterChange={onFilterChange} />
     </div>

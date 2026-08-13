@@ -80,6 +80,13 @@ function debugPhotoOpen(info: {
   lines.push(`dx=${dx.toFixed(1)} dy=${dy.toFixed(1)} sx=${sx.toFixed(3)} sy=${sy.toFixed(3)}`);
   lines.push(`stage anims created: ${stageAnimCount}`);
   lines.push(thumb ? `thumb bg-size: ${getComputedStyle(thumb).backgroundSize}` : "thumb: null (no thumbRef element)");
+  // How many elements sharing thumb's class exist anywhere in the document
+  // — should always be 1. More than that means something (an unrelated
+  // photo view instance, a leftover from a prior open) is still mounted.
+  if (thumb) {
+    const dupeCount = document.getElementsByClassName(thumb.className.split(" ")[0]).length;
+    lines.push(`elements sharing thumb's own class anywhere in DOM: ${dupeCount}`);
+  }
   render();
   box.addEventListener("click", () => box.remove());
   document.body.appendChild(box);
@@ -95,8 +102,26 @@ function debugPhotoOpen(info: {
     if (thumb) {
       lines.push(`[${label}] thumb transform: ${getComputedStyle(thumb).transform} opacity: ${getComputedStyle(thumb).opacity}`);
     }
+    // How many <img> tags actually exist inside .stage right now, and where
+    // each one is painted — if SteppingPhoto is leaving more than one slot
+    // mounted, or a stray extra image, this is where it'd show up.
+    const imgs = Array.from(stage.querySelectorAll("img"));
+    lines.push(`[${label}] <img> count inside stage: ${imgs.length}`);
+    imgs.forEach((img, i) => {
+      const r = img.getBoundingClientRect();
+      lines.push(
+        `[${label}]   img#${i}: src=...${img.currentSrc.slice(-40)} rect=${r.width.toFixed(0)}x${r.height.toFixed(0)}@${r.left.toFixed(0)},${r.top.toFixed(0)} opacity=${getComputedStyle(img).opacity} objectFit=${getComputedStyle(img).objectFit}`,
+      );
+    });
+    // SteppingPhoto's own wrapper is stage's first child; each of ITS
+    // children is one "slot" — more than one after landing means an
+    // outgoing slot never got cleaned up.
+    const steppingWrapper = stage.firstElementChild;
+    const slotCount = steppingWrapper?.children.length ?? -1;
+    lines.push(`[${label}] SteppingPhoto slot count: ${slotCount}`);
     render();
   };
+  sample("t=0ms");
   setTimeout(() => sample("t=100ms"), 100);
   setTimeout(() => sample("t=400ms"), 400);
   setTimeout(() => sample("t=900ms landed"), 900);

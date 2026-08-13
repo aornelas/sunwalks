@@ -35,6 +35,77 @@ import type { PhotoOrigin } from "@/lib/photo-origin";
  * remount, so this hook can tell the difference and skip straight to the
  * resting state instead.
  */
+
+/**
+ * TEMPORARY DEBUG — remove once the reported ghost (a larger, cropped copy
+ * growing behind the real photo on open, on a device this can't be
+ * reproduced on) is diagnosed. Appends a small on-screen panel straight to
+ * document.body — not through React, so it survives whatever's going wrong
+ * with the animated elements themselves — with the numbers behind this
+ * open, then samples the actual rendered state of stage/thumb at a few
+ * points through the animation. Meant to be screenshotted: the person
+ * reproducing this doesn't have devtools open on the device that shows it.
+ * Tap the panel to dismiss it early; it also self-removes after 20s.
+ */
+function debugPhotoOpen(info: {
+  origin: PhotoOrigin;
+  target: DOMRect;
+  dx: number;
+  dy: number;
+  sx: number;
+  sy: number;
+  stage: HTMLDivElement;
+  thumb: HTMLDivElement | null;
+  stageAnimCount: number;
+}) {
+  if (typeof document === "undefined") return;
+  const { origin, target, dx, dy, sx, sy, stage, thumb, stageAnimCount } = info;
+
+  const box = document.createElement("pre");
+  box.style.cssText =
+    "position:fixed;left:4px;right:4px;bottom:4px;z-index:2147483647;background:rgba(0,0,0,.92);" +
+    "color:#7CFC00;font:10px/1.4 -apple-system,monospace;padding:8px;border-radius:8px;" +
+    "white-space:pre-wrap;word-break:break-all;max-height:50vh;overflow:auto;margin:0;";
+  const lines: string[] = [];
+  const render = () => {
+    box.textContent = lines.join("\n");
+  };
+
+  lines.push("PHOTO-OPEN DEBUG — tap to dismiss");
+  lines.push(`UA: ${navigator.userAgent}`);
+  lines.push(`origin.rect: ${JSON.stringify(origin.rect)}`);
+  lines.push(
+    `target: L${target.left.toFixed(1)} T${target.top.toFixed(1)} W${target.width.toFixed(1)} H${target.height.toFixed(1)}`,
+  );
+  lines.push(`dx=${dx.toFixed(1)} dy=${dy.toFixed(1)} sx=${sx.toFixed(3)} sy=${sy.toFixed(3)}`);
+  lines.push(`stage anims created: ${stageAnimCount}`);
+  lines.push(thumb ? `thumb bg-size: ${getComputedStyle(thumb).backgroundSize}` : "thumb: null (no thumbRef element)");
+  render();
+  box.addEventListener("click", () => box.remove());
+  document.body.appendChild(box);
+
+  const sample = (label: string) => {
+    const related = document.getAnimations().filter((a) => {
+      const target = (a.effect as KeyframeEffect | null)?.target;
+      return target === stage || target === thumb;
+    });
+    const running = related.filter((a) => a.playState === "running").length;
+    lines.push(`[${label}] anims on stage/thumb: ${running} running / ${related.length} total`);
+    lines.push(`[${label}] stage transform: ${getComputedStyle(stage).transform}`);
+    if (thumb) {
+      lines.push(`[${label}] thumb transform: ${getComputedStyle(thumb).transform} opacity: ${getComputedStyle(thumb).opacity}`);
+    }
+    render();
+  };
+  setTimeout(() => sample("t=100ms"), 100);
+  setTimeout(() => sample("t=400ms"), 400);
+  setTimeout(() => sample("t=900ms landed"), 900);
+  setTimeout(() => sample("t=1400ms thumb should be gone"), 1400);
+  setTimeout(() => {
+    if (box.isConnected) box.remove();
+  }, 20000);
+}
+
 export function usePhotoOpenAnimation(origin: PhotoOrigin | null, enteredRef?: RefObject<boolean>) {
   const stageRef = useRef<HTMLDivElement>(null);
   const thumbRef = useRef<HTMLDivElement>(null);
@@ -92,6 +163,10 @@ export function usePhotoOpenAnimation(origin: PhotoOrigin | null, enteredRef?: R
       const timing: KeyframeAnimationOptions = { duration: 760, easing: EASE_STANDARD, fill: "backwards" };
       anims.push(stage.animate(keyframes, timing));
       if (thumb) anims.push(thumb.animate(keyframes, timing));
+      // TEMPORARY DEBUG — remove once the WebKit ghost is diagnosed. See
+      // debugPhotoOpen below; this is the only call site with the numbers
+      // (dx/dy/sx/sy, target rect) needed to make sense of what's rendering.
+      debugPhotoOpen({ origin, target, dx, dy, sx, sy, stage, thumb, stageAnimCount: anims.length });
     } else {
       anims.push(
         stage.animate([{ opacity: 0, transform: "scale(.97)" }, { opacity: 1, transform: "none" }], {

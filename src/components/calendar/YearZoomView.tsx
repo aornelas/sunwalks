@@ -2,10 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { buildMonthCells } from "@/lib/calendar-grid";
-import { monthShort } from "@/lib/dates";
-import { buildSrcSet } from "@/lib/image";
 import { useFirstPaintEntrance } from "@/lib/motion";
 import type { DayData } from "@/lib/types";
+import { YearMonthCard } from "./YearMonthCard";
 import styles from "./YearZoomView.module.css";
 
 const LOAD_MARGIN_PX = 800;
@@ -102,46 +101,20 @@ export function YearZoomView({
               <span className={styles.yearCount}>{yearCapturedCount} CAPTURED</span>
             </div>
             <div className={gridClass}>
-              {monthsData.map(({ mKey, cells, capturedCount }, monthIndex) => {
-                const visibleCells = filter ? cells.filter((c) => c.state === "captured") : cells;
-
-                return (
-                  <button
-                    key={mKey}
-                    type="button"
-                    className={`${styles.month} ${animateIn ? "motionSettleIn motionPressable" : ""}`}
-                    style={animateIn ? ({ "--cell-delay": `${monthIndex * 52}ms` } as React.CSSProperties) : undefined}
-                    onClick={() => onJumpToMonth(mKey)}
-                  >
-                    <div className={styles.header}>
-                      <span className={styles.name}>{monthShort(mKey)}</span>
-                      <span className={styles.count}>{capturedCount > 0 ? capturedCount : "—"}</span>
-                    </div>
-                    <div className={styles.dotGrid}>
-                      {visibleCells.map((cell, i) => {
-                        if (cell.state === "blank") {
-                          return <div key={`b-${i}`} className={styles.dot} />;
-                        }
-                        const isToday = cell.date === today;
-                        const day = cell.state === "captured" ? getDay(cell.date!) : undefined;
-                        const shot = day && (day.shots.find((s) => s.id === day.dayShotId) ?? day.shots[0]);
-                        return (
-                          <div
-                            key={cell.date}
-                            className={[
-                              styles.dot,
-                              cell.state === "missed" ? styles.missed : cell.state === "future" ? styles.future : "",
-                              isToday ? styles.today : "",
-                            ].join(" ")}
-                          >
-                            {shot && <img {...buildSrcSet(shot.id, "sq")} sizes="20px" alt="" loading="lazy" />}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </button>
-                );
-              })}
+              {monthsData.map(({ mKey, cells, capturedCount }, monthIndex) => (
+                <YearMonthCard
+                  key={mKey}
+                  monthKey={mKey}
+                  cells={cells}
+                  capturedCount={capturedCount}
+                  today={today}
+                  filter={filter}
+                  animateIn={animateIn}
+                  cellDelay={monthIndex * 52}
+                  getDay={getDay}
+                  onJumpToMonth={onJumpToMonth}
+                />
+              ))}
             </div>
           </div>
         );

@@ -1,19 +1,10 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState } from "react";
-import {
-  addDays,
-  dayKeyToDate,
-  formatMonthDayRange,
-  formatShortDate,
-  formatTime,
-  startOfWeek,
-  weekOfYear,
-} from "@/lib/dates";
-import { buildSrcSet } from "@/lib/image";
+import { addDays, dayKeyToDate, startOfWeek } from "@/lib/dates";
 import { useFirstPaintEntrance } from "@/lib/motion";
-import { setPendingOrigin } from "@/lib/photo-origin";
 import type { DayData } from "@/lib/types";
+import { WeekBlock } from "./WeekBlock";
 import styles from "./WeekZoomView.module.css";
 
 const LOAD_MARGIN_PX = 800;
@@ -100,7 +91,6 @@ export function WeekZoomView({
       {weekStarts.map((weekStart, weekIndex) => {
         const weekEnd = addDays(weekStart, 6);
         const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-        const visibleDays = filter ? days.filter((d) => (getDay(d)?.shots.length ?? 0) > 0) : days;
         const year = weekStart.slice(0, 4);
         const showYearLabel = weekIndex === 0 || year !== weekStarts[weekIndex - 1].slice(0, 4);
         const animateIn = playEntrance && weekIndex < initialBatch;
@@ -108,72 +98,19 @@ export function WeekZoomView({
         return (
           <Fragment key={weekStart}>
             {showYearLabel && <div className={styles.yearLabel}>{year}</div>}
-            <div className={`${styles.week} ${!animateIn && weekIndex >= initialBatch ? "motionPlainFade" : ""}`}>
-              <span className={styles.label}>
-                Week {weekOfYear(weekStart)} ({formatMonthDayRange(weekStart, weekEnd)})
-              </span>
-              <div className={gridClass}>
-              {visibleDays.map((date, colIndex) => {
-                const isToday = date === today;
-                const day = getDay(date);
-                const dayShot =
-                  day && day.shots.length > 0
-                    ? (day.shots.find((s) => s.id === day.dayShotId) ?? day.shots[0])
-                    : undefined;
-                const isFuture = date > today;
-                const entranceProps = animateIn
-                  ? {
-                      className: "motionSettleIn",
-                      style: { "--cell-delay": `${colIndex * 52}ms` } as React.CSSProperties,
-                    }
-                  : { className: "", style: undefined };
-
-                if (dayShot) {
-                  return (
-                    <button
-                      key={date}
-                      type="button"
-                      className={[styles.cell, styles.captured, isToday ? styles.today : "", "motionPressable", entranceProps.className].join(" ")}
-                      style={entranceProps.style}
-                      onClick={(e) => {
-                        setPendingOrigin(e.currentTarget.getBoundingClientRect(), buildSrcSet(dayShot.id, "sq").src);
-                        onOpenDay(date);
-                      }}
-                    >
-                      <img
-                        {...buildSrcSet(dayShot.id, "sq")}
-                        sizes="(min-width: 900px) 160px, 25vw"
-                        alt=""
-                      />
-                      <span className={styles.scrim} />
-                      <span className={styles.dayLabel}>{formatShortDate(date)}</span>
-                      <span className={styles.time}>{formatTime(new Date(dayShot.takenAt), timezone)}</span>
-                    </button>
-                  );
-                }
-                if (isFuture) {
-                  return (
-                    <div
-                      key={date}
-                      className={[styles.cell, styles.future, isToday ? styles.today : "", entranceProps.className].join(" ")}
-                      style={entranceProps.style}
-                    >
-                      <span className={styles.futureLabel}>{formatShortDate(date)}</span>
-                    </div>
-                  );
-                }
-                return (
-                  <div
-                    key={date}
-                    className={[styles.cell, styles.missed, isToday ? styles.today : "", entranceProps.className].join(" ")}
-                    style={entranceProps.style}
-                  >
-                    <span className={styles.missedLabel}>{formatShortDate(date)}</span>
-                    <span className={styles.noWalk}>no walk</span>
-                  </div>
-                );
-              })}
-              </div>
+            <div className={!animateIn && weekIndex >= initialBatch ? "motionPlainFade" : ""}>
+              <WeekBlock
+                weekStart={weekStart}
+                weekEnd={weekEnd}
+                days={days}
+                today={today}
+                timezone={timezone}
+                filter={filter}
+                gridClass={gridClass}
+                animateIn={animateIn}
+                getDay={getDay}
+                onOpenDay={onOpenDay}
+              />
             </div>
           </Fragment>
         );

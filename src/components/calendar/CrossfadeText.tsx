@@ -51,14 +51,19 @@ export function CrossfadeText({ text, className, duration: durationProp = 360, d
 
   return (
     <span className={className} style={{ position: "relative", display: "block" }}>
-      {layers.map((l) => (
+      {layers.map((l, i) => (
         <span
           key={l.key}
           ref={(el) => {
             if (el) elRefs.current.set(l.key, el);
             else elRefs.current.delete(l.key);
           }}
-          style={layers.length > 1 ? { position: "absolute", inset: 0 } : undefined}
+          // The first (outgoing) layer stays in normal flow so the wrapper
+          // keeps sizing itself off real content — if every layer were
+          // absolutely positioned at once, the wrapper would have nothing
+          // left to size against and collapse to 0×0 for the crossfade's
+          // duration (visible as the button snapping tiny, then back).
+          style={i > 0 ? { position: "absolute", inset: 0 } : undefined}
         >
           {l.text}
         </span>

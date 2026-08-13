@@ -29,6 +29,18 @@
   inset: 0;
   background-size: cover;
   background-position: center;
+  /* Only needed to keep the dissolve continuous while the full photo loads
+     and the shared-element transform is still running — once it's landed,
+     this needs to get out of the way, or its cover-fit crop shows through
+     as an enlarged backdrop behind the real photo when "fit whole photo"
+     letterboxes it instead of the dark ground. */
+  animation: stage-thumb-out calc(160ms + var(--motion-scale) * 320ms) var(--ease-standard) both;
+  animation-delay: calc(160ms + var(--motion-scale) * 600ms);
+}
+
+@keyframes stage-thumb-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 .photo {

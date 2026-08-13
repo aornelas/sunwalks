@@ -36,6 +36,20 @@
   gap: 8px;
 }
 
+.gridRelative {
+  position: relative;
+}
+
+.ghost {
+  pointer-events: none;
+  animation: week-ghost-collapse calc(160ms + var(--motion-scale) * 240ms) var(--ease-exit) both;
+}
+
+@keyframes week-ghost-collapse {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(calc(1 - 0.6 * var(--motion-scale))); }
+}
+
 .cell {
   position: relative;
   overflow: hidden;

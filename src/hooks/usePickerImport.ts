@@ -18,6 +18,15 @@ export interface PickerImportResult {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Google closes/lets the owner close the picker tab as soon as they finish
+// selecting, but the session's mediaItemsSet flag our backend polls for
+// lags behind that — more so the more photos were picked, since Google has
+// more to process server-side before marking the session ready. Treating a
+// closed tab as an instant cancel (as this used to) raced that lag and
+// reported real, completed picks as "you closed the tab too early." Give it
+// this long after the tab closes to catch up before giving up for real.
+const CLOSE_GRACE_MS = 20_000;
+
 /**
  * Drives the Picker API's inherently multi-step flow: create a session,
  * open Google's hosted picker UI in a new tab (the owner selects — natively
@@ -68,6 +77,7 @@ export function usePickerImport(api: CalendarApi): PickerImportResult {
       const deadline = Date.now() + session.timeoutMs;
       let ready = false;
       let cancelled = false;
+      let closedGraceDeadline: number | null = null;
       while (Date.now() < deadline) {
         await sleep(session.pollIntervalMs);
         if (runIdRef.current !== runId) return; // superseded by a newer call
@@ -80,10 +90,17 @@ export function usePickerImport(api: CalendarApi): PickerImportResult {
         // successful pick can't race a "cancelled" verdict ahead of the
         // poll that would've reported ready — see the bug this fixed:
         // closing the picker tab left the button spinning, disabled, for
-        // the full session timeout with zero feedback.
+        // the full session timeout with zero feedback. But the tab closing
+        // isn't itself proof of a cancel — Google's mediaItemsSet flag can
+        // still be lagging behind a real, completed pick — so give it
+        // CLOSE_GRACE_MS to catch up before calling it cancelled.
         if (popup && popup.closed) {
-          cancelled = true;
-          break;
+          if (closedGraceDeadline === null) {
+            closedGraceDeadline = Date.now() + CLOSE_GRACE_MS;
+          } else if (Date.now() >= closedGraceDeadline) {
+            cancelled = true;
+            break;
+          }
         }
       }
       if (runIdRef.current !== runId) return;

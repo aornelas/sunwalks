@@ -99,7 +99,7 @@ export function WebShell({
           <div className={styles.header}>
             <div>
               <h1 className={styles.wordmark}>
-                Sunrise Calendar <span className={styles.version}>v1.0</span>
+                Sunrise Calendar <span className={styles.version}>v1.1</span>
               </h1>
               <div className={styles.date}>{formatLongDateWithYear(today)}</div>
             </div>

@@ -17,7 +17,7 @@ export function MobileHeader({ today, readOnly, syncing, onRefresh, onOpenSettin
     <div className={styles.header}>
       <div>
         <h3 className={styles.wordmark}>
-          Sunrise Calendar <span className={styles.version}>v1.0</span>
+          Sunrise Calendar <span className={styles.version}>v1.1</span>
         </h3>
         <div className={styles.date}>{formatLongDateWithYear(today)}</div>
       </div>

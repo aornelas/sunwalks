@@ -97,6 +97,10 @@
   width: 100%;
   height: 100%;
   will-change: transform;
+  /* usePhotoOpenAnimation computes its translate/scale deltas against the
+     stage's top-left corner, not its center — this must match or the
+     shared-element scale-up lands at the wrong spot. */
+  transform-origin: 0 0;
 }
 
 .stageThumb {

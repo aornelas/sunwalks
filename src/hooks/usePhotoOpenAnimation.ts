@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { useCallback, useLayoutEffect, useRef, useState, type RefObject, type SyntheticEvent } from "react";
 import { EASE_EXIT, EASE_STANDARD, prefersReducedMotion } from "@/lib/motion";
 import type { PhotoOrigin } from "@/lib/photo-origin";
 
@@ -36,6 +36,26 @@ import type { PhotoOrigin } from "@/lib/photo-origin";
  * remount, so this hook can tell the difference and skip straight to the
  * resting state instead.
  */
+
+/**
+ * Wrap the real `<img>`'s onLoad with this instead of passing
+ * notifyPhotoLoaded straight through. The load event fires once the image's
+ * bytes are downloaded, not once the browser has finished decoding them —
+ * that gap was enough for the thumbnail's mismatched crop to still flash
+ * through for an instant even after switching to a load-driven fade. Falls
+ * straight through to notify() if decode() isn't available.
+ */
+export function decodeThenNotify(notify: () => void) {
+  return (e: SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    if (typeof img.decode === "function") {
+      img.decode().then(notify, notify);
+    } else {
+      notify();
+    }
+  };
+}
+
 export function usePhotoOpenAnimation(origin: PhotoOrigin | null, enteredRef?: RefObject<boolean>) {
   const stageRef = useRef<HTMLDivElement>(null);
   const thumbRef = useRef<HTMLDivElement>(null);
@@ -83,7 +103,7 @@ export function usePhotoOpenAnimation(origin: PhotoOrigin | null, enteredRef?: R
         if (thumbFadeAnim) return; // already fading or faded
         if (fallback) clearTimeout(fallback);
         thumbFadeAnim = thumb.animate([{ opacity: 1 }, { opacity: 0 }], {
-          duration: reduced ? 160 : 280,
+          duration: reduced ? 100 : 140,
           easing: EASE_STANDARD,
           fill: "forwards",
         });
@@ -139,11 +159,16 @@ export function usePhotoOpenAnimation(origin: PhotoOrigin | null, enteredRef?: R
   }, []);
 
   /**
-   * Wire to the real full-size `<img>`'s onLoad and onError — fades the
-   * thumbnail underlay out as soon as the photo it's standing in for has
-   * actually loaded, instead of waiting out the fallback timer regardless.
-   * Safe to call more than once (idempotent) or before the entrance effect
-   * has run (a plain ref read).
+   * Call once the real full-size `<img>` is actually ready to paint —
+   * fades the thumbnail underlay out immediately instead of waiting out
+   * the fallback timer. Call from onLoad after awaiting the image's own
+   * `decode()`, not directly from onLoad: the load event only means the
+   * bytes finished downloading, not that the browser has finished
+   * decoding them, and that gap was enough for the thumbnail's mismatched
+   * crop (see the doc above) to still flash through for an instant. Also
+   * wire onError directly (nothing to decode there). Safe to call more
+   * than once (idempotent) or before the entrance effect has run (a plain
+   * ref read).
    */
   const notifyPhotoLoaded = useCallback(() => {
     fadeThumbRef.current?.();

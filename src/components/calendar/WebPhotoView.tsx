@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { formatLongDate, formatTime } from "@/lib/dates";
 import { buildSrcSet } from "@/lib/image";
 import { EASE_SOFT, prefersReducedMotion } from "@/lib/motion";
-import { usePhotoOpenAnimation } from "@/hooks/usePhotoOpenAnimation";
+import { usePhotoOpenAnimation, decodeThenNotify } from "@/hooks/usePhotoOpenAnimation";
 import type { PhotoOrigin } from "@/lib/photo-origin";
 import type { DayData } from "@/lib/types";
 import { ViewingRing } from "./ViewingRing";
@@ -133,7 +133,7 @@ export function WebPhotoView({
               sizes="70vw"
               alt={formatLongDate(date)}
               fetchPriority="high"
-              onLoad={notifyPhotoLoaded}
+              onLoad={decodeThenNotify(notifyPhotoLoaded)}
               onError={notifyPhotoLoaded}
             />
           </SteppingPhoto>

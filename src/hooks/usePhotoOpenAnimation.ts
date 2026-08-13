@@ -12,14 +12,27 @@ import type { PhotoOrigin } from "@/lib/photo-origin";
  * already owns translateY on the overlay, so the two never fight over the
  * same element). Without an origin (e.g. a deep link opened the view
  * directly), the stage just gets a plain settle and the scrim still fades.
+ *
+ * `thumbRef` goes on the thumbnail underlay — it must be a *sibling* of the
+ * stage, not nested inside it. Nesting it and relying on it inheriting the
+ * stage's WAAPI transform looked correct (and is, per the CSS transform
+ * spec) but broke on WebKit: a child that also carries its own separate CSS
+ * `animation` (the thumbnail's opacity fade-out) doesn't reliably composite
+ * under an ancestor's JS-driven transform on that engine, so it rendered at
+ * full, untransformed size for the whole scale-up — a duplicate "ghost"
+ * photo sitting behind the real one. Driving both elements independently
+ * with the identical keyframes sidesteps that compositing question
+ * entirely instead of depending on it.
  */
 export function usePhotoOpenAnimation(origin: PhotoOrigin | null) {
   const stageRef = useRef<HTMLDivElement>(null);
+  const thumbRef = useRef<HTMLDivElement>(null);
   const scrimRef = useRef<HTMLDivElement>(null);
   const [closing, setClosing] = useState(false);
 
   useLayoutEffect(() => {
     const stage = stageRef.current;
+    const thumb = thumbRef.current;
     const reduced = prefersReducedMotion();
     const scrimAnim = scrimRef.current?.animate([{ opacity: 0 }, { opacity: 1 }], {
       duration: reduced ? 240 : 480,
@@ -41,27 +54,32 @@ export function usePhotoOpenAnimation(origin: PhotoOrigin | null) {
         stageAnim.cancel();
       };
     }
-    let stageAnim: Animation;
+    const anims: Animation[] = [];
     if (origin) {
       const target = stage.getBoundingClientRect();
       const dx = origin.rect.left - target.left;
       const dy = origin.rect.top - target.top;
       const sx = origin.rect.width / Math.max(target.width, 1);
       const sy = origin.rect.height / Math.max(target.height, 1);
-      stageAnim = stage.animate(
-        [{ transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` }, { transform: "none" }],
-        { duration: 760, easing: EASE_STANDARD, fill: "backwards" },
-      );
+      const keyframes: Keyframe[] = [
+        { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
+        { transform: "none" },
+      ];
+      const timing: KeyframeAnimationOptions = { duration: 760, easing: EASE_STANDARD, fill: "backwards" };
+      anims.push(stage.animate(keyframes, timing));
+      if (thumb) anims.push(thumb.animate(keyframes, timing));
     } else {
-      stageAnim = stage.animate([{ opacity: 0, transform: "scale(.97)" }, { opacity: 1, transform: "none" }], {
-        duration: 480,
-        easing: EASE_STANDARD,
-        fill: "backwards",
-      });
+      anims.push(
+        stage.animate([{ opacity: 0, transform: "scale(.97)" }, { opacity: 1, transform: "none" }], {
+          duration: 480,
+          easing: EASE_STANDARD,
+          fill: "backwards",
+        }),
+      );
     }
     return () => {
       scrimAnim?.cancel();
-      stageAnim.cancel();
+      anims.forEach((a) => a.cancel());
     };
     // Mount-only: this is the entrance, not a response to origin identity
     // changing (origin never changes for the life of one open view).
@@ -92,6 +110,9 @@ export function usePhotoOpenAnimation(origin: PhotoOrigin | null) {
         const dy = origin.rect.top - target.top;
         const sx = origin.rect.width / Math.max(target.width, 1);
         const sy = origin.rect.height / Math.max(target.height, 1);
+        // The thumbnail underlay has already finished its one-time fade-out
+        // by the time a close is possible, so only the stage needs to play
+        // the reverse here — nothing to keep in sync on the thumb.
         anim = stage.animate(
           [{ transform: "none" }, { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` }],
           { duration: 520, easing: EASE_EXIT, fill: "forwards" },
@@ -108,5 +129,5 @@ export function usePhotoOpenAnimation(origin: PhotoOrigin | null) {
     [origin],
   );
 
-  return { stageRef, scrimRef, closing, requestClose };
+  return { stageRef, thumbRef, scrimRef, closing, requestClose };
 }

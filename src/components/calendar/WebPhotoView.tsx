@@ -52,7 +52,7 @@ export function WebPhotoView({
     .filter(Boolean)
     .join(" · ");
 
-  const { stageRef, scrimRef, closing, requestClose } = usePhotoOpenAnimation(origin ?? null);
+  const { stageRef, thumbRef, scrimRef, closing, requestClose } = usePhotoOpenAnimation(origin ?? null);
 
   const [lastDate, setLastDate] = useState(date);
   let direction: 1 | -1 | 0 = 0;
@@ -115,8 +115,12 @@ export function WebPhotoView({
           <ChevronLeft size={22} strokeWidth={2.75} />
         </button>
 
+        <div
+          ref={thumbRef}
+          className={styles.stageThumb}
+          style={origin ? { backgroundImage: `url(${origin.thumbSrc})` } : undefined}
+        />
         <div ref={stageRef} className={styles.stage}>
-          <div className={styles.stageThumb} style={origin ? { backgroundImage: `url(${origin.thumbSrc})` } : undefined} />
           <SteppingPhoto stepKey={`${date}:${shot.id}`} direction={direction}>
             <img {...buildSrcSet(shot.id, "full")} sizes="70vw" alt={formatLongDate(date)} fetchPriority="high" />
           </SteppingPhoto>

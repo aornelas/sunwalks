@@ -55,7 +55,7 @@ export function LandscapePhotoView({
     .filter(Boolean)
     .join(" · ");
 
-  const { stageRef, scrimRef, closing, requestClose } = usePhotoOpenAnimation(origin ?? null);
+  const { stageRef, thumbRef, scrimRef, closing, requestClose } = usePhotoOpenAnimation(origin ?? null);
 
   const [lastDate, setLastDate] = useState(date);
   let direction: 1 | -1 | 0 = 0;
@@ -94,8 +94,12 @@ export function LandscapePhotoView({
     <div className={`${styles.overlay} ${closing ? styles.closing : ""}`}>
       <div ref={scrimRef} className={styles.scrim} />
 
+      <div
+        ref={thumbRef}
+        className={styles.stageThumb}
+        style={origin ? { backgroundImage: `url(${origin.thumbSrc})` } : undefined}
+      />
       <div ref={stageRef} className={styles.stage}>
-        <div className={styles.stageThumb} style={origin ? { backgroundImage: `url(${origin.thumbSrc})` } : undefined} />
         <SteppingPhoto stepKey={`${date}:${shot.id}`} direction={direction}>
           <img
             className={`${styles.photo} ${fit ? styles.photoContain : styles.photoCover}`}

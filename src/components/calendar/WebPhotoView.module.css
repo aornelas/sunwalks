@@ -90,8 +90,17 @@
 .stageThumb {
   position: absolute;
   inset: 0;
+  border-radius: 14px;
+  overflow: hidden;
   background-size: cover;
   background-position: center;
+  /* A sibling of .stage, not a child — see usePhotoOpenAnimation's comment
+     on why. Driven by its own identical translate/scale animation, so it
+     needs the same transform-origin the deltas are computed against, and
+     its own copy of the corner rounding .stage's overflow:hidden used to
+     provide for free when this was nested inside it. */
+  will-change: transform;
+  transform-origin: 0 0;
   /* Only needed to keep the dissolve continuous while the full photo loads
      and the shared-element transform is still running — once it's landed,
      this needs to get out of the way, or its cover-fit crop shows through

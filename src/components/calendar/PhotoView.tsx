@@ -61,7 +61,7 @@ export function PhotoView({
     .filter(Boolean)
     .join(" · ");
 
-  const { stageRef, scrimRef, closing, requestClose } = usePhotoOpenAnimation(origin ?? null);
+  const { stageRef, thumbRef, scrimRef, closing, requestClose } = usePhotoOpenAnimation(origin ?? null);
 
   // Motion 9: direction of travel, derived from the date the view just had
   // vs. what it has now (day keys sort lexically). Adjusting state during
@@ -181,8 +181,12 @@ export function PhotoView({
           <ChevronLeft size={20} strokeWidth={2.75} />
         </button>
 
+        <div
+          ref={thumbRef}
+          className={styles.stageThumb}
+          style={origin ? { backgroundImage: `url(${origin.thumbSrc})` } : undefined}
+        />
         <div ref={stageRef} className={styles.stage}>
-          <div className={styles.stageThumb} style={origin ? { backgroundImage: `url(${origin.thumbSrc})` } : undefined} />
           <SteppingPhoto stepKey={`${date}:${shot.id}`} direction={direction}>
             <img {...buildSrcSet(shot.id, "full")} sizes="100vw" alt={formatLongDate(date)} fetchPriority="high" />
           </SteppingPhoto>

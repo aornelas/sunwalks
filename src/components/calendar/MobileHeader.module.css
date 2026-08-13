@@ -55,6 +55,11 @@
   opacity: 0.5;
 }
 
+.importIconFlip {
+  display: inline-flex;
+  transform: scaleX(-1);
+}
+
 .spin {
   animation: spin 900ms linear infinite;
 }

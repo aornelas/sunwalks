@@ -67,6 +67,7 @@ export function usePickerImport(api: CalendarApi): PickerImportResult {
 
       const deadline = Date.now() + session.timeoutMs;
       let ready = false;
+      let cancelled = false;
       while (Date.now() < deadline) {
         await sleep(session.pollIntervalMs);
         if (runIdRef.current !== runId) return; // superseded by a newer call
@@ -75,8 +76,22 @@ export function usePickerImport(api: CalendarApi): PickerImportResult {
           ready = true;
           break;
         }
+        // Checked after polling (not before) so a tab closed right after a
+        // successful pick can't race a "cancelled" verdict ahead of the
+        // poll that would've reported ready — see the bug this fixed:
+        // closing the picker tab left the button spinning, disabled, for
+        // the full session timeout with zero feedback.
+        if (popup && popup.closed) {
+          cancelled = true;
+          break;
+        }
       }
       if (runIdRef.current !== runId) return;
+      if (cancelled) {
+        setState("error");
+        setError("Cancelled — you closed the Google Photos tab before finishing.");
+        return;
+      }
       if (!ready) {
         setState("error");
         setError("Timed out waiting for you to finish picking in Google Photos.");

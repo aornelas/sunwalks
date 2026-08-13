@@ -64,6 +64,13 @@ export function CalendarApp({
   const [prefsReady, setPrefsReady] = useState(false);
   const [detail, setDetail] = useState<DetailState | null>(null);
   const [photoOrigin, setPhotoOrigin] = useState<PhotoOrigin | null>(null);
+  // Rotating the phone swaps PhotoView/WebPhotoView/LandscapePhotoView for
+  // one another — CalendarApp doesn't remount when that happens, but each
+  // of those three does. Owning this ref here (instead of inside
+  // usePhotoOpenAnimation) is what lets it survive that swap, so the fresh
+  // instance can tell "rotation, already entered" apart from "real open"
+  // and skip replaying the entrance. See usePhotoOpenAnimation's doc.
+  const hasEnteredRef = useRef(false);
   const [jumpMonth, setJumpMonth] = useState<{ month: string; nonce: number } | undefined>();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -189,6 +196,9 @@ export function CalendarApp({
       // the triggering click handler set this same tick — never a stale
       // origin from a previous open (see photo-origin.ts).
       const origin = consumePendingOrigin();
+      // "replace" means we're already inside the photo view, stepping
+      // between days — not a fresh open, so the entrance shouldn't replay.
+      if (historyMode !== "replace") hasEnteredRef.current = false;
       if (!calendarData.getDay(date)) {
         await calendarData.ensureLoaded(date, date);
       }
@@ -370,6 +380,7 @@ export function CalendarApp({
             dayKeys={dayKeys}
             readOnly={readOnly}
             origin={photoOrigin}
+            enteredRef={hasEnteredRef}
             onClose={closeDetail}
             onNavigate={(d) => openDetailFor(d, undefined, "replace")}
             onChangeShotIndex={changeShotIndex}
@@ -384,6 +395,7 @@ export function CalendarApp({
             dayKeys={dayKeys}
             readOnly={readOnly}
             origin={photoOrigin}
+            enteredRef={hasEnteredRef}
             onClose={closeDetail}
             onNavigate={(d) => openDetailFor(d, undefined, "replace")}
             onChangeShotIndex={changeShotIndex}
@@ -398,6 +410,7 @@ export function CalendarApp({
             dayKeys={dayKeys}
             readOnly={readOnly}
             origin={photoOrigin}
+            enteredRef={hasEnteredRef}
             onClose={closeDetail}
             onNavigate={(d) => openDetailFor(d, undefined, "replace")}
             onChangeShotIndex={changeShotIndex}

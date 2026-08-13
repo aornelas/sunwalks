@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { EASE_EXIT, EASE_STANDARD, prefersReducedMotion } from "@/lib/motion";
 import type { PhotoOrigin } from "@/lib/photo-origin";
 
@@ -23,14 +23,38 @@ import type { PhotoOrigin } from "@/lib/photo-origin";
  * photo sitting behind the real one. Driving both elements independently
  * with the identical keyframes sidesteps that compositing question
  * entirely instead of depending on it.
+ *
+ * `enteredRef`, if passed, must be a ref owned by a component ABOVE the one
+ * that picks PhotoView vs WebPhotoView vs LandscapePhotoView — rotating the
+ * phone swaps between those three, which unmounts one and mounts another,
+ * and this hook's own state doesn't survive that (it belongs to the
+ * unmounted instance). Without this, every rotation replayed the entire
+ * entrance from the calendar square, since the fresh instance has no way to
+ * know it isn't a genuinely new open. The owning component resets this ref
+ * to false only on a real open and leaves it alone across a same-session
+ * remount, so this hook can tell the difference and skip straight to the
+ * resting state instead.
  */
-export function usePhotoOpenAnimation(origin: PhotoOrigin | null) {
+export function usePhotoOpenAnimation(origin: PhotoOrigin | null, enteredRef?: RefObject<boolean>) {
   const stageRef = useRef<HTMLDivElement>(null);
   const thumbRef = useRef<HTMLDivElement>(null);
   const scrimRef = useRef<HTMLDivElement>(null);
   const [closing, setClosing] = useState(false);
+  // Exposed (rather than left for callers to read enteredRef.current
+  // themselves) so the read only ever happens here, inside this same
+  // effect — the one place that might also write it. Reading it anywhere
+  // else risks a render happening before this effect has run, or, if done
+  // from another effect, an ordering race against this one for which
+  // reads/writes first.
+  const [skipEntrance, setSkipEntrance] = useState(false);
 
   useLayoutEffect(() => {
+    if (enteredRef?.current) {
+      // reorientation remount, not a fresh open — render at rest, no replay
+      setSkipEntrance(true);
+      return;
+    }
+    if (enteredRef) enteredRef.current = true;
     const stage = stageRef.current;
     const thumb = thumbRef.current;
     const reduced = prefersReducedMotion();
@@ -129,5 +153,5 @@ export function usePhotoOpenAnimation(origin: PhotoOrigin | null) {
     [origin],
   );
 
-  return { stageRef, thumbRef, scrimRef, closing, requestClose };
+  return { stageRef, thumbRef, scrimRef, closing, requestClose, skipEntrance };
 }

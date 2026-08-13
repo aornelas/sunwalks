@@ -11,6 +11,22 @@
   transition: transform 200ms ease, opacity 200ms ease;
 }
 
+/* Applied when this instance is a rotation remount, not a fresh open (see
+   usePhotoOpenAnimation's doc on enteredRef). usePhotoOpenAnimation already
+   skips its own JS-driven entrance in that case, but the chrome-in and
+   stage-thumb-out keyframes below are plain CSS animations tied to mount,
+   not to that check — without this they'd replay on every rotation.
+   Disabling the animation settles everything at its default opacity: 1,
+   which is correct for the chrome (its landed state) but wrong for the
+   thumbnail, whose landed state is faded out — that one needs the opacity
+   pinned explicitly or it'd flash back to a full "ghost" copy every time. */
+.noEntrance * {
+  animation: none !important;
+}
+.noEntrance .stageThumb {
+  opacity: 0;
+}
+
 .scrim {
   position: absolute;
   inset: 0;

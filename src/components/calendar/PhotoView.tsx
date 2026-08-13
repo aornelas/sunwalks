@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { formatLongDate, formatTime } from "@/lib/dates";
 import { buildSrcSet } from "@/lib/image";
@@ -29,6 +29,8 @@ interface PhotoViewProps {
   dayKeys: string[];
   readOnly: boolean;
   origin?: PhotoOrigin | null;
+  /** See usePhotoOpenAnimation's doc comment — owned by CalendarApp, survives a rotation remount. */
+  enteredRef?: RefObject<boolean>;
   onClose(): void;
   onNavigate(date: string): void;
   onChangeShotIndex(index: number): void;
@@ -43,6 +45,7 @@ export function PhotoView({
   dayKeys,
   readOnly,
   origin,
+  enteredRef,
   onClose,
   onNavigate,
   onChangeShotIndex,
@@ -61,7 +64,10 @@ export function PhotoView({
     .filter(Boolean)
     .join(" · ");
 
-  const { stageRef, thumbRef, scrimRef, closing, requestClose } = usePhotoOpenAnimation(origin ?? null);
+  const { stageRef, thumbRef, scrimRef, closing, requestClose, skipEntrance } = usePhotoOpenAnimation(
+    origin ?? null,
+    enteredRef,
+  );
 
   // Motion 9: direction of travel, derived from the date the view just had
   // vs. what it has now (day keys sort lexically). Adjusting state during
@@ -139,7 +145,7 @@ export function PhotoView({
 
   return (
     <div
-      className={`${styles.overlay} ${settling ? styles.settling : ""} ${closing ? styles.closing : ""}`}
+      className={`${styles.overlay} ${settling ? styles.settling : ""} ${closing ? styles.closing : ""} ${skipEntrance ? styles.noEntrance : ""}`}
       style={dragY ? { transform: `translateY(${dragY}px)`, opacity: Math.max(1 - dragY / 400, 0.4) } : undefined}
       onTransitionEnd={() => setSettling(false)}
     >

@@ -28,10 +28,14 @@ export function SteppingPhoto({ stepKey, direction, children }: SteppingPhotoPro
   const elRefs = useRef(new Map<string, HTMLDivElement>());
 
   useLayoutEffect(() => {
-    if (stepKey === prevKeyRef.current) {
-      setSlots((s) => s.map((slot) => (slot.key === stepKey ? { ...slot, node: children } : slot)));
-      return;
-    }
+    // No transition to run — the render below already shows the live
+    // `children` for the current key, so there's nothing to sync into
+    // state here. (There used to be a setSlots call in this branch; it
+    // went stale whenever `children` changed for a reason other than
+    // `stepKey`/`direction` — e.g. toggling LandscapePhotoView's "fit"
+    // button changes the photo's className without changing the shot —
+    // since this effect only re-runs on stepKey/direction changing.)
+    if (stepKey === prevKeyRef.current) return;
     const oldKey = prevKeyRef.current;
     prevKeyRef.current = stepKey;
     const dir = direction;
@@ -88,7 +92,12 @@ export function SteppingPhoto({ stepKey, direction, children }: SteppingPhotoPro
           }}
           style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
         >
-          {slot.node}
+          {/* The current slot always renders the live `children` prop, not
+              its stored `node` — a stepping transition freezes an outgoing
+              slot's content on purpose, but the current slot must reflect
+              prop changes (e.g. a fit-mode toggle) immediately, without
+              waiting for the next stepKey change to refresh it. */}
+          {slot.key === stepKey ? children : slot.node}
         </div>
       ))}
     </div>

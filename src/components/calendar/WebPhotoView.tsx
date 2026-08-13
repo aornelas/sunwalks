@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { formatLongDate, formatTime } from "@/lib/dates";
 import { buildSrcSet } from "@/lib/image";
@@ -21,6 +21,8 @@ interface WebPhotoViewProps {
   dayKeys: string[];
   readOnly: boolean;
   origin?: PhotoOrigin | null;
+  /** See usePhotoOpenAnimation's doc comment — owned by CalendarApp, survives a rotation remount. */
+  enteredRef?: RefObject<boolean>;
   onClose(): void;
   onNavigate(date: string): void;
   onChangeShotIndex(index: number): void;
@@ -35,6 +37,7 @@ export function WebPhotoView({
   dayKeys,
   readOnly,
   origin,
+  enteredRef,
   onClose,
   onNavigate,
   onChangeShotIndex,
@@ -52,7 +55,10 @@ export function WebPhotoView({
     .filter(Boolean)
     .join(" · ");
 
-  const { stageRef, thumbRef, scrimRef, closing, requestClose } = usePhotoOpenAnimation(origin ?? null);
+  const { stageRef, thumbRef, scrimRef, closing, requestClose, skipEntrance } = usePhotoOpenAnimation(
+    origin ?? null,
+    enteredRef,
+  );
 
   const [lastDate, setLastDate] = useState(date);
   let direction: 1 | -1 | 0 = 0;
@@ -89,7 +95,7 @@ export function WebPhotoView({
   }, [prevDate, nextDate]);
 
   return (
-    <div className={`${styles.overlay} ${closing ? styles.closing : ""}`}>
+    <div className={`${styles.overlay} ${closing ? styles.closing : ""} ${skipEntrance ? styles.noEntrance : ""}`}>
       <div ref={scrimRef} className={styles.scrim} />
 
       <div className={styles.topRow}>

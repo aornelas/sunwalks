@@ -58,7 +58,7 @@ export function LandscapePhotoView({
     .filter(Boolean)
     .join(" · ");
 
-  const { stageRef, thumbRef, scrimRef, closing, requestClose, skipEntrance } = usePhotoOpenAnimation(
+  const { stageRef, thumbRef, scrimRef, closing, requestClose, skipEntrance, notifyPhotoLoaded } = usePhotoOpenAnimation(
     origin ?? null,
     enteredRef,
   );
@@ -114,6 +114,8 @@ export function LandscapePhotoView({
             alt={formatLongDate(date)}
             fetchPriority="high"
             onClick={() => setChromeVisible((v) => !v)}
+            onLoad={notifyPhotoLoaded}
+            onError={notifyPhotoLoaded}
           />
         </SteppingPhoto>
       </div>

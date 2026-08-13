@@ -125,16 +125,10 @@
      provide for free when this was nested inside it. */
   will-change: transform;
   transform-origin: 0 0;
-  /* Keeps the dissolve continuous while the full photo loads and the
-     shared-element transform is still running, then gets out of the way
-     once it's landed. */
-  animation: stage-thumb-out calc(160ms + var(--motion-scale) * 320ms) var(--ease-standard) both;
-  animation-delay: calc(160ms + var(--motion-scale) * 600ms);
-}
-
-@keyframes stage-thumb-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  /* Fade-out is driven from JS (usePhotoOpenAnimation's notifyPhotoLoaded),
+     not a CSS animation-delay — it needs to fire the moment the real photo
+     has actually loaded, not after a flat guess at how long that takes. */
+  opacity: 1;
 }
 
 .stage img {

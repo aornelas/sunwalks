@@ -64,7 +64,7 @@ export function PhotoView({
     .filter(Boolean)
     .join(" · ");
 
-  const { stageRef, thumbRef, scrimRef, closing, requestClose, skipEntrance } = usePhotoOpenAnimation(
+  const { stageRef, thumbRef, scrimRef, closing, requestClose, skipEntrance, notifyPhotoLoaded } = usePhotoOpenAnimation(
     origin ?? null,
     enteredRef,
   );
@@ -194,7 +194,14 @@ export function PhotoView({
         />
         <div ref={stageRef} className={styles.stage}>
           <SteppingPhoto stepKey={`${date}:${shot.id}`} direction={direction}>
-            <img {...buildSrcSet(shot.id, "full")} sizes="100vw" alt={formatLongDate(date)} fetchPriority="high" />
+            <img
+              {...buildSrcSet(shot.id, "full")}
+              sizes="100vw"
+              alt={formatLongDate(date)}
+              fetchPriority="high"
+              onLoad={notifyPhotoLoaded}
+              onError={notifyPhotoLoaded}
+            />
           </SteppingPhoto>
         </div>
 

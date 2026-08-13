@@ -14,15 +14,16 @@ import type { PhotoOrigin } from "@/lib/photo-origin";
  * directly), the stage just gets a plain settle and the scrim still fades.
  *
  * `thumbRef` goes on the thumbnail underlay — it must be a *sibling* of the
- * stage, not nested inside it. Nesting it and relying on it inheriting the
- * stage's WAAPI transform looked correct (and is, per the CSS transform
- * spec) but broke on WebKit: a child that also carries its own separate CSS
- * `animation` (the thumbnail's opacity fade-out) doesn't reliably composite
- * under an ancestor's JS-driven transform on that engine, so it rendered at
- * full, untransformed size for the whole scale-up — a duplicate "ghost"
- * photo sitting behind the real one. Driving both elements independently
- * with the identical keyframes sidesteps that compositing question
- * entirely instead of depending on it.
+ * stage, not nested inside it, and is driven by its own independently
+ * created but identically keyframed transform rather than inheriting the
+ * stage's. `notifyPhotoLoaded` (returned below) must be wired to the real
+ * `<img>`'s onLoad/onError — origin.thumbSrc is a center-cropped square, a
+ * different crop of the photo than its real aspect ratio, so once the real
+ * (contain-fit) photo lands, its letterbox gaps don't line up with the
+ * thumbnail's own. Fading the thumbnail out only once the real photo has
+ * actually loaded — rather than after a flat delay — is what keeps that
+ * mismatched crop from showing through the gap for however long was left
+ * on a fixed clock.
  *
  * `enteredRef`, if passed, must be a ref owned by a component ABOVE the one
  * that picks PhotoView vs WebPhotoView vs LandscapePhotoView — rotating the
@@ -35,102 +36,6 @@ import type { PhotoOrigin } from "@/lib/photo-origin";
  * remount, so this hook can tell the difference and skip straight to the
  * resting state instead.
  */
-
-/**
- * TEMPORARY DEBUG — remove once the reported ghost (a larger, cropped copy
- * growing behind the real photo on open, on a device this can't be
- * reproduced on) is diagnosed. Appends a small on-screen panel straight to
- * document.body — not through React, so it survives whatever's going wrong
- * with the animated elements themselves — with the numbers behind this
- * open, then samples the actual rendered state of stage/thumb at a few
- * points through the animation. Meant to be screenshotted: the person
- * reproducing this doesn't have devtools open on the device that shows it.
- * Tap the panel to dismiss it early; it also self-removes after 20s.
- */
-function debugPhotoOpen(info: {
-  origin: PhotoOrigin;
-  target: DOMRect;
-  dx: number;
-  dy: number;
-  sx: number;
-  sy: number;
-  stage: HTMLDivElement;
-  thumb: HTMLDivElement | null;
-  stageAnimCount: number;
-}) {
-  if (typeof document === "undefined") return;
-  const { origin, target, dx, dy, sx, sy, stage, thumb, stageAnimCount } = info;
-
-  const box = document.createElement("pre");
-  box.style.cssText =
-    "position:fixed;left:4px;right:4px;bottom:4px;z-index:2147483647;background:rgba(0,0,0,.92);" +
-    "color:#7CFC00;font:10px/1.4 -apple-system,monospace;padding:8px;border-radius:8px;" +
-    "white-space:pre-wrap;word-break:break-all;max-height:50vh;overflow:auto;margin:0;";
-  const lines: string[] = [];
-  const render = () => {
-    box.textContent = lines.join("\n");
-  };
-
-  lines.push("PHOTO-OPEN DEBUG — tap to dismiss");
-  lines.push(`UA: ${navigator.userAgent}`);
-  lines.push(`origin.rect: ${JSON.stringify(origin.rect)}`);
-  lines.push(
-    `target: L${target.left.toFixed(1)} T${target.top.toFixed(1)} W${target.width.toFixed(1)} H${target.height.toFixed(1)}`,
-  );
-  lines.push(`dx=${dx.toFixed(1)} dy=${dy.toFixed(1)} sx=${sx.toFixed(3)} sy=${sy.toFixed(3)}`);
-  lines.push(`stage anims created: ${stageAnimCount}`);
-  lines.push(thumb ? `thumb bg-size: ${getComputedStyle(thumb).backgroundSize}` : "thumb: null (no thumbRef element)");
-  // How many elements sharing thumb's class exist anywhere in the document
-  // — should always be 1. More than that means something (an unrelated
-  // photo view instance, a leftover from a prior open) is still mounted.
-  if (thumb) {
-    const dupeCount = document.getElementsByClassName(thumb.className.split(" ")[0]).length;
-    lines.push(`elements sharing thumb's own class anywhere in DOM: ${dupeCount}`);
-  }
-  render();
-  box.addEventListener("click", () => box.remove());
-  document.body.appendChild(box);
-
-  const sample = (label: string) => {
-    const related = document.getAnimations().filter((a) => {
-      const target = (a.effect as KeyframeEffect | null)?.target;
-      return target === stage || target === thumb;
-    });
-    const running = related.filter((a) => a.playState === "running").length;
-    lines.push(`[${label}] anims on stage/thumb: ${running} running / ${related.length} total`);
-    lines.push(`[${label}] stage transform: ${getComputedStyle(stage).transform}`);
-    if (thumb) {
-      lines.push(`[${label}] thumb transform: ${getComputedStyle(thumb).transform} opacity: ${getComputedStyle(thumb).opacity}`);
-    }
-    // How many <img> tags actually exist inside .stage right now, and where
-    // each one is painted — if SteppingPhoto is leaving more than one slot
-    // mounted, or a stray extra image, this is where it'd show up.
-    const imgs = Array.from(stage.querySelectorAll("img"));
-    lines.push(`[${label}] <img> count inside stage: ${imgs.length}`);
-    imgs.forEach((img, i) => {
-      const r = img.getBoundingClientRect();
-      lines.push(
-        `[${label}]   img#${i}: src=...${img.currentSrc.slice(-40)} rect=${r.width.toFixed(0)}x${r.height.toFixed(0)}@${r.left.toFixed(0)},${r.top.toFixed(0)} opacity=${getComputedStyle(img).opacity} objectFit=${getComputedStyle(img).objectFit}`,
-      );
-    });
-    // SteppingPhoto's own wrapper is stage's first child; each of ITS
-    // children is one "slot" — more than one after landing means an
-    // outgoing slot never got cleaned up.
-    const steppingWrapper = stage.firstElementChild;
-    const slotCount = steppingWrapper?.children.length ?? -1;
-    lines.push(`[${label}] SteppingPhoto slot count: ${slotCount}`);
-    render();
-  };
-  sample("t=0ms");
-  setTimeout(() => sample("t=100ms"), 100);
-  setTimeout(() => sample("t=400ms"), 400);
-  setTimeout(() => sample("t=900ms landed"), 900);
-  setTimeout(() => sample("t=1400ms thumb should be gone"), 1400);
-  setTimeout(() => {
-    if (box.isConnected) box.remove();
-  }, 20000);
-}
-
 export function usePhotoOpenAnimation(origin: PhotoOrigin | null, enteredRef?: RefObject<boolean>) {
   const stageRef = useRef<HTMLDivElement>(null);
   const thumbRef = useRef<HTMLDivElement>(null);
@@ -143,6 +48,10 @@ export function usePhotoOpenAnimation(origin: PhotoOrigin | null, enteredRef?: R
   // from another effect, an ordering race against this one for which
   // reads/writes first.
   const [skipEntrance, setSkipEntrance] = useState(false);
+  // Set by the entrance effect to whatever should run once the real photo
+  // has loaded; read by notifyPhotoLoaded. A ref, not state, because
+  // nothing needs to re-render when this changes.
+  const fadeThumbRef = useRef<(() => void) | null>(null);
 
   useLayoutEffect(() => {
     if (enteredRef?.current) {
@@ -166,12 +75,33 @@ export function usePhotoOpenAnimation(origin: PhotoOrigin | null, enteredRef?: R
     // silently swallow the real scale-up, leaving the stage sitting at full
     // size for the whole "animation."
     if (!stage) return () => scrimAnim?.cancel();
+
+    let thumbFadeAnim: Animation | undefined;
+    let fallback: ReturnType<typeof setTimeout> | undefined;
+    if (thumb) {
+      const fadeThumb = () => {
+        if (thumbFadeAnim) return; // already fading or faded
+        if (fallback) clearTimeout(fallback);
+        thumbFadeAnim = thumb.animate([{ opacity: 1 }, { opacity: 0 }], {
+          duration: reduced ? 160 : 280,
+          easing: EASE_STANDARD,
+          fill: "forwards",
+        });
+      };
+      fadeThumbRef.current = fadeThumb;
+      // Worst-case backstop for a photo that's unusually slow to load —
+      // notifyPhotoLoaded is expected to fire well before this in practice.
+      fallback = setTimeout(fadeThumb, reduced ? 320 : 1400);
+    }
+
     if (reduced) {
       // "Motion 2 becomes a plain fade — no scale, no travel."
       const stageAnim = stage.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 240, fill: "backwards" });
       return () => {
         scrimAnim?.cancel();
         stageAnim.cancel();
+        thumbFadeAnim?.cancel();
+        if (fallback) clearTimeout(fallback);
       };
     }
     const anims: Animation[] = [];
@@ -188,10 +118,6 @@ export function usePhotoOpenAnimation(origin: PhotoOrigin | null, enteredRef?: R
       const timing: KeyframeAnimationOptions = { duration: 760, easing: EASE_STANDARD, fill: "backwards" };
       anims.push(stage.animate(keyframes, timing));
       if (thumb) anims.push(thumb.animate(keyframes, timing));
-      // TEMPORARY DEBUG — remove once the WebKit ghost is diagnosed. See
-      // debugPhotoOpen below; this is the only call site with the numbers
-      // (dx/dy/sx/sy, target rect) needed to make sense of what's rendering.
-      debugPhotoOpen({ origin, target, dx, dy, sx, sy, stage, thumb, stageAnimCount: anims.length });
     } else {
       anims.push(
         stage.animate([{ opacity: 0, transform: "scale(.97)" }, { opacity: 1, transform: "none" }], {
@@ -204,10 +130,23 @@ export function usePhotoOpenAnimation(origin: PhotoOrigin | null, enteredRef?: R
     return () => {
       scrimAnim?.cancel();
       anims.forEach((a) => a.cancel());
+      thumbFadeAnim?.cancel();
+      if (fallback) clearTimeout(fallback);
     };
     // Mount-only: this is the entrance, not a response to origin identity
     // changing (origin never changes for the life of one open view).
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /**
+   * Wire to the real full-size `<img>`'s onLoad and onError — fades the
+   * thumbnail underlay out as soon as the photo it's standing in for has
+   * actually loaded, instead of waiting out the fallback timer regardless.
+   * Safe to call more than once (idempotent) or before the entrance effect
+   * has run (a plain ref read).
+   */
+  const notifyPhotoLoaded = useCallback(() => {
+    fadeThumbRef.current?.();
   }, []);
 
   /** Plays the reverse (or a plain fade, without an origin) then calls `close`. */
@@ -253,5 +192,5 @@ export function usePhotoOpenAnimation(origin: PhotoOrigin | null, enteredRef?: R
     [origin],
   );
 
-  return { stageRef, thumbRef, scrimRef, closing, requestClose, skipEntrance };
+  return { stageRef, thumbRef, scrimRef, closing, requestClose, skipEntrance, notifyPhotoLoaded };
 }

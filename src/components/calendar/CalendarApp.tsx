@@ -56,7 +56,7 @@ export function CalendarApp({
   const [justSynced, setJustSynced] = useState(false);
   const accountState = account;
 
-  // Month + (for a shared, read-only viewer) sunrise-days-only is the
+  // Month + (for a shared, read-only viewer) sunwalk-days-only is the
   // sensible first impression; a returning visitor's actual choice then
   // overrides this once the cookie-read effect below runs.
   const [zoom, setZoom] = useState<ZoomLevel>("month");

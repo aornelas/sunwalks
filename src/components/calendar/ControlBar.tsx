@@ -67,7 +67,7 @@ export function ControlBar({ zoom, onZoomChange, filter, onFilterChange }: Contr
         type="button"
         className={`${styles.toggle} ${filter ? styles.toggleOn : ""}`}
         onClick={() => onFilterChange(!filter)}
-        aria-label="Sunrise days only"
+        aria-label="Sunwalk days only"
         aria-pressed={filter}
       >
         <Sunrise size={17} strokeWidth={2.75} />

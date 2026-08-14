@@ -1,6 +1,6 @@
 {
-  "name": "Sunrise Calendar",
-  "short_name": "Sunrise Calendar",
+  "name": "Sunwalks",
+  "short_name": "Sunwalks",
   "description": "Every day square is the sunrise photo you were out for that morning.",
   "start_url": "/?source=pwa",
   "display": "standalone",
@@ -8,21 +8,21 @@
   "theme_color": "#f5ead8",
   "icons": [
     {
-      "src": "/icons/icon-192.svg",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.svg",
+      "src": "/icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-maskable-512.svg",
+      "src": "/icons/icon-maskable-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "maskable"
     }
   ],
@@ -32,9 +32,9 @@
       "url": "/?d=today",
       "icons": [
         {
-          "src": "/icons/icon-192.svg",
+          "src": "/icons/icon-192.png",
           "sizes": "192x192",
-          "type": "image/svg+xml"
+          "type": "image/png"
         }
       ]
     }

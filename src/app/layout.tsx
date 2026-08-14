@@ -2,19 +2,19 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Sunrise Calendar",
+  title: "Sunwalks",
   description: "Every day square is the sunrise photo you were out for that morning.",
   manifest: "/manifest.json",
   icons: {
     icon: [
-      { url: "/icons/icon-192.svg", sizes: "192x192", type: "image/svg+xml" },
-      { url: "/icons/icon-512.svg", sizes: "512x512", type: "image/svg+xml" },
+      { url: "/icons/sunwalks-icon.svg", type: "image/svg+xml" },
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
     ],
-    apple: "/icons/icon-192.svg",
+    apple: "/icons/apple-touch-icon-180.png",
   },
   appleWebApp: {
     capable: true,
-    title: "Sunrise Calendar",
+    title: "Sunwalks",
     statusBarStyle: "default",
   },
   other: {

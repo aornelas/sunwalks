@@ -99,7 +99,7 @@ export function WebShell({
           <div className={styles.header}>
             <div>
               <h1 className={styles.wordmark}>
-                Sunrise Calendar <span className={styles.version}>v1.1</span>
+                Sunwalks <span className={styles.version}>v1.1</span>
               </h1>
               <div className={styles.date}>{formatLongDateWithYear(today)}</div>
             </div>
@@ -157,7 +157,7 @@ export function WebShell({
           <div className={styles.totalNumber}>
             <RollingNumber value={stats.total} animate={animateStats} />
           </div>
-          <div className={styles.totalLabel}>sunrises captured</div>
+          <div className={styles.totalLabel}>sunwalks</div>
 
           <div className={styles.figureGrid}>
             <div>

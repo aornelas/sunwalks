@@ -10,10 +10,10 @@ export default async function LoginPage({
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        <h1 className={styles.wordmark}>Sunrise Calendar</h1>
+        <h1 className={styles.wordmark}>Sunwalks</h1>
         <p className={styles.tagline}>
           One square for every morning you were out there. Sign in with the Google account that
-          holds your sunrise album.
+          holds your sunwalk album.
         </p>
         {error && <div className={styles.error}>{error}</div>}
         <a className={styles.button} href="/api/auth/google/login">

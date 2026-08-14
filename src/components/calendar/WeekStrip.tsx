@@ -34,7 +34,7 @@ export function WeekStrip({ today, getDay, onOpenDay, newDates }: WeekStripProps
                   setPendingOrigin(e.currentTarget.getBoundingClientRect(), buildSrcSet(shot.id, "sq").src);
                   onOpenDay(date);
                 }}
-                aria-label={`Open sunrise for ${date}`}
+                aria-label={`Open sunwalk for ${date}`}
               >
                 <div className={[styles.circle, isToday ? styles.today : "", isNew ? "motionPop" : ""].join(" ")}>
                   <CrossfadeImg {...buildSrcSet(shot.id, "sq")} sizes="55px" alt="" fetchPriority="high" />

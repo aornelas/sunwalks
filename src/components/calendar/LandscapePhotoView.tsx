@@ -150,7 +150,7 @@ export function LandscapePhotoView({
             type="button"
             className={`${styles.chevron} ${styles.chevronPrev} ${!prevDate ? styles.chevronDisabled : ""}`}
             onClick={() => (prevDate ? onNavigate(prevDate) : rubberBand(1))}
-            aria-label="Previous sunrise"
+            aria-label="Previous sunwalk"
             aria-disabled={!prevDate}
           >
             <ChevronLeft size={20} strokeWidth={2.75} />
@@ -159,7 +159,7 @@ export function LandscapePhotoView({
             type="button"
             className={`${styles.chevron} ${styles.chevronNext} ${!nextDate ? styles.chevronDisabled : ""}`}
             onClick={() => (nextDate ? onNavigate(nextDate) : rubberBand(-1))}
-            aria-label="Next sunrise"
+            aria-label="Next sunwalk"
             aria-disabled={!nextDate}
           >
             <ChevronRight size={20} strokeWidth={2.75} />

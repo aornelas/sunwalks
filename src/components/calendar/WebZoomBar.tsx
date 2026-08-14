@@ -68,7 +68,7 @@ export function WebZoomBar({ zoom, onZoomChange, filter, onFilterChange }: WebZo
         onClick={() => onFilterChange(!filter)}
         aria-pressed={filter}
       >
-        Sunrise days only
+        Sunwalk days only
       </button>
     </div>
   );

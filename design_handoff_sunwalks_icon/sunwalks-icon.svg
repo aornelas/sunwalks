@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Sunwalks</title>
+  <rect width="512" height="512" fill="#f5ead8"></rect>
+  <path d="M244 348a72 72 0 0 1 144 0z" fill="#c67139"></path>
+  <g stroke="#7a8a5e" stroke-width="19" stroke-linecap="round">
+    <path d="M104 348h18"></path><path d="M156 348h34"></path><path d="M224 348h48"></path><path d="M306 348h102"></path>
+  </g>
+  <g stroke="#c67139" stroke-width="17" stroke-linecap="round">
+    <path d="M316 204v-36"></path><path d="M400 236l24-24"></path><path d="M232 236l-24-24"></path>
+  </g>
+</svg>

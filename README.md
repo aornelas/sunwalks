@@ -1,4 +1,4 @@
-# Sunrise Calendar
+# Sunwalks
 
 A personal calendar where every day square is the sunrise photo captured that
 morning, sourced from Google Photos. Built from the design handoff in

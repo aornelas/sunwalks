@@ -100,6 +100,10 @@ export function formatShortDate(dayKey: string): string {
   return `${WEEKDAY_SHORT[d.getUTCDay()]} ${d.getUTCDate()}`;
 }
 
+export function weekdayShort(dayKey: string): string {
+  return WEEKDAY_SHORT[weekdayIndex(dayKey)];
+}
+
 export function formatMonthDayRange(startKey: string, endKey: string): string {
   const s = dayKeyToDate(startKey);
   const e = dayKeyToDate(endKey);

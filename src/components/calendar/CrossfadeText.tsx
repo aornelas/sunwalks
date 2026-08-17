@@ -14,6 +14,8 @@ interface CrossfadeTextProps {
   /** Defaults match motion 9's caption (360ms, +120ms delay). Pass 280/0 for the "Copy link" micro-state. */
   duration?: number;
   delay?: number;
+  /** Applied to whichever layer is current — the outgoing layer adopts it too, since it's about to fade out anyway. */
+  color?: string;
 }
 
 /**
@@ -21,7 +23,7 @@ interface CrossfadeTextProps {
  * blinking to its new value — the caption during day-stepping, or a label
  * like "Copy link" → "Link copied".
  */
-export function CrossfadeText({ text, className, duration: durationProp = 360, delay: delayProp = 120 }: CrossfadeTextProps) {
+export function CrossfadeText({ text, className, duration: durationProp = 360, delay: delayProp = 120, color }: CrossfadeTextProps) {
   const [layers, setLayers] = useState<Layer[]>([{ key: text, text }]);
   const prevRef = useRef(text);
   const elRefs = useRef(new Map<string, HTMLSpanElement>());
@@ -63,7 +65,7 @@ export function CrossfadeText({ text, className, duration: durationProp = 360, d
           // absolutely positioned at once, the wrapper would have nothing
           // left to size against and collapse to 0×0 for the crossfade's
           // duration (visible as the button snapping tiny, then back).
-          style={i > 0 ? { position: "absolute", inset: 0 } : undefined}
+          style={i > 0 ? { position: "absolute", inset: 0, color } : { color }}
         >
           {l.text}
         </span>

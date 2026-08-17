@@ -1,0 +1,21 @@
+CREATE TABLE "forecast_days" (
+	"date" date PRIMARY KEY NOT NULL,
+	"sunrise" timestamp with time zone NOT NULL,
+	"civil_twilight_begin" timestamp with time zone NOT NULL,
+	"golden_hour_end" timestamp with time zone NOT NULL,
+	"cloud_total" real NOT NULL,
+	"cloud_low" real NOT NULL,
+	"cloud_mid" real NOT NULL,
+	"cloud_high" real NOT NULL,
+	"temp_at_sunrise" real NOT NULL,
+	"apparent_temp" real NOT NULL,
+	"wind_speed" real NOT NULL,
+	"wind_dir" real NOT NULL,
+	"precip_probability" real NOT NULL,
+	"fog_probability" real NOT NULL,
+	"ceiling_ft" real,
+	"verdict" text NOT NULL,
+	"score" integer NOT NULL,
+	"reason" text NOT NULL,
+	"fetched_at" timestamp with time zone DEFAULT now() NOT NULL
+);

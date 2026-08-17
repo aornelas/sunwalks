@@ -1,9 +1,10 @@
-import type { DayData, PickerSessionInfo, Stats } from "./types";
+import type { DayData, PickerSessionInfo, PlanningResponse, Stats } from "./types";
 
 export interface CalendarApi {
   fetchDays(start: string, end: string): Promise<DayData[]>;
   fetchStats(): Promise<Stats>;
   fetchDayKeys(): Promise<string[]>;
+  fetchPlanning?(start?: string): Promise<PlanningResponse>;
   setDayPhoto?(date: string, shotId: string): Promise<void>;
   createPickerSession?(): Promise<PickerSessionInfo>;
   pollPickerSession?(sessionId: string): Promise<{ ready: boolean }>;
@@ -38,6 +39,10 @@ export function createOwnerApi(): CalendarApi {
       const res = await fetch("/api/day-keys");
       const data = await json<{ dayKeys: string[] }>(res);
       return data.dayKeys;
+    },
+    async fetchPlanning(start) {
+      const res = await fetch(start ? `/api/planning?start=${start}` : "/api/planning");
+      return json<PlanningResponse>(res);
     },
     async setDayPhoto(date, shotId) {
       const res = await fetch(`/api/day/${date}/day-photo`, {

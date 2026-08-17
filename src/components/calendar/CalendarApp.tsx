@@ -7,13 +7,22 @@ import { useCalendarData } from "@/hooks/useCalendarData";
 import { usePickerImport } from "@/hooks/usePickerImport";
 import { createOwnerApi, createShareApi } from "@/lib/api-client";
 import { consumePendingOrigin, type PhotoOrigin } from "@/lib/photo-origin";
-import type { AccountInfo, DayData, Stats, ZoomLevel } from "@/lib/types";
+import type { AccountInfo, DayData, PlanningResponse, Stats, ZoomLevel } from "@/lib/types";
 import { MobileShell } from "./MobileShell";
 import { WebShell } from "./WebShell";
 import { PhotoView } from "./PhotoView";
 import { WebPhotoView } from "./WebPhotoView";
 import { LandscapePhotoView } from "./LandscapePhotoView";
 import { SettingsSheet } from "./SettingsSheet";
+import { PlanningView } from "./PlanningView";
+
+const EMPTY_PLANNING: PlanningResponse = {
+  days: [],
+  windowStartMinutes: 330,
+  windowEndMinutes: 450,
+  fetchedAt: null,
+  stale: true,
+};
 
 interface DetailState {
   date: string;
@@ -28,6 +37,7 @@ export interface CalendarAppProps {
   initialDays: DayData[];
   initialStats: Stats;
   initialDayKeys: string[];
+  initialPlanning?: PlanningResponse;
   account?: AccountInfo;
 }
 
@@ -39,6 +49,7 @@ export function CalendarApp({
   initialDays,
   initialStats,
   initialDayKeys,
+  initialPlanning,
   account,
 }: CalendarAppProps) {
   const api = useMemo(
@@ -74,6 +85,9 @@ export function CalendarApp({
   const [jumpMonth, setJumpMonth] = useState<{ month: string; nonce: number } | undefined>();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [planning, setPlanning] = useState<PlanningResponse | undefined>(initialPlanning);
+  const [planningOpen, setPlanningOpen] = useState(false);
+  const [planningIndex, setPlanningIndex] = useState(0);
 
   // Remembers the visitor's own zoom/filter choice across visits (a browser
   // cookie, not localStorage) — read once on mount, then kept in sync
@@ -151,14 +165,14 @@ export function CalendarApp({
   // Tracks which overlay currently owns the top history entry we pushed, so
   // the popstate handler knows what to close and our own close buttons know
   // whether to walk history back (see ANDROID_UPDATE.md §3).
-  const historyOwnerRef = useRef<"detail" | "sheet" | null>(null);
+  const historyOwnerRef = useRef<"detail" | "sheet" | "planning" | null>(null);
 
   useEffect(() => {
-    document.body.style.overflow = detail || sheetOpen ? "hidden" : "";
+    document.body.style.overflow = detail || sheetOpen || planningOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [detail, sheetOpen]);
+  }, [detail, sheetOpen, planningOpen]);
 
   useEffect(() => {
     // The calendar itself is portrait-locked at runtime (manifest.json
@@ -187,8 +201,8 @@ export function CalendarApp({
     // app's light theme color and reads as a pale bar floating over dark
     // content. #17140f matches --photo-ground exactly.
     const meta = document.querySelector('meta[name="theme-color"]');
-    meta?.setAttribute("content", detail ? "#17140f" : "#f5ead8");
-  }, [detail]);
+    meta?.setAttribute("content", detail || planningOpen ? "#17140f" : "#f5ead8");
+  }, [detail, planningOpen]);
 
   const openDetailFor = useCallback(
     async (date: string, shotIndex?: number, historyMode: "push" | "replace" = "push") => {
@@ -280,6 +294,32 @@ export function CalendarApp({
     setSheetOpen(false);
   }, []);
 
+  const refreshPlanning = useCallback(() => {
+    api.fetchPlanning?.().then(setPlanning).catch(() => {});
+  }, [api]);
+
+  const openPlanning = useCallback(() => {
+    setPlanningIndex(0);
+    setPlanningOpen(true);
+
+    const url = new URL(window.location.href);
+    url.hash = "plan";
+    window.history.pushState({ overlay: "planning" }, "", url);
+    historyOwnerRef.current = "planning";
+
+    // The row/view already show whatever's cached; this refreshes it if the
+    // server decides the cache is stale (see PLANNING.md's refresh cadence).
+    refreshPlanning();
+  }, [refreshPlanning]);
+
+  const closePlanning = useCallback(() => {
+    if (historyOwnerRef.current === "planning") {
+      historyOwnerRef.current = null;
+      window.history.back();
+    }
+    setPlanningOpen(false);
+  }, []);
+
   // Hardware/gesture back closes whichever overlay we pushed a history
   // entry for, instead of navigating away from the app entirely.
   useEffect(() => {
@@ -290,6 +330,9 @@ export function CalendarApp({
       } else if (historyOwnerRef.current === "sheet") {
         historyOwnerRef.current = null;
         setSheetOpen(false);
+      } else if (historyOwnerRef.current === "planning") {
+        historyOwnerRef.current = null;
+        setPlanningOpen(false);
       }
     }
     window.addEventListener("popstate", onPopState);
@@ -342,6 +385,9 @@ export function CalendarApp({
     earliestDate: dayKeys.length > 0 ? dayKeys[0] : null,
     newDates,
     animateStats: justSynced,
+    planningDay: !readOnly ? planning?.days[0] : undefined,
+    planningIsThisMorning: planning?.days[0]?.date === today,
+    onOpenPlanning: openPlanning,
   };
 
   return (
@@ -417,6 +463,18 @@ export function CalendarApp({
             onSetDayPhoto={handleSetDayPhoto}
           />
         )
+      )}
+
+      {planningOpen && !readOnly && (
+        <PlanningView
+          planning={planning ?? EMPTY_PLANNING}
+          selectedIndex={planningIndex}
+          today={today}
+          timezone={timezone}
+          onSelectDay={setPlanningIndex}
+          onClose={closePlanning}
+          onRetry={refreshPlanning}
+        />
       )}
 
       {sheetOpen && !readOnly && accountState && (

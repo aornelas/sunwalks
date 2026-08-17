@@ -1,0 +1,54 @@
+.row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+  border-radius: 20px;
+  background: #17140f;
+  padding: 13px 15px;
+  margin: 16px 0 18px;
+  text-align: left;
+}
+
+.icon {
+  flex: none;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+.kicker {
+  display: block;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.5625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(245, 234, 216, 0.5);
+}
+
+.line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.verdict {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+}
+
+.sunrise {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: rgba(245, 234, 216, 0.7);
+  white-space: nowrap;
+}
+
+.chevron {
+  flex: none;
+  color: rgba(245, 234, 216, 0.6);
+}

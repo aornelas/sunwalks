@@ -23,6 +23,13 @@ export const env = {
   get timezone() {
     return process.env.APP_TIMEZONE || "America/Los_Angeles";
   },
+  /** Owner's home coordinates — used only by the planning view's forecast/solar math. */
+  get ownerLat() {
+    return Number(process.env.OWNER_LAT) || 37.7749;
+  },
+  get ownerLon() {
+    return Number(process.env.OWNER_LON) || -122.4194;
+  },
   get siteUrl() {
     return process.env.SITE_URL || "http://localhost:3000";
   },

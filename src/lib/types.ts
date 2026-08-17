@@ -1,3 +1,5 @@
+import type { VerdictWord } from "./verdict";
+
 export interface Shot {
   id: string;
   url: string;
@@ -35,4 +37,34 @@ export interface PickerSessionInfo {
   pickerUri: string;
   pollIntervalMs: number;
   timeoutMs: number;
+}
+
+export interface PlanningDay {
+  date: string;
+  sunrise: string; // ISO instant
+  civilTwilightBegin: string;
+  goldenHourEnd: string;
+  cloudTotal: number;
+  cloudLow: number;
+  cloudMid: number;
+  cloudHigh: number;
+  tempAtSunrise: number;
+  apparentTemp: number;
+  windSpeed: number;
+  windDir: number;
+  precipProbability: number;
+  fogProbability: number;
+  ceilingFt: number | null;
+  verdict: VerdictWord;
+  score: number;
+  reason: string;
+}
+
+export interface PlanningResponse {
+  days: PlanningDay[];
+  windowStartMinutes: number;
+  windowEndMinutes: number;
+  fetchedAt: string | null;
+  stale: boolean;
+  error?: string;
 }

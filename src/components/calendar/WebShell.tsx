@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { addDays, dayOfMonth, formatLongDateWithYear, formatTime } from "@/lib/dates";
 import { setPendingOrigin } from "@/lib/photo-origin";
-import type { AccountInfo, DayData, Stats, ZoomLevel } from "@/lib/types";
+import type { AccountInfo, DayData, PlanningDay, Stats, ZoomLevel } from "@/lib/types";
 import type { PickerImportState } from "@/hooks/usePickerImport";
+import { PlanningEntryRow } from "./PlanningEntryRow";
 import { WebZoomBar } from "./WebZoomBar";
 import { MonthZoomView } from "./MonthZoomView";
 import { WeekZoomView } from "./WeekZoomView";
@@ -39,6 +40,9 @@ interface WebShellProps {
   onRegenerateShareLink?(): Promise<void>;
   newDates?: ReadonlySet<string>;
   animateStats?: boolean;
+  planningDay?: PlanningDay;
+  planningIsThisMorning?: boolean;
+  onOpenPlanning?(): void;
 }
 
 export function WebShell({
@@ -66,6 +70,9 @@ export function WebShell({
   onRegenerateShareLink,
   newDates,
   animateStats,
+  planningDay,
+  planningIsThisMorning,
+  onOpenPlanning,
 }: WebShellProps) {
   const [regenerating, setRegenerating] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -99,12 +106,21 @@ export function WebShell({
           <div className={styles.header}>
             <div>
               <h1 className={styles.wordmark}>
-                Sunwalks <span className={styles.version}>v1.2</span>
+                Sunwalks <span className={styles.version}>v2.0</span>
               </h1>
               <div className={styles.date}>{formatLongDateWithYear(today)}</div>
             </div>
             <WebZoomBar zoom={zoom} onZoomChange={onZoomChange} filter={filter} onFilterChange={onFilterChange} />
           </div>
+
+          {!readOnly && onOpenPlanning && (
+            <PlanningEntryRow
+              day={planningDay}
+              isThisMorning={!!planningIsThisMorning}
+              timezone={timezone}
+              onOpen={onOpenPlanning}
+            />
+          )}
 
           {stats.total === 0 && (
             <p className={styles.tagline} style={{ marginBottom: 20 }}>

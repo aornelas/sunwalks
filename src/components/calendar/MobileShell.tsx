@@ -1,7 +1,8 @@
 "use client";
 
-import type { DayData, Stats, ZoomLevel } from "@/lib/types";
+import type { DayData, PlanningDay, Stats, ZoomLevel } from "@/lib/types";
 import { MobileHeader } from "./MobileHeader";
+import { PlanningEntryRow } from "./PlanningEntryRow";
 import { WeekStrip } from "./WeekStrip";
 import { StatsLine } from "./StatsLine";
 import { MonthZoomView } from "./MonthZoomView";
@@ -31,6 +32,9 @@ interface MobileShellProps {
   onOpenSettings(): void;
   newDates?: ReadonlySet<string>;
   animateStats?: boolean;
+  planningDay?: PlanningDay;
+  planningIsThisMorning?: boolean;
+  onOpenPlanning?(): void;
 }
 
 export function MobileShell({
@@ -53,10 +57,21 @@ export function MobileShell({
   onOpenSettings,
   newDates,
   animateStats,
+  planningDay,
+  planningIsThisMorning,
+  onOpenPlanning,
 }: MobileShellProps) {
   return (
     <div className={styles.page}>
       <MobileHeader today={today} readOnly={readOnly} syncing={syncing} onRefresh={onRefresh} onOpenSettings={onOpenSettings} />
+      {!readOnly && onOpenPlanning && (
+        <PlanningEntryRow
+          day={planningDay}
+          isThisMorning={!!planningIsThisMorning}
+          timezone={timezone}
+          onOpen={onOpenPlanning}
+        />
+      )}
       <WeekStrip today={today} getDay={getDay} onOpenDay={onOpenDay} newDates={newDates} />
       <StatsLine stats={stats} animate={animateStats} />
       {stats.total === 0 && (

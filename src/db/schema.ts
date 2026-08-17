@@ -3,6 +3,7 @@ import {
   text,
   timestamp,
   integer,
+  real,
   date,
   uniqueIndex,
   index,
@@ -61,6 +62,34 @@ export const shareLinks = pgTable(
   },
   (t) => [uniqueIndex("share_links_token_idx").on(t.token)],
 );
+
+/**
+ * The planning view's forecast cache — one row per calendar day, keyed on
+ * the owner's fixed home coordinates. Verdict/score/reason are derived
+ * server-side at fetch time (see lib/verdict.ts) so the phone and web view
+ * can never disagree about whether a morning is Promising.
+ */
+export const forecastDays = pgTable("forecast_days", {
+  date: date("date", { mode: "string" }).primaryKey(),
+  sunrise: timestamp("sunrise", { withTimezone: true }).notNull(),
+  civilTwilightBegin: timestamp("civil_twilight_begin", { withTimezone: true }).notNull(),
+  goldenHourEnd: timestamp("golden_hour_end", { withTimezone: true }).notNull(),
+  cloudTotal: real("cloud_total").notNull(),
+  cloudLow: real("cloud_low").notNull(),
+  cloudMid: real("cloud_mid").notNull(),
+  cloudHigh: real("cloud_high").notNull(),
+  tempAtSunrise: real("temp_at_sunrise").notNull(),
+  apparentTemp: real("apparent_temp").notNull(),
+  windSpeed: real("wind_speed").notNull(),
+  windDir: real("wind_dir").notNull(),
+  precipProbability: real("precip_probability").notNull(),
+  fogProbability: real("fog_probability").notNull(),
+  ceilingFt: real("ceiling_ft"),
+  verdict: text("verdict").notNull(),
+  score: integer("score").notNull(),
+  reason: text("reason").notNull(),
+  fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 export const sessions = pgTable("sessions", {
   token: text("token").primaryKey(),

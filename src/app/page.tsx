@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getOwnerAccount } from "@/lib/owner";
 import { getDaysInRange, getAllCapturedDayKeys } from "@/lib/data";
 import { computeStats } from "@/lib/stats";
+import { getPlanningResponse } from "@/lib/planning";
 import { env } from "@/lib/env";
 import { addMonths, monthKey, todayDayKey } from "@/lib/dates";
 import { CalendarApp } from "@/components/calendar/CalendarApp";
@@ -18,10 +19,11 @@ export default async function HomePage() {
   const today = todayDayKey(env.timezone);
   const windowStart = `${addMonths(monthKey(today), -2)}-01`;
 
-  const [initialDays, initialStats, initialDayKeys] = await Promise.all([
+  const [initialDays, initialStats, initialDayKeys, initialPlanning] = await Promise.all([
     getDaysInRange(windowStart, today),
     computeStats(),
     getAllCapturedDayKeys(),
+    getPlanningResponse(),
   ]);
 
   const accountInfo: AccountInfo = {
@@ -37,6 +39,7 @@ export default async function HomePage() {
       initialDays={initialDays}
       initialStats={initialStats}
       initialDayKeys={initialDayKeys}
+      initialPlanning={initialPlanning}
       account={accountInfo}
     />
   );

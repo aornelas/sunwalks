@@ -41,3 +41,6 @@ yarn-error.log*
 next-env.d.ts
 
 /.photo-storage
+
+# gstack runtime data
+.gstack/

@@ -100,11 +100,14 @@
 html,
 body {
   height: 100%;
+  /* Belt-and-suspenders against a transparent seam at the very top edge
+     (behind the status bar in the installed PWA) ever showing the
+     browser's own default canvas colour instead of the app's ground. */
+  background: var(--color-bg);
 }
 
 body {
   margin: 0;
-  background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-body);
   font-size: 0.9375rem;

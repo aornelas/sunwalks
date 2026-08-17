@@ -298,6 +298,18 @@ export function CalendarApp({
     api.fetchPlanning?.().then(setPlanning).catch(() => {});
   }, [api]);
 
+  // Fetched client-side, after first paint — not part of the initial
+  // server render, since it can involve a live Open-Meteo call and
+  // shouldn't hold up the calendar itself. The entry row shows "Checking
+  // forecast…" for the brief gap until this resolves.
+  useEffect(() => {
+    if (readOnly || initialPlanning) return;
+    refreshPlanning();
+    // Mount-only: refreshPlanning is stable per `api`, which doesn't change
+    // across the component's lifetime for a given readOnly/shareToken pair.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readOnly]);
+
   const openPlanning = useCallback(() => {
     setPlanningIndex(0);
     setPlanningOpen(true);

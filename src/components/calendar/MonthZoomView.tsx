@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState } from "react";
+import { buildMonthCells } from "@/lib/calendar-grid";
 import { addMonths, monthKey as toMonthKey } from "@/lib/dates";
 import { useFirstPaintEntrance } from "@/lib/motion";
 import type { DayData } from "@/lib/types";
@@ -71,6 +72,9 @@ export function MonthZoomView({
   }
 
   const monthKeys = Array.from({ length: monthsShown }, (_, i) => addMonths(currentMonth, -i));
+  const visibleMonths = monthKeys
+    .map((mKey, monthIndex) => ({ mKey, monthIndex }))
+    .filter(({ mKey }) => !filter || buildMonthCells(mKey, today, getDay).some((c) => c.state === "captured"));
 
   useEffect(() => {
     if (!onJumpMonth) return;
@@ -125,12 +129,12 @@ export function MonthZoomView({
   // container, doesn't let a first child's margin collapse with the header
   // above it) so the very first year label lines up with Week/Year view
   // regardless of variant — see the DoW-row placement note below.
-  const topYear = monthKeys.length > 0 ? monthKeys[0].slice(0, 4) : null;
+  const topYear = visibleMonths.length > 0 ? visibleMonths[0].mKey.slice(0, 4) : null;
 
   return (
     <div>
       {topYear && <div className={styles.yearLabel}>{topYear}</div>}
-      {variant === "mobile" && (
+      {variant === "mobile" && !filter && (
         <div className={styles.weekdayHeader}>
           {WEEKDAY_LABELS.map((label, i) => (
             <span key={i}>{label}</span>
@@ -138,9 +142,9 @@ export function MonthZoomView({
         </div>
       )}
       <div className={listClass}>
-        {monthKeys.map((mKey, i) => {
+        {visibleMonths.map(({ mKey, monthIndex }, i) => {
           const year = mKey.slice(0, 4);
-          const showYearLabel = i > 0 && year !== monthKeys[i - 1].slice(0, 4);
+          const showYearLabel = i > 0 && year !== visibleMonths[i - 1].mKey.slice(0, 4);
           return (
             <Fragment key={mKey}>
               {showYearLabel && <div className={styles.yearLabel}>{year}</div>}
@@ -149,9 +153,9 @@ export function MonthZoomView({
                 today={today}
                 variant={variant}
                 filter={filter}
-                eager={i < 2}
-                animateIn={playEntrance && i < initialBatch}
-                scrollLoaded={i >= initialBatch}
+                eager={monthIndex < 2}
+                animateIn={playEntrance && monthIndex < initialBatch}
+                scrollLoaded={monthIndex >= initialBatch}
                 getDay={getDay}
                 onOpenDay={onOpenDay}
                 newDates={newDates}

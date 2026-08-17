@@ -91,6 +91,9 @@ export function YearZoomView({
         const yearCapturedCount = monthsData.reduce((sum, m) => sum + m.capturedCount, 0);
         const animateIn = playEntrance && yearIndex < initialBatch;
 
+        if (filter && yearCapturedCount === 0) return null;
+        const visibleMonthsData = filter ? monthsData.filter((m) => m.capturedCount > 0) : monthsData;
+
         return (
           <div
             key={year}
@@ -101,7 +104,7 @@ export function YearZoomView({
               <span className={styles.yearCount}>{yearCapturedCount} CAPTURED</span>
             </div>
             <div className={gridClass}>
-              {monthsData.map(({ mKey, cells, capturedCount }, monthIndex) => (
+              {visibleMonthsData.map(({ mKey, cells, capturedCount }, monthIndex) => (
                 <YearMonthCard
                   key={mKey}
                   monthKey={mKey}

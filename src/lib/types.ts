@@ -14,9 +14,12 @@ export interface DayData {
 
 export interface Stats {
   total: number;
-  last7: number;
-  last30: number;
-  avgPerWeek: number;
+  thisWeek: number;
+  bestWeek: number;
+  thisMonth: number;
+  bestMonth: number;
+  thisYear: number;
+  bestYear: number;
   currentRun: number;
 }
 

@@ -162,21 +162,24 @@ export function WebShell({
           <div className={styles.figureGrid}>
             <div>
               <div className={styles.figureNumber}>
-                <RollingNumber value={stats.last7} animate={animateStats} />
+                <RollingNumber value={stats.thisWeek} animate={animateStats} />/
+                <RollingNumber value={stats.bestWeek} animate={animateStats} />
               </div>
-              <div className={styles.figureLabel}>last 7 days</div>
+              <div className={styles.figureLabel}>this/best week</div>
             </div>
             <div>
               <div className={styles.figureNumber}>
-                <RollingNumber value={stats.last30} animate={animateStats} />
+                <RollingNumber value={stats.thisMonth} animate={animateStats} />/
+                <RollingNumber value={stats.bestMonth} animate={animateStats} />
               </div>
-              <div className={styles.figureLabel}>last 30 days</div>
+              <div className={styles.figureLabel}>this/best month</div>
             </div>
             <div>
               <div className={styles.figureNumber}>
-                <RollingNumber value={stats.avgPerWeek} animate={animateStats} />
+                <RollingNumber value={stats.thisYear} animate={animateStats} />/
+                <RollingNumber value={stats.bestYear} animate={animateStats} />
               </div>
-              <div className={styles.figureLabel}>a week, on average</div>
+              <div className={styles.figureLabel}>this/best year</div>
             </div>
             <div>
               <div className={styles.figureNumber}>

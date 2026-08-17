@@ -21,8 +21,14 @@ interface ControlBarProps {
 
 export function ControlBar({ zoom, onZoomChange, filter, onFilterChange }: ControlBarProps) {
   const pillRefs = useRef(new Map<string, HTMLButtonElement>());
+  const pillsRef = useRef<HTMLDivElement>(null);
   const fillRef = useRef<HTMLSpanElement>(null);
   const mountedRef = useRef(false);
+  const zoomRef = useRef(zoom);
+
+  useLayoutEffect(() => {
+    zoomRef.current = zoom;
+  }, [zoom]);
 
   useLayoutEffect(() => {
     const fill = fillRef.current;
@@ -44,9 +50,31 @@ export function ControlBar({ zoom, onZoomChange, filter, onFilterChange }: Contr
     fill.style.width = `${width}px`;
   }, [zoom]);
 
+  // A portrait/landscape rotation resizes the pills without changing `zoom`,
+  // so the effect above never reruns — the fill would otherwise be stuck at
+  // its pre-rotation position/width. Snap it back into place (no animation)
+  // whenever the pill row's size actually changes.
+  useLayoutEffect(() => {
+    const container = pillsRef.current;
+    const fill = fillRef.current;
+    if (!container || !fill) return;
+    const observer = new ResizeObserver(() => {
+      const target = pillRefs.current.get(zoomRef.current);
+      if (!target) return;
+      // A finished animate() call from the last zoom change still holds its
+      // end frame (fill: "forwards") and outranks a plain style assignment,
+      // so a direct set here would be silently ignored — cancel it first.
+      fill.getAnimations().forEach((anim) => anim.cancel());
+      fill.style.transform = `translateX(${target.offsetLeft}px)`;
+      fill.style.width = `${target.offsetWidth}px`;
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className={styles.bar}>
-      <div className={styles.pills}>
+      <div className={styles.pills} ref={pillsRef}>
         <span ref={fillRef} className={styles.pillFill} aria-hidden="true" />
         {ZOOMS.map(({ key, label }) => (
           <button

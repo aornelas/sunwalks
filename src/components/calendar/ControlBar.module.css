@@ -63,13 +63,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-neutral-200);
+  background-color: var(--color-neutral-200);
   background-clip: content-box;
   color: #645c50;
-  transition: background var(--dur-instant) var(--ease-standard), color var(--dur-instant) var(--ease-standard);
+  transition: background-color var(--dur-instant) var(--ease-standard), color var(--dur-instant) var(--ease-standard);
 }
 
 .toggleOn {
-  background: var(--color-accent-2-600);
+  background-color: var(--color-accent-2-600);
   color: #fff;
 }

@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { days } from "@/db/schema";
-import { addDays, todayDayKey } from "./dates";
+import { addDays, monthKey, startOfWeek, todayDayKey } from "./dates";
 import { env } from "./env";
 import type { Stats } from "./types";
 
@@ -10,27 +10,29 @@ export async function computeStats(): Promise<Stats> {
   const total = dateSet.size;
 
   if (total === 0) {
-    return { total: 0, last7: 0, last30: 0, avgPerWeek: 0, currentRun: 0 };
+    return { total: 0, thisWeek: 0, bestWeek: 0, thisMonth: 0, bestMonth: 0, thisYear: 0, bestYear: 0, currentRun: 0 };
   }
 
   const today = todayDayKey(env.timezone);
-  const cutoff7 = addDays(today, -6);
-  const cutoff30 = addDays(today, -29);
 
-  let last7 = 0;
-  let last30 = 0;
+  const weekCounts = new Map<string, number>();
+  const monthCounts = new Map<string, number>();
+  const yearCounts = new Map<string, number>();
   for (const date of dateSet) {
-    if (date >= cutoff7 && date <= today) last7++;
-    if (date >= cutoff30 && date <= today) last30++;
+    const wk = startOfWeek(date);
+    weekCounts.set(wk, (weekCounts.get(wk) ?? 0) + 1);
+    const mk = monthKey(date);
+    monthCounts.set(mk, (monthCounts.get(mk) ?? 0) + 1);
+    const yk = date.slice(0, 4);
+    yearCounts.set(yk, (yearCounts.get(yk) ?? 0) + 1);
   }
 
-  const firstDate = [...dateSet].sort()[0];
-  const daysSinceFirst = Math.max(
-    1,
-    Math.round((Date.parse(today) - Date.parse(firstDate)) / (1000 * 60 * 60 * 24)) + 1,
-  );
-  const weeksSinceFirst = Math.max(daysSinceFirst / 7, 1);
-  const avgPerWeek = Math.round((total / weeksSinceFirst) * 10) / 10;
+  const thisWeek = weekCounts.get(startOfWeek(today)) ?? 0;
+  const bestWeek = Math.max(...weekCounts.values());
+  const thisMonth = monthCounts.get(monthKey(today)) ?? 0;
+  const bestMonth = Math.max(...monthCounts.values());
+  const thisYear = yearCounts.get(today.slice(0, 4)) ?? 0;
+  const bestYear = Math.max(...yearCounts.values());
 
   let currentRun = 0;
   let cursor = dateSet.has(today) ? today : addDays(today, -1);
@@ -39,5 +41,5 @@ export async function computeStats(): Promise<Stats> {
     cursor = addDays(cursor, -1);
   }
 
-  return { total, last7, last30, avgPerWeek, currentRun };
+  return { total, thisWeek, bestWeek, thisMonth, bestMonth, thisYear, bestYear, currentRun };
 }

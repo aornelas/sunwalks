@@ -86,13 +86,21 @@ export function WeekZoomView({
 
   const gridClass = variant === "web" ? styles.webGrid : styles.mobileGrid;
 
+  const visibleWeeks = weekStarts
+    .map((weekStart, weekIndex) => ({ weekStart, weekIndex }))
+    .filter(({ weekStart }) => {
+      if (!filter) return true;
+      const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+      return days.some((d) => (getDay(d)?.shots.length ?? 0) > 0);
+    });
+
   return (
     <div>
-      {weekStarts.map((weekStart, weekIndex) => {
+      {visibleWeeks.map(({ weekStart, weekIndex }, visibleIndex) => {
         const weekEnd = addDays(weekStart, 6);
         const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
         const year = weekStart.slice(0, 4);
-        const showYearLabel = weekIndex === 0 || year !== weekStarts[weekIndex - 1].slice(0, 4);
+        const showYearLabel = visibleIndex === 0 || year !== visibleWeeks[visibleIndex - 1].weekStart.slice(0, 4);
         const animateIn = playEntrance && weekIndex < initialBatch;
 
         return (

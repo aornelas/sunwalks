@@ -20,8 +20,14 @@ interface WebZoomBarProps {
 
 export function WebZoomBar({ zoom, onZoomChange, filter, onFilterChange }: WebZoomBarProps) {
   const pillRefs = useRef(new Map<string, HTMLButtonElement>());
+  const zoomGroupRef = useRef<HTMLDivElement>(null);
   const fillRef = useRef<HTMLSpanElement>(null);
   const mountedRef = useRef(false);
+  const zoomRef = useRef(zoom);
+
+  useLayoutEffect(() => {
+    zoomRef.current = zoom;
+  }, [zoom]);
 
   useLayoutEffect(() => {
     const fill = fillRef.current;
@@ -43,9 +49,29 @@ export function WebZoomBar({ zoom, onZoomChange, filter, onFilterChange }: WebZo
     fill.style.width = `${width}px`;
   }, [zoom]);
 
+  // Same rationale as ControlBar: a rotation/resize can change pill sizes
+  // without `zoom` changing, so re-snap the fill whenever the row resizes.
+  useLayoutEffect(() => {
+    const container = zoomGroupRef.current;
+    const fill = fillRef.current;
+    if (!container || !fill) return;
+    const observer = new ResizeObserver(() => {
+      const target = pillRefs.current.get(zoomRef.current);
+      if (!target) return;
+      // A finished animate() call from the last zoom change still holds its
+      // end frame (fill: "forwards") and outranks a plain style assignment,
+      // so a direct set here would be silently ignored — cancel it first.
+      fill.getAnimations().forEach((anim) => anim.cancel());
+      fill.style.transform = `translateX(${target.offsetLeft}px)`;
+      fill.style.width = `${target.offsetWidth}px`;
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className={styles.bar}>
-      <div className={styles.zoomGroup}>
+      <div className={styles.zoomGroup} ref={zoomGroupRef}>
         <span ref={fillRef} className={styles.pillFill} aria-hidden="true" />
         {ZOOMS.map(({ key, label }) => (
           <button

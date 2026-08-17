@@ -6,9 +6,15 @@ export function StatsLine({ stats, animate }: { stats: Stats; animate?: boolean 
   return (
     <div className={styles.line}>
       <span><b><RollingNumber value={stats.total} animate={animate} /></b> sunwalks</span>
-      <span><b><RollingNumber value={stats.last7} animate={animate} /></b> this week</span>
-      <span><b><RollingNumber value={stats.last30} animate={animate} /></b> this month</span>
-      <span><b><RollingNumber value={stats.avgPerWeek} animate={animate} /></b> a week</span>
+      <span>
+        <b><RollingNumber value={stats.thisWeek} animate={animate} />/<RollingNumber value={stats.bestWeek} animate={animate} /></b> this/best week
+      </span>
+      <span>
+        <b><RollingNumber value={stats.thisMonth} animate={animate} />/<RollingNumber value={stats.bestMonth} animate={animate} /></b> this/best month
+      </span>
+      <span>
+        <b><RollingNumber value={stats.thisYear} animate={animate} />/<RollingNumber value={stats.bestYear} animate={animate} /></b> this/best year
+      </span>
     </div>
   );
 }

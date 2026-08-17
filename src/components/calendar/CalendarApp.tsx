@@ -196,12 +196,24 @@ export function CalendarApp({
   }, [detail]);
 
   useEffect(() => {
-    // The photo view is a near-black overlay; without this the Android
-    // status bar (and installed app's task-switcher chrome) stays the
-    // app's light theme color and reads as a pale bar floating over dark
-    // content. #17140f matches --photo-ground exactly.
-    const meta = document.querySelector('meta[name="theme-color"]');
-    meta?.setAttribute("content", detail || planningOpen ? "#17140f" : "#f5ead8");
+    // The photo view and planning view are near-black overlays; without
+    // this the Android status bar (and installed app's task-switcher
+    // chrome) stays the app's light theme color and reads as a pale bar
+    // floating over dark content. #17140f matches --photo-ground exactly.
+    //
+    // Replacing the whole <meta> node, not mutating its `content` via
+    // setAttribute, is deliberate: Chrome on Android has repainted the
+    // status bar off a *mutated* theme-color meta unreliably in testing —
+    // most often on the transition back to the lighter colour, leaving a
+    // stale grey band that only clears on a full app relaunch. Swapping in
+    // a fresh element forces it to re-detect the tag and repaint cleanly.
+    const color = detail || planningOpen ? "#17140f" : "#f5ead8";
+    const current = document.querySelector('meta[name="theme-color"]');
+    const next = document.createElement("meta");
+    next.setAttribute("name", "theme-color");
+    next.setAttribute("content", color);
+    if (current) current.replaceWith(next);
+    else document.head.appendChild(next);
   }, [detail, planningOpen]);
 
   const openDetailFor = useCallback(

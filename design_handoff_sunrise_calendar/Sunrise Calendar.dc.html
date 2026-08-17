@@ -26,6 +26,415 @@ body{margin:0;background:#e8ddc8;font-family:Figtree,system-ui,sans-serif}
 </style>
 </helmet>
 
+<section class="dv-turn" id="t3">
+<div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">Planning tomorrow — three places to put the forecast. All live: expand the card in <a class="dv-oid" href="#3a">3a</a>, flip the calendar in <a class="dv-oid" href="#3b">3b</a>, tap a day in <a class="dv-oid" href="#3c">3c</a>.</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="3a">
+<div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>Tonight's card — one line above the calendar, expands in place</div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+<div style="height:100%;min-height:788px;overflow:hidden;display:flex;flex-direction:column;background:var(--color-bg)">
+  <div style="flex:1;overflow:auto;padding:54px 14px 96px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:2px 0 4px">
+      <div>
+        <h3 style="margin:0;font-family:var(--font-heading);font-size:26px;letter-spacing:-.02em">Sunwalks</h3>
+        <div style="font:600 11px var(--font-body);color:var(--color-neutral-700);margin-top:2px;white-space:nowrap">{{ todayLine }}</div>
+      </div>
+      <div onClick="{{ openSheet }}" style="cursor:pointer;width:34px;height:34px;border-radius:999px;display:grid;place-items:center;background:var(--color-neutral-200);flex:none">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#645c50" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 3v2M12 19v2M4.2 7.5l1.7 1M18.1 15.5l1.7 1M4.2 16.5l1.7-1M18.1 8.5l1.7-1"></path></svg>
+      </div>
+    </div>
+
+    <div style="margin:16px 0 18px;border-radius:22px;background:{{ tm.tint }};padding:15px 16px 16px">
+      <div onClick="{{ toggleCard }}" style="cursor:pointer;display:flex;align-items:flex-start;gap:12px">
+        <div style="flex:1;min-width:0">
+          <div style="font:600 9.5px var(--font-body);letter-spacing:.14em;text-transform:uppercase;color:{{ tm.ink }};opacity:.7">Tomorrow morning</div>
+          <div style="display:flex;align-items:baseline;gap:9px;margin-top:3px">
+            <span style="font-family:var(--font-heading);font-size:25px;line-height:1.1;color:{{ tm.ink }}">{{ tm.verdict }}</span>
+            <span style="font:600 13px var(--font-body);color:{{ tm.ink }};opacity:.75;white-space:nowrap">{{ tm.sunrise }}</span>
+          </div>
+        </div>
+        <div style="width:28px;height:28px;flex:none;border-radius:999px;display:grid;place-items:center;background:rgba(255,255,255,.5)">
+          <sc-if value="{{ cardOpen }}" hint-placeholder-val="{{ true }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5d4a36" stroke-width="2.75" stroke-linecap="round"><path d="M5 15l7-7 7 7"></path></svg></sc-if>
+          <sc-if value="{{ cardShut }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5d4a36" stroke-width="2.75" stroke-linecap="round"><path d="M5 9l7 7 7-7"></path></svg></sc-if>
+        </div>
+      </div>
+
+      <sc-if value="{{ cardOpen }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <p style="margin:9px 0 15px;font:400 12.5px/1.5 var(--font-body);color:{{ tm.ink }};text-wrap:pretty">{{ tm.line }}</p>
+
+          <div style="position:relative;height:9px;border-radius:999px;background:rgba(255,255,255,.55);margin-bottom:7px">
+            <div style="position:absolute;left:30%;width:40%;top:0;bottom:0;background:rgba(122,138,94,.34)"></div>
+            <div style="position:absolute;left:{{ tm.barW }};top:-4px;width:17px;height:17px;margin-left:-8.5px;border-radius:999px;background:{{ tm.fill }};box-shadow:0 0 0 3.5px {{ tm.tint }}"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font:600 9px var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:{{ tm.ink }};opacity:.55;margin-bottom:15px">
+            <span>Clear</span><span>Colour band</span><span>Overcast</span>
+          </div>
+
+          <div style="display:flex;gap:6px;margin-bottom:13px">
+            <div style="flex:1;border-radius:14px;background:rgba(255,255,255,.5);padding:9px 10px">
+              <div style="font:600 8.5px var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:{{ tm.ink }};opacity:.6">First light</div>
+              <div style="font-family:var(--font-heading);font-size:15px;color:{{ tm.ink }};margin-top:1px">{{ tm.first }}</div>
+            </div>
+            <div style="flex:1;border-radius:14px;background:{{ tm.fill }};padding:9px 10px">
+              <div style="font:600 8.5px var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--color-bg);opacity:.75">Sunrise</div>
+              <div style="font-family:var(--font-heading);font-size:15px;color:var(--color-bg);margin-top:1px">{{ tm.sunriseShort }}</div>
+            </div>
+            <div style="flex:1;border-radius:14px;background:rgba(255,255,255,.5);padding:9px 10px">
+              <div style="font:600 8.5px var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:{{ tm.ink }};opacity:.6">Gold ends</div>
+              <div style="font-family:var(--font-heading);font-size:15px;color:{{ tm.ink }};margin-top:1px">{{ tm.golden }}</div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-wrap:wrap;gap:5px 7px;font:400 11.5px var(--font-body);color:{{ tm.ink }};margin-bottom:14px">
+            <span style="border-radius:999px;background:rgba(255,255,255,.5);padding:5px 11px;white-space:nowrap">{{ tm.temp }} · {{ tm.feels }}</span>
+            <span style="border-radius:999px;background:rgba(255,255,255,.5);padding:5px 11px;white-space:nowrap">{{ tm.wind }}</span>
+            <span style="border-radius:999px;background:rgba(255,255,255,.5);padding:5px 11px;white-space:nowrap">Rain {{ tm.rain }}</span>
+            <span style="border-radius:999px;background:rgba(255,255,255,.5);padding:5px 11px;white-space:nowrap">Fog {{ tm.fog }}</span>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:11px;border-radius:16px;background:rgba(255,255,255,.5);padding:11px 13px;margin-bottom:12px">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7a8a5e" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"></path><circle cx="12" cy="10" r="2.4"></circle></svg>
+            <div style="flex:1;min-width:0">
+              <div style="font:600 12.5px var(--font-body);color:{{ tm.ink }}">{{ vantage.name }} — leave {{ tm.leave }}</div>
+              <div style="font:400 11px var(--font-body);color:{{ tm.ink }};opacity:.7;text-wrap:pretty">{{ vantage.azimuth }}</div>
+            </div>
+          </div>
+
+          <div onClick="{{ setAlarm }}" style="cursor:pointer;text-align:center;border-radius:999px;background:{{ tm.fill }};color:var(--color-bg);padding:12px 0;font:400 15px var(--font-heading)">{{ alarmLabel }}</div>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="display:flex;gap:6px;margin-bottom:14px">
+      <sc-for list="{{ strip }}" as="s">
+        <div onClick="{{ s.open }}" style="flex:1;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px">
+          <div style="width:100%;aspect-ratio:1;border-radius:999px;overflow:hidden;position:relative;background:var(--color-neutral-200)">
+            <sc-if value="{{ s.src }}"><img src="{{ s.src }}" alt="" style="width:100%;height:100%;object-fit:cover"></sc-if>
+            <sc-if value="{{ s.isToday }}"><span style="position:absolute;inset:0;border-radius:999px;box-shadow:inset 0 0 0 2px var(--color-accent)"></span></sc-if>
+          </div>
+          <span style="font:600 9.5px var(--font-body);letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-600)">{{ s.wd }}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:7px">
+      <sc-for list="{{ weekdays }}" as="w" hint-placeholder-count="7">
+        <div style="text-align:center;font:600 9px var(--font-body);letter-spacing:.1em;color:var(--color-neutral-500)">{{ w }}</div>
+      </sc-for>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:8px;margin:0 0 9px 2px">
+      <h4 style="margin:0;font-family:var(--font-heading);font-size:18px">{{ augMonth.name }}</h4>
+      <span style="font:600 9px var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-600)">{{ augMonth.count }} captured</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+      <sc-for list="{{ augMonth.cells }}" as="c">
+        <sc-if value="{{ c.pad }}"><div></div></sc-if>
+        <sc-if value="{{ c.photo }}">
+          <div onClick="{{ c.open }}" style="cursor:pointer;position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;box-shadow:var(--shadow-sm)">
+            <img src="{{ c.src }}" alt="" style="width:100%;height:100%;object-fit:cover">
+            <span style="position:absolute;top:2px;left:5px;font:700 9px var(--font-body);color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.55)">{{ c.numText }}</span>
+            <sc-if value="{{ c.isToday }}"><span style="position:absolute;inset:0;border-radius:12px;box-shadow:inset 0 0 0 2px var(--color-accent)"></span></sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{ c.emptyAny }}">
+          <div style="position:relative;aspect-ratio:1;border-radius:12px;background:var(--color-neutral-300)">
+            <span style="position:absolute;top:2px;left:5px;font:600 9px var(--font-body);color:var(--color-neutral-500)">{{ c.numText }}</span>
+          </div>
+        </sc-if>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:14px;right:14px;bottom:14px;display:flex;align-items:center;gap:6px;padding:6px;border-radius:999px;background:rgba(245,234,216,.86);backdrop-filter:blur(14px);box-shadow:var(--shadow-md)">
+    <div onClick="{{ setWeek }}" style="cursor:pointer;flex:1;text-align:center;padding:8px 0;border-radius:999px;font:400 13px var(--font-heading);background:{{ wkBg }};color:{{ wkFg }}">Week</div>
+    <div onClick="{{ setMonth }}" style="cursor:pointer;flex:1;text-align:center;padding:8px 0;border-radius:999px;font:400 13px var(--font-heading);background:{{ moBg }};color:{{ moFg }}">Month</div>
+    <div onClick="{{ setYear }}" style="cursor:pointer;flex:1;text-align:center;padding:8px 0;border-radius:999px;font:400 13px var(--font-heading);background:{{ yrBg }};color:{{ yrFg }}">Year</div>
+  </div>
+</div>
+</x-import>
+</div>
+
+<div class="dv-opt" id="3b">
+<div class="dv-olabel"><a class="dv-oid" href="#3b">3b</a>Looking ahead — the same calendar, flipped forward</div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+<div style="height:100%;min-height:788px;overflow:hidden;display:flex;flex-direction:column;background:var(--color-bg)">
+  <div style="flex:1;overflow:auto;padding:54px 14px 96px">
+    <h3 style="margin:0;font-family:var(--font-heading);font-size:26px;letter-spacing:-.02em">Sunwalks</h3>
+    <div style="font:600 11px var(--font-body);color:var(--color-neutral-700);margin-top:2px">{{ todayLine }}</div>
+
+    <div style="display:flex;gap:5px;padding:5px;border-radius:999px;background:var(--color-neutral-200);margin:15px 0 18px">
+      <div onClick="{{ setBack }}" style="cursor:pointer;flex:1;text-align:center;padding:8px 0;border-radius:999px;font:400 13px var(--font-heading);background:{{ backBg }};color:{{ backFg }}">Looking back</div>
+      <div onClick="{{ setAhead }}" style="cursor:pointer;flex:1;text-align:center;padding:8px 0;border-radius:999px;font:400 13px var(--font-heading);background:{{ aheadBg }};color:{{ aheadFg }}">Looking ahead</div>
+    </div>
+
+    <sc-if value="{{ ahead }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="display:flex;gap:6px;margin-bottom:13px">
+          <sc-for list="{{ fc }}" as="f" hint-placeholder-count="7">
+            <div onClick="{{ f.pick }}" style="flex:1;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px">
+              <div style="width:100%;aspect-ratio:1;border-radius:999px;overflow:hidden;position:relative;background:{{ f.tint }}">
+                <div style="position:absolute;left:0;right:0;bottom:0;height:{{ f.fillH }};background:{{ f.fill }};opacity:.5"></div>
+                <span style="position:absolute;inset:0;display:grid;place-items:center;font-family:var(--font-heading);font-size:13px;color:{{ f.ink }}">{{ f.num }}</span>
+                <sc-if value="{{ f.isTomorrow }}"><span style="position:absolute;inset:0;border-radius:999px;box-shadow:inset 0 0 0 2px var(--color-accent)"></span></sc-if>
+              </div>
+              <span style="font:600 9.5px var(--font-body);letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-600)">{{ f.wd1 }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:9px;padding:12px 0;border-top:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider);margin-bottom:18px">
+          <span style="width:9px;height:9px;flex:none;border-radius:999px;background:{{ tm.fill }}"></span>
+          <div style="flex:1;min-width:0;font:400 11.5px var(--font-body);color:var(--color-neutral-700)">
+            <b style="font-weight:700;color:var(--color-accent-700)">{{ tm.verdict }} tomorrow</b> — {{ tm.cloudLabel }}, sunrise {{ tm.sunrise }}, leave {{ tm.leave }}.
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:7px">
+          <sc-for list="{{ weekdays }}" as="w" hint-placeholder-count="7">
+            <div style="text-align:center;font:600 9px var(--font-body);letter-spacing:.1em;color:var(--color-neutral-500)">{{ w }}</div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin:0 0 9px 2px">
+          <h4 style="margin:0;font-family:var(--font-heading);font-size:18px">August</h4>
+          <span style="font:600 9px var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-600)">11 walked · 7 forecast</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px">
+          <sc-for list="{{ planCells }}" as="c">
+            <sc-if value="{{ c.pad }}"><div></div></sc-if>
+            <sc-if value="{{ c.photo }}">
+              <div onClick="{{ c.open }}" style="cursor:pointer;position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;box-shadow:var(--shadow-sm)">
+                <img src="{{ c.src }}" alt="" style="width:100%;height:100%;object-fit:cover">
+                <span style="position:absolute;top:2px;left:5px;font:700 9px var(--font-body);color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.55)">{{ c.numText }}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ c.emptyAny }}">
+              <div style="position:relative;aspect-ratio:1;border-radius:12px;background:var(--color-neutral-300)">
+                <span style="position:absolute;top:2px;left:5px;font:600 9px var(--font-body);color:var(--color-neutral-500)">{{ c.numText }}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ c.isFc }}">
+              <div onClick="{{ c.pick }}" style="cursor:pointer;position:relative;aspect-ratio:1;border-radius:12px;background:{{ c.tint }};overflow:hidden">
+                <span style="position:absolute;top:2px;left:5px;font:700 9px var(--font-body);color:{{ c.ink }};opacity:.75">{{ c.numText }}</span>
+                <span style="position:absolute;left:0;right:0;top:52%;transform:translateY(-50%);text-align:center;font-family:var(--font-heading);font-size:12px;color:{{ c.ink }}">{{ c.cloudPct }}</span>
+                <span style="position:absolute;left:0;bottom:0;height:3px;width:{{ c.barW }};background:{{ c.fill }}"></span>
+                <sc-if value="{{ c.chosen }}"><span style="position:absolute;inset:0;border-radius:12px;box-shadow:inset 0 0 0 2px {{ c.fill }}"></span></sc-if>
+              </div>
+            </sc-if>
+            <sc-if value="{{ c.far }}">
+              <div style="position:relative;aspect-ratio:1">
+                <span style="position:absolute;top:2px;left:5px;font:600 9px var(--font-body);color:var(--color-neutral-400)">{{ c.numText }}</span>
+              </div>
+            </sc-if>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:6px 14px;font:400 10.5px var(--font-body);color:var(--color-neutral-600);margin-bottom:18px">
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:3px;background:var(--color-accent)"></span>Colour likely</span>
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:3px;background:var(--color-accent-2-600)"></span>Worth going</span>
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:3px;background:var(--color-neutral-400)"></span>Grey or wet</span>
+        </div>
+
+        <div style="border-radius:20px;background:var(--color-neutral-100);padding:14px 16px">
+          <div style="font:600 9.5px var(--font-body);letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-600);margin-bottom:11px">{{ sel.long }}</div>
+          <sc-for list="{{ marks }}" as="k">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:5px 0">
+              <span style="font:400 12px var(--font-body);color:var(--color-neutral-700)">{{ k.label }}</span>
+              <span style="font-family:var(--font-heading);font-size:14px">{{ k.time }}</span>
+            </div>
+          </sc-for>
+          <div style="height:1px;background:var(--color-divider);margin:10px 0 11px"></div>
+          <div style="font:400 12px/1.5 var(--font-body);color:var(--color-neutral-700);text-wrap:pretty">{{ sel.line }}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px 6px;margin-top:11px;font:400 11px var(--font-body);color:var(--color-neutral-700)">
+            <span style="border-radius:999px;background:var(--color-neutral-200);padding:5px 11px;white-space:nowrap">{{ sel.temp }}</span>
+            <span style="border-radius:999px;background:var(--color-neutral-200);padding:5px 11px;white-space:nowrap">{{ sel.wind }}</span>
+            <span style="border-radius:999px;background:var(--color-neutral-200);padding:5px 11px;white-space:nowrap">Rain {{ sel.rain }}</span>
+            <span style="border-radius:999px;background:var(--color-neutral-200);padding:5px 11px;white-space:nowrap">Fog {{ sel.fog }}</span>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ back }}">
+      <div>
+        <div style="display:flex;gap:6px;margin-bottom:14px">
+          <sc-for list="{{ strip }}" as="s">
+            <div onClick="{{ s.open }}" style="flex:1;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px">
+              <div style="width:100%;aspect-ratio:1;border-radius:999px;overflow:hidden;position:relative;background:var(--color-neutral-200)">
+                <sc-if value="{{ s.src }}"><img src="{{ s.src }}" alt="" style="width:100%;height:100%;object-fit:cover"></sc-if>
+                <sc-if value="{{ s.isToday }}"><span style="position:absolute;inset:0;border-radius:999px;box-shadow:inset 0 0 0 2px var(--color-accent)"></span></sc-if>
+              </div>
+              <span style="font:600 9.5px var(--font-body);letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-600)">{{ s.wd }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px 11px;padding:13px 0;border-top:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider);margin-bottom:18px;font:400 11.5px var(--font-body);color:var(--color-neutral-700)">
+          <span><b style="font-weight:700;color:var(--color-accent-700)">{{ stats.total }}</b> sunwalks</span>
+          <span><b style="font-weight:700;color:var(--color-accent-700)">{{ stats.week }}</b> this week</span>
+          <span><b style="font-weight:700;color:var(--color-accent-700)">{{ stats.run }}</b> in a row</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+          <sc-for list="{{ augMonth.cells }}" as="c">
+            <sc-if value="{{ c.pad }}"><div></div></sc-if>
+            <sc-if value="{{ c.photo }}">
+              <div onClick="{{ c.open }}" style="cursor:pointer;position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;box-shadow:var(--shadow-sm)">
+                <img src="{{ c.src }}" alt="" style="width:100%;height:100%;object-fit:cover">
+                <span style="position:absolute;top:2px;left:5px;font:700 9px var(--font-body);color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.55)">{{ c.numText }}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ c.emptyAny }}">
+              <div style="position:relative;aspect-ratio:1;border-radius:12px;background:var(--color-neutral-300)">
+                <span style="position:absolute;top:2px;left:5px;font:600 9px var(--font-body);color:var(--color-neutral-500)">{{ c.numText }}</span>
+              </div>
+            </sc-if>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-import>
+</div>
+
+<div class="dv-opt" id="3c">
+<div class="dv-olabel"><a class="dv-oid" href="#3c">3c</a>Night view — tap “Plan tomorrow” on the calendar, tap “Calendar” to come back</div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+<div style="height:100%;min-height:788px;overflow:hidden;background:#17140f">
+<sc-if value="{{ planOpen }}" hint-placeholder-val="{{ true }}">
+  <div style="height:100%;min-height:788px;overflow:auto;background:#17140f;padding:52px 20px 26px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:22px">
+      <div onClick="{{ closePlan }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;border-radius:999px;background:rgba(255,255,255,.12);padding:7px 14px 7px 11px">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f5ead8" stroke-width="2.75" stroke-linecap="round"><path d="M15 5l-7 7 7 7"></path></svg>
+        <span style="font:400 13px var(--font-heading);color:#f5ead8">Calendar</span>
+      </div>
+      <div style="font:600 9.5px var(--font-body);letter-spacing:.16em;text-transform:uppercase;color:rgba(245,234,216,.5);white-space:nowrap">Planning {{ sel.dayName }}</div>
+    </div>
+
+    <div style="font:600 10px var(--font-body);letter-spacing:.14em;text-transform:uppercase;color:rgba(245,234,216,.45);margin-bottom:6px">{{ sel.dateLine }}</div>
+    <h3 style="margin:0;font-family:var(--font-heading);font-size:42px;line-height:1.02;letter-spacing:-.02em;color:{{ sel.dark }}">{{ sel.verdict }}</h3>
+    <p style="margin:10px 0 24px;min-height:44px;font:400 14px/1.55 var(--font-body);color:rgba(245,234,216,.78);text-wrap:pretty">{{ sel.line }}</p>
+
+    <div style="position:relative;height:58px;border-radius:16px;background:linear-gradient(90deg,#1b1a28 0%,#2e2334 18%,#6b3a30 40%,#c67139 54%,#e2b46f 70%,#d9d3bd 100%);margin-bottom:9px">
+      <sc-for list="{{ mainMarks }}" as="k" hint-placeholder-count="3">
+        <div style="position:absolute;top:0;bottom:0;left:{{ k.left }};width:2px;background:rgba(23,20,15,.5)"></div>
+      </sc-for>
+    </div>
+    <div style="position:relative;height:44px;margin-bottom:22px">
+      <sc-for list="{{ mainMarks }}" as="k" hint-placeholder-count="3">
+        <div style="position:absolute;left:{{ k.left }};top:0;transform:translateX(-50%);text-align:center;white-space:nowrap">
+          <div style="font-family:var(--font-heading);font-size:13px;color:#f5ead8">{{ k.time }}</div>
+          <div style="font:600 8.5px var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:rgba(245,234,216,.5);margin-top:2px">{{ k.label }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px">
+      <div style="border-radius:18px;background:rgba(255,255,255,.07);padding:13px 15px">
+        <div style="font:600 8.5px var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:rgba(245,234,216,.45)">Cloud</div>
+        <div style="font-family:var(--font-heading);font-size:22px;color:#f5ead8;margin:2px 0 5px">{{ sel.cloudPct }}</div>
+        <div style="height:5px;border-radius:999px;background:rgba(255,255,255,.14);position:relative">
+          <div style="position:absolute;left:30%;width:40%;top:0;bottom:0;background:rgba(122,138,94,.5)"></div>
+          <div style="position:absolute;left:{{ sel.barW }};top:-3px;width:11px;height:11px;margin-left:-5.5px;border-radius:999px;background:{{ sel.dark }}"></div>
+        </div>
+        <div style="font:400 10.5px var(--font-body);color:rgba(245,234,216,.6);margin-top:6px">{{ sel.cloudLabel }}</div>
+      </div>
+      <div style="border-radius:18px;background:rgba(255,255,255,.07);padding:13px 15px">
+        <div style="font:600 8.5px var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:rgba(245,234,216,.45)">Out there</div>
+        <div style="font-family:var(--font-heading);font-size:22px;color:#f5ead8;margin:2px 0 5px">{{ sel.temp }}</div>
+        <div style="font:400 10.5px/1.5 var(--font-body);color:rgba(245,234,216,.6)">{{ sel.feels }} · {{ sel.wind }}<br>Rain {{ sel.rain }} · fog {{ sel.fog }}</div>
+      </div>
+    </div>
+
+    <div style="height:1px;background:rgba(245,234,216,.14);margin:22px 0 20px"></div>
+
+    <div style="font:600 9.5px var(--font-body);letter-spacing:.14em;text-transform:uppercase;color:rgba(245,234,216,.45);margin-bottom:10px">The week ahead</div>
+    <div style="display:flex;gap:6px">
+      <sc-for list="{{ fc }}" as="f" hint-placeholder-count="7">
+        <div onClick="{{ f.pick }}" style="flex:1;cursor:pointer;border-radius:14px;padding:9px 0 10px;text-align:center;background:rgba(255,255,255,.07)">
+          <div style="font:600 9px var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:rgba(245,234,216,.5)">{{ f.wd1 }}</div>
+          <div style="font-family:var(--font-heading);font-size:13px;color:#f5ead8;margin:3px 0 6px">{{ f.num }}</div>
+          <div style="width:9px;height:9px;border-radius:999px;background:{{ f.dark }};margin:0 auto"></div>
+          <sc-if value="{{ f.chosen }}"><div style="height:2px;border-radius:999px;background:{{ f.dark }};margin:8px 9px 0"></div></sc-if>
+        </div>
+      </sc-for>
+    </div>
+    <div style="font:400 11px var(--font-body);color:rgba(245,234,216,.5);margin-top:10px">{{ driftLine }} Tap a day to plan it.</div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ planShut }}">
+  <div style="height:100%;min-height:788px;overflow:auto;background:var(--color-bg);padding:54px 14px 96px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:2px 0 4px">
+      <div>
+        <h3 style="margin:0;font-family:var(--font-heading);font-size:26px;letter-spacing:-.02em">Sunwalks</h3>
+        <div style="font:600 11px var(--font-body);color:var(--color-neutral-700);margin-top:2px;white-space:nowrap">{{ todayLine }}</div>
+      </div>
+      <div onClick="{{ openSheet }}" style="cursor:pointer;width:34px;height:34px;border-radius:999px;display:grid;place-items:center;background:var(--color-neutral-200);flex:none">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#645c50" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 3v2M12 19v2M4.2 7.5l1.7 1M18.1 15.5l1.7 1M4.2 16.5l1.7-1M18.1 8.5l1.7-1"></path></svg>
+      </div>
+    </div>
+
+    <div onClick="{{ openPlan }}" style="cursor:pointer;display:flex;align-items:center;gap:12px;border-radius:20px;background:#17140f;padding:13px 15px;margin:16px 0 18px">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#e0954f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a6.6 6.6 0 0 0 11 11z"></path></svg>
+      <div style="flex:1;min-width:0">
+        <div style="font:600 9px var(--font-body);letter-spacing:.14em;text-transform:uppercase;color:rgba(245,234,216,.5)">Plan tomorrow</div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-top:2px">
+          <span style="font:400 16px var(--font-heading);color:{{ tm.dark }}">{{ tm.verdict }}</span>
+          <span style="font:400 12px var(--font-body);color:rgba(245,234,216,.7);white-space:nowrap">sunrise {{ tm.sunrise }}</span>
+        </div>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(245,234,216,.6)" stroke-width="2.75" stroke-linecap="round" style="flex:none"><path d="M9 5l7 7-7 7"></path></svg>
+    </div>
+
+    <div style="display:flex;gap:6px;margin-bottom:14px">
+      <sc-for list="{{ strip }}" as="s">
+        <div onClick="{{ s.open }}" style="flex:1;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px">
+          <div style="width:100%;aspect-ratio:1;border-radius:999px;overflow:hidden;position:relative;background:var(--color-neutral-200)">
+            <sc-if value="{{ s.src }}"><img src="{{ s.src }}" alt="" style="width:100%;height:100%;object-fit:cover"></sc-if>
+            <sc-if value="{{ s.isToday }}"><span style="position:absolute;inset:0;border-radius:999px;box-shadow:inset 0 0 0 2px var(--color-accent)"></span></sc-if>
+          </div>
+          <span style="font:600 9.5px var(--font-body);letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-600)">{{ s.wd }}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:7px">
+      <sc-for list="{{ weekdays }}" as="w" hint-placeholder-count="7">
+        <div style="text-align:center;font:600 9px var(--font-body);letter-spacing:.1em;color:var(--color-neutral-500)">{{ w }}</div>
+      </sc-for>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:8px;margin:0 0 9px 2px">
+      <h4 style="margin:0;font-family:var(--font-heading);font-size:18px">{{ augMonth.name }}</h4>
+      <span style="font:600 9px var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-600)">{{ augMonth.count }} captured</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+      <sc-for list="{{ augMonth.cells }}" as="c">
+        <sc-if value="{{ c.pad }}"><div></div></sc-if>
+        <sc-if value="{{ c.photo }}">
+          <div onClick="{{ c.open }}" style="cursor:pointer;position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;box-shadow:var(--shadow-sm)">
+            <img src="{{ c.src }}" alt="" style="width:100%;height:100%;object-fit:cover">
+            <span style="position:absolute;top:2px;left:5px;font:700 9px var(--font-body);color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.55)">{{ c.numText }}</span>
+            <sc-if value="{{ c.isToday }}"><span style="position:absolute;inset:0;border-radius:12px;box-shadow:inset 0 0 0 2px var(--color-accent)"></span></sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{ c.emptyAny }}">
+          <div style="position:relative;aspect-ratio:1;border-radius:12px;background:var(--color-neutral-300)">
+            <span style="position:absolute;top:2px;left:5px;font:600 9px var(--font-body);color:var(--color-neutral-500)">{{ c.numText }}</span>
+          </div>
+        </sc-if>
+      </sc-for>
+    </div>
+  </div>
+</sc-if>
+</div>
+</x-import>
+</div>
+
+</div>
+<p class="dv-next">Try next: “make the moon row on the calendar a live widget-style preview” · “give the week-ahead row verdict words, not just dots” · “add a lock-screen widget for the night before”</p>
+</section>
+
 <section class="dv-turn" id="t2">
 <div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Landscape photo view — rotate the phone and the sunrise fills the screen. Tap the photo to hide the chrome; the corner button switches fill / whole frame.</span></div>
 <div class="dv-opts">
@@ -625,12 +1034,25 @@ const PLACES = ['Telegraph Hill', 'Twin Peaks', 'Treasure Island', 'Rincon Park'
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const TODAY = { y: 2026, m: 8, d: 11 };
 
+/* Evening forecast — what you'd look at the night before */
+const FC = [
+  { m:8,d:12,cloud:45,band:'high cloud',sunrise:'6:24',first:'5:56',golden:'7:02',temp:57,feels:54,wind:'6 mph W',rain:5,fog:'Low',verdict:'Promising',line:'High cloud at 45% — the kind that lights up. Clear at the horizon.',score:5 },
+  { m:8,d:13,cloud:90,band:'low cloud',sunrise:'6:25',first:'5:57',golden:'7:03',temp:58,feels:56,wind:'9 mph WSW',rain:10,fog:'High',verdict:'Socked in',line:'Marine layer to 1,100 ft. Above it if you go high, grey if you don’t.',score:2 },
+  { m:8,d:14,cloud:15,band:'clear',sunrise:'6:26',first:'5:58',golden:'7:04',temp:55,feels:52,wind:'4 mph N',rain:0,fog:'Low',verdict:'Bare',line:'Empty sky. Little colour, but clean silhouettes.',score:3 },
+  { m:8,d:15,cloud:55,band:'high cloud',sunrise:'6:27',first:'5:59',golden:'7:05',temp:56,feels:53,wind:'7 mph W',rain:5,fog:'Low',verdict:'Promising',line:'Broken cirrus. Worth the alarm.',score:5 },
+  { m:8,d:16,cloud:35,band:'mid cloud',sunrise:'6:28',first:'6:00',golden:'7:06',temp:59,feels:57,wind:'5 mph NW',rain:0,fog:'Low',verdict:'Good',line:'Scattered mid cloud, warm morning.',score:4 },
+  { m:8,d:17,cloud:100,band:'rain',sunrise:'6:29',first:'6:01',golden:'7:07',temp:60,feels:58,wind:'14 mph S',rain:65,fog:'Med',verdict:'Wet',line:'Rain through the morning. Sleep in.',score:1 },
+  { m:8,d:18,cloud:60,band:'high cloud',sunrise:'6:30',first:'6:02',golden:'7:08',temp:57,feels:54,wind:'8 mph W',rain:15,fog:'Low',verdict:'Good',line:'Thickening from the west, but colour first.',score:4 }
+];
+const VANTAGE = { name:'Telegraph Hill', walk:'12 min uphill', azimuth:'Sun clears the ridge at 76° ENE', why:'Highest thing east of you — above the layer if it rolls in.' };
+
 class Component extends DCLogic {
   state = {
     view: 'month', filter: false, detail: null, sheet: false, copied: false,
     auto: true, chosen: {}, synced: '6:52 AM',
     dView: 'month', dFilter: false, dDetail: null, dMonth: 8,
-    lDetail: { m: 8, d: 11, view: 0 }, landFit: false, landChrome: true
+    lDetail: { m: 8, d: 11, view: 0 }, landFit: false, landChrome: true,
+    cardOpen: true, ahead: true, planOpen: true, planPick: 0, alarmSet: false
   };
 
   detailKey(surface) { return surface === 'd' ? 'dDetail' : (surface === 'l' ? 'lDetail' : 'detail'); }
@@ -742,6 +1164,38 @@ class Component extends DCLogic {
 
   pill(on) { return on ? { bg: 'var(--color-accent)', fg: 'var(--color-bg)' } : { bg: 'transparent', fg: 'var(--color-neutral-700)' }; }
 
+  /* --- evening planning --- */
+  tone(score) {
+    if (score >= 5) return { fill: 'var(--color-accent)', tint: 'var(--color-accent-200)', ink: 'var(--color-accent-800)', dark: '#e0954f' };
+    if (score >= 4) return { fill: 'var(--color-accent-2-600)', tint: 'var(--color-accent-2-200)', ink: 'var(--color-accent-2-800)', dark: '#a8b884' };
+    if (score >= 3) return { fill: 'var(--color-neutral-500)', tint: 'var(--color-neutral-200)', ink: 'var(--color-neutral-800)', dark: 'rgba(245,234,216,.7)' };
+    return { fill: 'var(--color-neutral-400)', tint: 'var(--color-neutral-200)', ink: 'var(--color-neutral-700)', dark: 'rgba(245,234,216,.5)' };
+  }
+  mins(t) { const p = t.split(':'); return (+p[0]) * 60 + (+p[1]); }
+  fcAt(m, d) { return FC.find(f => f.m === m && f.d === d); }
+
+  fcDay(f, i) {
+    const t = this.tone(f.score);
+    const leaveM = this.mins(f.sunrise) - 36;
+    return {
+      wd: this.wd(f.m, f.d), wd1: this.wd(f.m, f.d).slice(0, 1), num: f.d,
+      isTomorrow: i === 0,
+      long: (i === 0 ? 'Tomorrow' : this.wd(f.m, f.d)) + ' · ' + MONTH_NAMES[f.m - 1] + ' ' + f.d,
+      dayName: i === 0 ? 'Tomorrow' : this.wd(f.m, f.d),
+      dateLine: this.longDate(f.m, f.d),
+      cloud: f.cloud, cloudPct: f.cloud + '%', cloudLabel: f.cloud + '% ' + f.band,
+      fillH: f.cloud + '%', barW: f.cloud + '%',
+      sunrise: f.sunrise + ' AM', sunriseShort: f.sunrise,
+      first: f.first + ' AM', golden: f.golden + ' AM',
+      leave: Math.floor(leaveM / 60) + ':' + String(leaveM % 60).padStart(2, '0') + ' AM',
+      alarm: Math.floor((leaveM - 15) / 60) + ':' + String((leaveM - 15) % 60).padStart(2, '0') + ' AM',
+      temp: f.temp + '°', feels: 'feels ' + f.feels + '°', wind: f.wind,
+      rain: f.rain + '%', fog: f.fog, verdict: f.verdict, line: f.line,
+      fill: t.fill, tint: t.tint, ink: t.ink, dark: t.dark,
+      sweet: f.cloud >= 30 && f.cloud <= 70
+    };
+  }
+
   renderVals() {
     const s = this.state;
     this.index();
@@ -811,7 +1265,49 @@ class Component extends DCLogic {
     const dfil = s.dFilter ? { bg: 'var(--color-accent-2-600)', fg: '#fff' } : { bg: 'var(--color-neutral-200)', fg: 'var(--color-neutral-700)' };
 
     const dm = Math.max(2, s.dMonth);
+
+    /* forecast objects */
+    const fc = FC.map((f, i) => Object.assign(this.fcDay(f, i), {
+      pick: () => this.setState({ planPick: i, planOpen: true }),
+      chosen: i === s.planPick
+    }));
+    const tm = fc[0];
+    const sel = fc[s.planPick];
+    /* 3b — August with the week ahead filled in */
+    const planCells = [];
+    for (let i = 0; i < new Date(2026, 7, 1).getDay(); i++) planCells.push({ pad: true });
+    for (let d = 1; d <= 31; d++) {
+      if (d <= TODAY.d) { const c = this.cell(8, d, 'm'); c.isPast = true; planCells.push(c); continue; }
+      const f = this.fcAt(8, d);
+      if (f) { const o = this.fcDay(f, d - 12); o.isFc = true; o.numText = String(d); planCells.push(o); continue; }
+      planCells.push({ far: true, numText: String(d) });
+    }
+    /* 3c — the light window, 5:30 → 7:30 */
+    const span = (t) => (((this.mins(t) - 330) / 120) * 100) + '%';
+    const marks = [
+      { label: 'Leave', time: sel.leave, left: span(sel.leave.replace(' AM', '')), lead: true },
+      { label: 'First light', time: sel.first, left: span(sel.first.replace(' AM', '')) },
+      { label: 'Sunrise', time: sel.sunrise, left: span(sel.sunriseShort), key: true },
+      { label: 'Golden ends', time: sel.golden, left: span(sel.golden.replace(' AM', '')) }
+    ];
+
     return {
+      tm, fc, sel, planCells, marks, vantage: VANTAGE,
+      leadMarks: marks.filter(k => k.lead), mainMarks: marks.filter(k => !k.lead),
+      augMonth: this.monthObj(8, 'm'),
+      cardOpen: s.cardOpen, cardShut: !s.cardOpen,
+      toggleCard: () => this.setState({ cardOpen: !s.cardOpen }),
+      ahead: s.ahead, back: !s.ahead,
+      setAhead: () => this.setState({ ahead: true }), setBack: () => this.setState({ ahead: false }),
+      aheadBg: s.ahead ? 'var(--color-accent)' : 'transparent', aheadFg: s.ahead ? 'var(--color-bg)' : 'var(--color-neutral-700)',
+      backBg: s.ahead ? 'transparent' : 'var(--color-accent)', backFg: s.ahead ? 'var(--color-neutral-700)' : 'var(--color-bg)',
+      planOpen: s.planOpen, planShut: !s.planOpen,
+      driftLine: 'Sunrise drifts ' + fc[0].sunriseShort + ' → ' + fc[6].sunriseShort + ' across the week.',
+      openPlan: () => this.setState({ planOpen: true }), closePlan: () => this.setState({ planOpen: false }),
+      alarmSet: s.alarmSet, alarmOff: !s.alarmSet,
+      setAlarm: () => this.setState({ alarmSet: !s.alarmSet }),
+      alarmLabel: s.alarmSet ? 'Alarm set · ' + sel.alarm : 'Wake me at ' + sel.alarm,
+      fcAhead: { good: 4, best: 'Wednesday', bestLine: 'Best odds this week' },
       winW: 1180, winH: 768,
       weekdays: ['S','M','T','W','T','F','S'],
       stats: { total: this._total, week: 6, month: 20, avg: '4.4', run: 3 },

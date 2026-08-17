@@ -8,6 +8,8 @@ The files in this bundle are **design references authored in HTML** — a workin
 
 `Sunrise Calendar.dc.html` is a single-file prototype containing three views side by side on one canvas (badges `1a`, `1b`, `1c`). It uses a small template runtime plus two device-frame helpers (`ios-frame.jsx`, `browser-window.jsx`) purely to draw the phone bezel and browser chrome — **none of that is part of the product**. Ignore the frames; implement what is inside them.
 
+**Looking ahead is specified separately.** `PLANNING.md` in this bundle covers the night-time planning view (badge `3c`) — the forecast screen, its entry point on the calendar, and the verdict rules. This README covers the calendar itself.
+
 ## Fidelity
 
 **High-fidelity.** Colors, type, spacing, radii, states and copy are final. Recreate pixel-for-pixel. All values come from the Organic design system (`styles.css` in this bundle) — consume those CSS variables rather than re-typing hex codes.
@@ -184,12 +186,18 @@ In `screenshots/`, captured at 2×:
 | `2a-mobile-landscape-photo.png` | Landscape photo view, chrome visible |
 | `1b-web-month.png` | Web, month zoom with the stats rail |
 | `1c-first-run.png` | First run / album picker |
+| `3c-night-promising.png` | Planning view, tomorrow — see `PLANNING.md` |
+| `3c-night-socked-in.png` | Planning view re-targeted to Thursday |
+| `3c-calendar-entry.png` | Calendar with the "Plan tomorrow" entry row |
 
 ## Files in this bundle
 
 | File | What it is |
 | --- | --- |
 | `Sunrise Calendar.dc.html` | The prototype: 2a landscape photo view, 1a mobile, 1b web, 1c first run, all interactive |
+| `PLANNING.md` | Spec for the night-time planning view (`3c`) — forecast, timeline, verdicts |
+| `MOTION.md` | The authority on all timing |
+| `ANDROID_UPDATE.md` | Android-specific notes |
 | `styles.css` | The Organic design system — tokens and component classes |
 | `ios-frame.jsx`, `browser-window.jsx` | Device/browser chrome for the prototype only — not product code |
 | `assets/sq/`, `assets/full/` | Sunrise photo derivatives |

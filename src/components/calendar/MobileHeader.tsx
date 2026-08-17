@@ -17,7 +17,7 @@ export function MobileHeader({ today, readOnly, syncing, onRefresh, onOpenSettin
     <div className={styles.header}>
       <div>
         <h3 className={styles.wordmark}>
-          Sunwalks <span className={styles.version}>v1.1</span>
+          Sunwalks <span className={styles.version}>v1.2</span>
         </h3>
         <div className={styles.date}>{formatLongDateWithYear(today)}</div>
       </div>

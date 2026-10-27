@@ -3,7 +3,7 @@
 A personal calendar where every day square is the sunrise photo you were out
 for that morning. Photos come from Google Photos; days you didn't make it out
 stay empty, so the calendar is the streak. At night, a planning view reads
-tomorrow's forecast and tells you whether the walk is worth the alarm.
+tomorrow's forecast so you can plan your walk accordingly.
 
 <p align="center">
   <img src="docs/screenshots/desktop-month.png" alt="Desktop month view with the stats rail" width="100%">
@@ -17,6 +17,7 @@ tomorrow's forecast and tells you whether the walk is worth the alarm.
 </p>
 
 > Screenshots use the bundled sample photos in [demo mode](#quickstart-demo-mode-no-google-account).
+> These are AI-generated stand-ins (see [Credits](#credits)), not real photos.
 
 ## Features
 
@@ -252,6 +253,14 @@ design_handoff_*/        the Claude Design specs this was built from
 - **Native Android**: read sunrise photos straight from the device instead
   of importing them, plus home-screen widgets.
 
+## Credits
+
+The sample photos in `public/seed-photos/` and `design_handoff_sunrise_calendar/assets/`,
+and the photos visible in the screenshots, were generated with Google's
+Nano Banana (Gemini image model) as stand-ins for real sunrise photos. They
+aren't covered by the MIT license; use them freely, no rights reserved.
+
 ## License
 
-[MIT](LICENSE)
+Code is [MIT](LICENSE). The generated sample photos are excluded; see
+[Credits](#credits).

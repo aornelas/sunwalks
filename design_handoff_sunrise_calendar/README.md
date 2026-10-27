@@ -167,7 +167,7 @@ All from the Organic design system — `styles.css` is in this bundle; link it o
 
 - `assets/sq/1–12.png` — 360×360 center crops of the owner's real sunrise photos, used for grid squares, strip circles and year dots.
 - `assets/full/1–12.png` — 900px-wide versions for the photo view.
-- Both are derived from twelve sample photos (generated stand-ins for the owner's own, swapped in for the public release). In production these are generated from the Google Photos album; the prototype cycles the same twelve across 99 captured days.
+- Both are derived from twelve sample photos (stand-ins generated with Google's Nano Banana for the public release, replacing the owner's own; not covered by the repo's MIT license, no rights reserved). In production these are generated from the Google Photos album; the prototype cycles the same twelve across 99 captured days.
 - Fonts: Caprasimo + Figtree from Google Fonts (imported at the top of `styles.css`).
 
 ## Screenshots

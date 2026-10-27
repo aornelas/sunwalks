@@ -69,6 +69,43 @@ Next.js 16 (App Router) · React 19 · TypeScript · Drizzle ORM + Postgres
 hand-rolled Google OAuth · Google Photos **Picker API** · Open-Meteo +
 `suncalc` · CSS Modules, no UI framework.
 
+## Architecture
+
+```
+ Google Photos Picker ──(owner picks)──▶ /api/picker/session/* ──▶ src/lib/ingest.ts
+                                                                     │  480px square + 1600px full
+                                                                     ▼
+ Postgres (Drizzle) ◀── photo rows, days ──┘          Vercel Blob (private) ◀── image bytes
+      │                                                    │
+      ▼                                                    ▼
+ /api/days, /api/stats, /api/day-keys          /api/photos/[id]/image (streams bytes)
+      │                                                    │
+      └──────────────▶ CalendarApp (client) ◀──────────────┘
+                              ▲
+ Open-Meteo + suncalc ──▶ /api/planning ──▶ PlanningView
+```
+
+- **Data model** (`src/db/schema.ts`):
+  - `photos`: one row per imported shot, with the date and the time it was
+    taken.
+  - `days`: one row per date that has photos, plus the chosen day photo.
+  - `owner_account`: the single owner and their encrypted Google refresh
+    token.
+  - `sessions` and `share_links`: sign-in sessions and unlisted share tokens.
+  - `sync_log`: a record of each import.
+  - `forecast_days`: a cache of fetched forecasts for the planning view.
+- **Auth**: Google OAuth is used only to identify the owner and to call the
+  Picker API. `src/proxy.ts` redirects unauthenticated page loads to
+  `/login`, and every owner API route re-checks the session in
+  `requireOwner()`.
+- **Sharing**: `/s/[token]` and `/api/s/[token]/*` are read-only mirrors of
+  the owner APIs, gated by an active share token instead of a session.
+- **Image URLs are capability URLs.** `/api/photos/[id]/image` is public so
+  the share page can render photos; photo ids are long, unguessable Google
+  media ids.
+- **"Day" boundaries** are computed in `APP_TIMEZONE` (`src/lib/dates.ts`),
+  not UTC, so a 6 AM photo lands on the right square.
+
 ## Quickstart (demo mode, no Google account)
 
 Demo mode seeds about 130 days of captures from 12 bundled sample photos,
@@ -93,6 +130,11 @@ npm run dev
 ```
 
 Open http://localhost:3000.
+
+The sample photos are rebuilt with `npm run sample-photos -- <dir>`, which
+crops and resizes any folder of 16:9 images and strips their metadata
+(EXIF, GPS, XMP, IPTC). `npm run sample-photos -- --check` fails if any
+committed image carries metadata.
 
 > **Never set `DEMO_MODE=true` in production.** It disables the owner check
 > on every route.
@@ -198,6 +240,17 @@ design_handoff_*/        the Claude Design specs this was built from
 - **No automatic sync.** This is a Google platform restriction (see above).
 - **Built for one person in one place.** The verdict copy assumes coastal fog
   ("marine layer"), and the Android tuning targeted a Pixel 10 Pro XL.
+
+## Roadmap
+
+- **Claude layer**
+  - A photo-source interface between the app and wherever photos live.
+  - Vision tagging of each sunrise (colours, cloud type, a "drama" score,
+    alt text) through the Claude API, with a Batch API backfill.
+  - An MCP server exposing the archive to Claude.
+  - A "worth it tomorrow?" forecast agent that posts to Slack.
+- **Native Android**: read sunrise photos straight from the device instead
+  of importing them, plus home-screen widgets.
 
 ## License
 

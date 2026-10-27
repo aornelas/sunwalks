@@ -46,7 +46,10 @@ export function deriveVerdict(input: VerdictInput): { word: VerdictWord; score: 
   // is Wet, not Promising.
   if (input.precipProbability >= 50) return { word: "Wet", score: TONES.Wet.tone };
 
-  if (input.fogProbability >= 60 || input.cloudLow >= 80 || input.cloudTotal > 80) {
+  // Only fog or a low deck socks the morning in. A total overcast made of
+  // mid/high cloud is not grey at sunrise — the sun gets under it from the
+  // horizon — so it falls through to the cloud bands.
+  if (input.fogProbability >= 60 || input.cloudLow >= 80) {
     return { word: "Socked in", score: TONES["Socked in"].tone };
   }
 
@@ -97,7 +100,11 @@ export function buildReason(word: VerdictWord, input: VerdictInput): string {
         ? "Empty sky. Little colour, but clean silhouettes."
         : `Mostly clear, ${round(input.cloudTotal)}% cloud. Little colour, but clean silhouettes.`;
     case "Good":
-      return `Scattered ${dominantBandLabel(input).toLowerCase()} cloud, warm morning.`;
+      // Good is also where a mid/high overcast lands (Socked in is low cloud
+      // only), so don't call a full sky "scattered".
+      return input.cloudTotal > 80
+        ? `Solid ${dominantBandLabel(input).toLowerCase()} cloud at ${round(input.cloudTotal)}%. Lights up if the sun gets under it.`
+        : `Scattered ${dominantBandLabel(input).toLowerCase()} cloud, warm morning.`;
     case "Promising":
       return `${dominantBandLabel(input)} cloud at ${round(input.cloudTotal)}% — the kind that lights up. Clear at the horizon.`;
   }

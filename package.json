@@ -10,13 +10,14 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "tsx scripts/seed.ts"
+    "db:seed": "tsx scripts/seed.ts",
+    "sample-photos": "tsx scripts/prepare-sample-photos.ts"
   },
   "dependencies": {
-    "@vercel/blob": "^2.8.0",
+    "@vercel/blob": "^2.8.2",
     "drizzle-orm": "^0.45.2",
     "lucide-react": "^1.31.0",
-    "next": "16.3.0",
+    "next": "16.4.3",
     "postgres": "^3.4.9",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -29,8 +30,14 @@
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
-    "eslint-config-next": "16.3.0",
+    "eslint-config-next": "16.4.3",
+    "sharp": "^0.35.3",
     "tsx": "^4.23.12",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@vercel/cli-config": {
+      "zod": "^4.6.6"
+    }
   }
 }

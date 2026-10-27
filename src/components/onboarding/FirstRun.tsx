@@ -7,11 +7,11 @@ import { usePickerImport } from "@/hooks/usePickerImport";
 import styles from "./FirstRun.module.css";
 
 const ILLUSTRATION = [
-  "/seed-photos/sq/1.png",
+  "/seed-photos/sq/1.jpg",
   null,
-  "/seed-photos/sq/5.png",
+  "/seed-photos/sq/5.jpg",
   null,
-  "/seed-photos/sq/9.png",
+  "/seed-photos/sq/9.jpg",
   null,
 ] as const;
 

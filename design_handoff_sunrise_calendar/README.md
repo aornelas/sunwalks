@@ -167,12 +167,14 @@ All from the Organic design system — `styles.css` is in this bundle; link it o
 
 - `assets/sq/1–12.png` — 360×360 center crops of the owner's real sunrise photos, used for grid squares, strip circles and year dots.
 - `assets/full/1–12.png` — 900px-wide versions for the photo view.
-- Both are derived from twelve photos the owner supplied. In production these are generated from the Google Photos album; the prototype cycles the same twelve across 99 captured days.
+- Both are derived from twelve sample photos (generated stand-ins for the owner's own, swapped in for the public release). In production these are generated from the Google Photos album; the prototype cycles the same twelve across 99 captured days.
 - Fonts: Caprasimo + Figtree from Google Fonts (imported at the top of `styles.css`).
 
 ## Screenshots
 
-In `screenshots/`, captured at 2×:
+In `screenshots/`, captured at 2×.
+
+> **Public-release note:** the original prototype captures showed the owner's personal photos and account details. Everything here except the two `3c-night-*` files was re-captured from the built app in demo mode with the sample photos, so these show the shipped implementation rather than the prototype; the states listed are the same.
 
 | File | State |
 | --- | --- |

@@ -31,7 +31,7 @@ async function main() {
     const roll = Math.abs(Math.sin(offset * 12.9898) * 43758.5453) % 1;
     if (roll > CAPTURE_RATE) continue;
 
-    const filename = `${(photoIndex % PHOTO_COUNT) + 1}.png`;
+    const filename = `${(photoIndex % PHOTO_COUNT) + 1}.jpg`;
     photoIndex++;
     // ~6am in APP_TIMEZONE (America/Los_Angeles default, UTC-7/-8) — offset
     // from UTC so formatTime() shows a plausible sunrise hour, not local UTC.
@@ -44,8 +44,8 @@ async function main() {
       date: dayKey,
       takenAt,
       filename,
-      width: 1600,
-      height: 900,
+      width: 1360,
+      height: 765,
     });
     await db.insert(days).values({ date: dayKey, dayShotId: id });
 
@@ -53,15 +53,15 @@ async function main() {
     // multi-shot mornings.
     if (photoIndex % 6 === 0) {
       const secondId = `seed-${dayKey}-1`;
-      const secondFilename = `${((photoIndex + 3) % PHOTO_COUNT) + 1}.png`;
+      const secondFilename = `${((photoIndex + 3) % PHOTO_COUNT) + 1}.jpg`;
       const secondTakenAt = new Date(takenAt.getTime() + 9 * 60_000);
       await db.insert(photos).values({
         id: secondId,
         date: dayKey,
         takenAt: secondTakenAt,
         filename: secondFilename,
-        width: 1600,
-        height: 900,
+        width: 1360,
+        height: 765,
       });
     }
     inserted++;

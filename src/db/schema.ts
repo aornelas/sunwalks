@@ -66,8 +66,9 @@ export const shareLinks = pgTable(
 /**
  * The planning view's forecast cache — one row per calendar day, keyed on
  * the owner's fixed home coordinates. Verdict/score/reason are derived
- * server-side at fetch time (see lib/verdict.ts) so the phone and web view
- * can never disagree about whether a morning is Promising.
+ * server-side (see lib/verdict.ts) so the phone and web view can never
+ * disagree about whether a morning is Stunning. They're stored for
+ * reference, but lib/planning.ts re-derives them from the inputs on read.
  */
 export const forecastDays = pgTable("forecast_days", {
   date: date("date", { mode: "string" }).primaryKey(),

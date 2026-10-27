@@ -9,7 +9,7 @@ import { addDays, localDayKey } from "../src/lib/dates";
 import { env } from "../src/lib/env";
 
 const PHOTO_COUNT = 12;
-const HISTORY_DAYS = 220; // first-photo date is HISTORY_DAYS ago
+const HISTORY_DAYS = 165; // first-photo date is HISTORY_DAYS ago
 const CAPTURE_RATE = 0.6; // ~99 captured days out of ~165 mornings tried
 
 async function main() {

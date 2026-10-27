@@ -174,7 +174,7 @@ All from the Organic design system — `styles.css` is in this bundle; link it o
 
 In `screenshots/`, captured at 2×.
 
-> **Public-release note:** the original prototype captures showed the owner's personal photos and account details. Everything here except the two `3c-night-*` files was re-captured from the built app in demo mode with the sample photos, so these show the shipped implementation rather than the prototype; the states listed are the same.
+> **Public-release note:** the original prototype captures showed the owner's personal photos and account details. Everything here was re-captured from the built app in demo mode with the sample photos, so these show the shipped implementation rather than the prototype; the states listed are the same. The planning-view captures use the renamed verdicts (see `PLANNING.md` §Verdicts).
 
 | File | State |
 | --- | --- |
@@ -188,8 +188,8 @@ In `screenshots/`, captured at 2×.
 | `2a-mobile-landscape-photo.png` | Landscape photo view, chrome visible |
 | `1b-web-month.png` | Web, month zoom with the stats rail |
 | `1c-first-run.png` | First run / album picker |
-| `3c-night-promising.png` | Planning view, tomorrow — see `PLANNING.md` |
-| `3c-night-socked-in.png` | Planning view re-targeted to Thursday |
+| `3c-night-stunning.png` | Planning view, tomorrow — see `PLANNING.md` |
+| `3c-night-foggy.png` | Planning view re-targeted to Thursday |
 | `3c-calendar-entry.png` | Calendar with the "Plan tomorrow" entry row |
 
 ## Files in this bundle

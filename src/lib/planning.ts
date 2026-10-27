@@ -9,7 +9,7 @@ import { forecastDays } from "@/db/schema";
 import { addDays, dayKeyToDate, todayDayKey } from "./dates";
 import { env } from "./env";
 import { fetchForecastDays, type RawDayForecast } from "./weather";
-import { deriveVerdict, buildReason, type VerdictWord } from "./verdict";
+import { deriveVerdict, buildReason } from "./verdict";
 import { computeTimelineWindow } from "./timeline";
 import type { PlanningDay, PlanningResponse } from "./types";
 
@@ -29,7 +29,12 @@ export function planningStartDate(now: Date = new Date()): string {
 
 type ForecastRow = typeof forecastDays.$inferSelect;
 
+// The verdict is re-derived from the stored inputs rather than read back,
+// so a change to the rules or the vocabulary applies to cached rows at once
+// instead of after the next refresh (and the stale-forecast fallback never
+// serves a word the client no longer knows).
 function toPlanningDay(row: ForecastRow): PlanningDay {
+  const { word, score } = deriveVerdict(row);
   return {
     date: row.date,
     sunrise: row.sunrise.toISOString(),
@@ -46,9 +51,9 @@ function toPlanningDay(row: ForecastRow): PlanningDay {
     precipProbability: row.precipProbability,
     fogProbability: row.fogProbability,
     ceilingFt: row.ceilingFt,
-    verdict: row.verdict as VerdictWord,
-    score: row.score,
-    reason: row.reason,
+    verdict: word,
+    score,
+    reason: buildReason(word, row),
   };
 }
 

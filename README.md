@@ -29,8 +29,8 @@ tomorrow's forecast so you can plan your walk accordingly.
   is open.
 - **Planning view** for tomorrow morning: first light, sunrise and end of golden
   hour (solar maths via `suncalc`), cloud layers and conditions from
-  [Open-Meteo](https://open-meteo.com/), and a one-word verdict (*Promising*,
-  *Good*, *Bare*, *Socked in*, *Wet*) with a week-ahead strip.
+  [Open-Meteo](https://open-meteo.com/), and a one-word verdict (*Stunning*,
+  *Nice*, *Clear*, *Foggy*, *Wet*) with a week-ahead strip.
 - **Unlisted share link.** Anyone with the URL gets a read-only, `noindex`
   copy of the calendar. You can revoke it or generate a new one.
 - **Installable PWA**, tuned for Android/Chrome: safe-area insets, the

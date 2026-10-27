@@ -3,7 +3,7 @@
 // (no DB/network) so this is safe to import from both server code (deriving
 // the stored verdict) and client components (looking up a tone's colour).
 
-export type VerdictWord = "Promising" | "Good" | "Bare" | "Socked in" | "Wet";
+export type VerdictWord = "Stunning" | "Nice" | "Clear" | "Foggy" | "Wet";
 
 export interface VerdictTone {
   tone: 1 | 2 | 3 | 4 | 5;
@@ -14,10 +14,10 @@ export interface VerdictTone {
 }
 
 const TONES: Record<VerdictWord, VerdictTone> = {
-  Promising: { tone: 5, fill: "#c67139", dark: "#e0954f" },
-  Good: { tone: 4, fill: "#728157", dark: "#a8b884" },
-  Bare: { tone: 3, fill: "#a19786", dark: "rgba(245,234,216,.7)" },
-  "Socked in": { tone: 2, fill: "#c0b6a5", dark: "rgba(245,234,216,.5)" },
+  Stunning: { tone: 5, fill: "#c67139", dark: "#e0954f" },
+  Nice: { tone: 4, fill: "#728157", dark: "#a8b884" },
+  Clear: { tone: 3, fill: "#a19786", dark: "rgba(245,234,216,.7)" },
+  Foggy: { tone: 2, fill: "#c0b6a5", dark: "rgba(245,234,216,.5)" },
   Wet: { tone: 1, fill: "#c0b6a5", dark: "rgba(245,234,216,.5)" },
 };
 
@@ -41,19 +41,19 @@ function lowCloudMinority(input: VerdictInput, ceiling: number): boolean {
 }
 
 export function deriveVerdict(input: VerdictInput): { word: VerdictWord; score: number } {
-  // Resolution order per PLANNING.md: Wet wins over everything, then Socked
-  // in, then the cloud bands — a colourful-looking day that's also raining
-  // is Wet, not Promising.
+  // Resolution order per PLANNING.md: Wet wins over everything, then Foggy,
+  // then the cloud bands — a colourful-looking day that's also raining is
+  // Wet, not Stunning.
   if (input.precipProbability >= 50) return { word: "Wet", score: TONES.Wet.tone };
 
-  // Only fog or a low deck socks the morning in. A total overcast made of
+  // Only fog or a low deck makes the morning Foggy. A total overcast made of
   // mid/high cloud is not grey at sunrise — the sun gets under it from the
   // horizon — so it falls through to the cloud bands.
   if (input.fogProbability >= 60 || input.cloudLow >= 80) {
-    return { word: "Socked in", score: TONES["Socked in"].tone };
+    return { word: "Foggy", score: TONES.Foggy.tone };
   }
 
-  if (input.cloudTotal < 20) return { word: "Bare", score: TONES.Bare.tone };
+  if (input.cloudTotal < 20) return { word: "Clear", score: TONES.Clear.tone };
 
   if (
     input.cloudTotal >= 30 &&
@@ -61,10 +61,10 @@ export function deriveVerdict(input: VerdictInput): { word: VerdictWord; score: 
     lowCloudMinority(input, 25) &&
     input.precipProbability < 20
   ) {
-    return { word: "Promising", score: TONES.Promising.tone };
+    return { word: "Stunning", score: TONES.Stunning.tone };
   }
 
-  return { word: "Good", score: TONES.Good.tone };
+  return { word: "Nice", score: TONES.Nice.tone };
 }
 
 function dominantBandLabel(input: VerdictInput): "High" | "Mid" {
@@ -87,7 +87,7 @@ export function buildReason(word: VerdictWord, input: VerdictInput): string {
       return input.precipProbability >= 70
         ? "Rain through the morning. Sleep in."
         : `Showers likely, ${round(input.precipProbability)}% chance. Sleep in.`;
-    case "Socked in":
+    case "Foggy":
       if (input.ceilingFt != null && (input.fogProbability >= 60 || input.cloudLow >= 80)) {
         return `Marine layer to ${round(input.ceilingFt).toLocaleString("en-US")} ft. Above it if you go high, grey if you don't.`;
       }
@@ -95,17 +95,17 @@ export function buildReason(word: VerdictWord, input: VerdictInput): string {
         return `Fog likely, ${round(input.fogProbability)}% chance. Grey start, may burn off late.`;
       }
       return `${round(input.cloudLow)}% low cloud — a solid grey lid. Little chance of colour.`;
-    case "Bare":
+    case "Clear":
       return input.cloudTotal < 8
         ? "Empty sky. Little colour, but clean silhouettes."
         : `Mostly clear, ${round(input.cloudTotal)}% cloud. Little colour, but clean silhouettes.`;
-    case "Good":
-      // Good is also where a mid/high overcast lands (Socked in is low cloud
+    case "Nice":
+      // Nice is also where a mid/high overcast lands (Foggy is low cloud
       // only), so don't call a full sky "scattered".
       return input.cloudTotal > 80
         ? `Solid ${dominantBandLabel(input).toLowerCase()} cloud at ${round(input.cloudTotal)}%. Lights up if the sun gets under it.`
         : `Scattered ${dominantBandLabel(input).toLowerCase()} cloud, warm morning.`;
-    case "Promising":
+    case "Stunning":
       return `${dominantBandLabel(input)} cloud at ${round(input.cloudTotal)}% — the kind that lights up. Clear at the horizon.`;
   }
 }

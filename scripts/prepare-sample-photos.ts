@@ -10,7 +10,7 @@
 // week view's tall card are centre crops. scripts/seed.ts cycles through
 // PHOTO_COUNT of them and records FULL's dimensions on each seeded photo.
 import { execFileSync } from "node:child_process";
-import { mkdirSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
 
@@ -52,7 +52,7 @@ async function build(sourceDir: string) {
 async function check() {
   const tracked = execFileSync("git", ["ls-files", "-z"], { encoding: "utf8" })
     .split("\0")
-    .filter((f) => AUDIT_EXT.test(f));
+    .filter((f) => AUDIT_EXT.test(f) && existsSync(f)); // skip deleted-but-unstaged files
   const flagged: string[] = [];
   for (const file of tracked) {
     const meta = await sharp(readFileSync(file)).metadata();

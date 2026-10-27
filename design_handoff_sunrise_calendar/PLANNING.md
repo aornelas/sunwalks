@@ -111,26 +111,28 @@ Under the row, the drift line: "Sunrise drifts 6:24 → 6:30 across the week. Ta
 
 ## Verdicts
 
+> **Renamed after launch:** the words were originally Promising, Good, Bare and Socked in. They became Stunning, Nice, Clear and Foggy when the planning view's job changed from "is it worth going out?" to "where should I walk?". The rules and tones are unchanged.
+
 The verdict is a single word derived server-side, plus a tone that colours the word, the cloud knob and the week-ahead dot. Never show the numeric score, and never show a star rating.
 
 | Word | When | Tone | Colours (`fill` / `dark` on the dark ground) |
 | --- | --- | --- | --- |
-| **Promising** | 30–70% cloud, mostly mid/high, horizon clear, rain < 20%, fog not high | 5 | `--color-accent` #c67139 / `#e0954f` |
-| **Good** | 20–80% cloud, mid/high, rain < 30% | 4 | `--color-accent-2-600` / `#a8b884` |
-| **Bare** | under 20% cloud — clean sky, little colour, good silhouettes | 3 | `--color-neutral-500` / `rgba(245,234,216,.7)` |
-| **Socked in** | 80%+ **low** cloud, or fog probability high | 2 | `--color-neutral-400` / `rgba(245,234,216,.5)` |
+| **Stunning** | 30–70% cloud, mostly mid/high, horizon clear, rain < 20%, fog not high | 5 | `--color-accent` #c67139 / `#e0954f` |
+| **Nice** | 20–80% cloud, mid/high, rain < 30% | 4 | `--color-accent-2-600` / `#a8b884` |
+| **Clear** | under 20% cloud — clean sky, little colour, good silhouettes | 3 | `--color-neutral-500` / `rgba(245,234,216,.7)` |
+| **Foggy** | 80%+ **low** cloud, or fog probability high | 2 | `--color-neutral-400` / `rgba(245,234,216,.5)` |
 | **Wet** | rain probability 50%+ | 1 | `--color-neutral-400` / `rgba(245,234,216,.5)` |
 
-Resolution order: **Wet** wins over everything, then **Socked in**, then the cloud-band bands. A day inside the colour band that is also raining is Wet — the sky may be interesting but the morning is not.
+Resolution order: **Wet** wins over everything, then **Foggy**, then the cloud-band bands. A day inside the colour band that is also raining is Wet — the sky may be interesting but the morning is not.
 
 Tone colours carry no information the word does not; the word is the accessible signal. Terracotta only ever means "worth getting up for", so it must not be used decoratively anywhere on this screen.
 
 **Reason line** — one or two sentences, written from the same inputs, in the app's voice: plain, specific, never hedged into uselessness, never gamified. What the prototype ships with, as the tone reference:
 
-- Promising — "High cloud at 45% — the kind that lights up. Clear at the horizon."
-- Socked in — "Marine layer to 1,100 ft. Above it if you go high, grey if you don't."
-- Bare — "Empty sky. Little colour, but clean silhouettes."
-- Good — "Scattered mid cloud, warm morning."
+- Stunning — "High cloud at 45% — the kind that lights up. Clear at the horizon."
+- Foggy — "Marine layer to 1,100 ft. Above it if you go high, grey if you don't."
+- Clear — "Empty sky. Little colour, but clean silhouettes."
+- Nice — "Scattered mid cloud, warm morning."
 - Wet — "Rain through the morning. Sleep in."
 
 Generate these from a small set of templates keyed on the deciding factor (cloud level + band, fog ceiling, rain), not from an open-ended model — the voice matters more than the variety, and "Sleep in." is the app being honest, not funny.
@@ -151,7 +153,7 @@ Per day, seven days out:
 ```
 
 - **Source**: Open-Meteo covers all of it without a key — hourly `cloudcover_low/mid/high`, `temperature_2m`, `apparent_temperature`, `windspeed_10m`, `precipitation_probability`, `visibility`, plus daily `sunrise`. Sample the hour containing sunrise (interpolate if you want to be precise). Civil twilight and the 6°-altitude golden-hour end are solar-position maths, not an API call — compute them from lat/long and date.
-- **Derive the verdict on the server**, next to the ingest that already computes `stats` — the phone and the web view must never disagree about whether tomorrow is Promising.
+- **Derive the verdict on the server**, next to the ingest that already computes `stats` — the phone and the web view must never disagree about whether tomorrow is Stunning.
 - **Cadence**: refresh when the view opens if the cached forecast is older than 3 hours, plus once in the evening (around 20:00 local) so the entry row is current at bedtime. A forecast is a forecast — nothing here needs to be live.
 - **Location**: the owner's home coordinates, set once, from the calendar's existing settings. This screen has no location UI.
 
@@ -180,7 +182,7 @@ Nothing pulses, nothing counts up. The screen is read in the dark, half asleep.
 
 ## Accessibility
 
-- The verdict word — never colour alone — carries the meaning, in the header, the entry row and (via the day number + dot) the week-ahead row. Give each week-ahead tile an accessible label like "Friday 14, Bare".
+- The verdict word — never colour alone — carries the meaning, in the header, the entry row and (via the day number + dot) the week-ahead row. Give each week-ahead tile an accessible label like "Friday 14, Clear".
 - All five tone `dark` values clear 4.5:1 on `#17140f`; the 42px verdict has margin to spare.
 - The whole screen is dark by design and does not follow the system light/dark setting — the calendar stays cream, this stays near-black. If the platform demands it, honour "increase contrast" by lifting the card fills from `.07` to `.12` and the body text from `.78` to `.9`.
 - Respect reduced-motion: cross-fades become instant swaps; the tick tween is dropped.
@@ -191,6 +193,6 @@ In `screenshots/`, captured at 2×:
 
 | File | State |
 | --- | --- |
-| `3c-night-promising.png` | Planning view, tomorrow, verdict "Promising" — the default state |
-| `3c-night-socked-in.png` | Planning view re-targeted to Thursday from the week-ahead row, verdict "Socked in" — shows the two-line reason at its reserved height and a 90% cloud knob past the band |
+| `3c-night-stunning.png` | Planning view, tomorrow, verdict "Stunning" — the default state |
+| `3c-night-foggy.png` | Planning view re-targeted to Thursday from the week-ahead row, verdict "Foggy" — shows the two-line reason at its reserved height and a 90% cloud knob past the band |
 | `3c-calendar-entry.png` | The calendar with the dark "Plan tomorrow" entry row |

@@ -14,7 +14,6 @@ const PUBLIC_PREFIXES = [
   "/manifest.json",
   "/icons",
   "/favicon.ico",
-  "/api/cron",
 ];
 
 export function proxy(req: NextRequest) {

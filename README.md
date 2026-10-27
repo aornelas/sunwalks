@@ -1,143 +1,204 @@
 # Sunwalks
 
-A personal calendar where every day square is the sunrise photo captured that
-morning, sourced from Google Photos. Built from the design handoff in
-[`design_handoff_sunrise_calendar/`](design_handoff_sunrise_calendar/README.md).
+A personal calendar where every day square is the sunrise photo you were out
+for that morning. Photos come from Google Photos; days you didn't make it out
+stay empty, so the calendar is the streak. At night, a planning view reads
+tomorrow's forecast and tells you whether the walk is worth the alarm.
+
+<p align="center">
+  <img src="docs/screenshots/desktop-month.png" alt="Desktop month view with the stats rail" width="100%">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/mobile-month.png" alt="Mobile month view" width="24%">
+  <img src="docs/screenshots/mobile-photo.png" alt="Photo view, multi-shot morning" width="24%">
+  <img src="docs/screenshots/mobile-planning.png" alt="Planning view for tomorrow's sunrise" width="24%">
+  <img src="docs/screenshots/mobile-year.png" alt="Year view" width="24%">
+</p>
+
+> Screenshots use the bundled sample photos in [demo mode](#quickstart-demo-mode-no-google-account).
+
+## Features
+
+- **Week / Month / Year zoom** with animated transitions, a "sunwalk days
+  only" filter that collapses empty days, and this/best stats for the week,
+  month and year.
+- **Photo view** with multi-shot mornings, a chosen "day photo",
+  swipe-down to dismiss, and a landscape mode that unlocks rotation only while a photo
+  is open.
+- **Planning view** for tomorrow morning: first light, sunrise and end of golden
+  hour (solar maths via `suncalc`), cloud layers and conditions from
+  [Open-Meteo](https://open-meteo.com/), and a one-word verdict (*Promising*,
+  *Good*, *Bare*, *Socked in*, *Wet*) with a week-ahead strip.
+- **Unlisted share link.** Anyone with the URL gets a read-only, `noindex`
+  copy of the calendar. You can revoke it or generate a new one.
+- **Installable PWA**, tuned for Android/Chrome: safe-area insets, the
+  hardware back button closes overlays, 48dp touch targets, and `?d=today`
+  deep links.
+- **Single owner by design.** One Google account signs in; everyone else sees
+  only what the share link exposes.
+
+## How it was built: Claude Design → Claude Code
+
+The application code in this repo was written with
+[Claude Code](https://claude.com/claude-code), working from design specs
+produced in Claude Design. The git history is the build log; it covers
+five days in August 2026.
+
+| Step | What happened | Where to look |
+| --- | --- | --- |
+| Design | A Claude Design prototype plus a written handoff: layout, tokens, states and suggested architecture | [`design_handoff_sunrise_calendar/README.md`](design_handoff_sunrise_calendar/README.md) |
+| One-shot build | The whole app, implemented from the handoff in a single pass | commit *"One shot implementation"* |
+| Platform pass | Android/Pixel plumbing spec, then implementation | [`ANDROID_UPDATE.md`](design_handoff_sunrise_calendar/ANDROID_UPDATE.md) |
+| Motion | Nine named motions with exact timings and curves, then implementation | [`MOTION.md`](design_handoff_sunrise_calendar/MOTION.md) and the interactive `Sunrise Motion (standalone).html` |
+| Planning | Forecast screen and verdict rules, then implementation | [`PLANNING.md`](design_handoff_sunrise_calendar/PLANNING.md) |
+| Rebrand | New icon set and the rename to Sunwalks | [`design_handoff_sunwalks_icon/`](design_handoff_sunwalks_icon/ICON.md) |
+
+The real-world problems show up in the history too:
+
+- **The Google Photos Library API shutdown.** It was retired mid-project; see
+  [below](#google-photos-access) for the redesign it forced.
+- **A storage migration.** Photos moved from local disk to Vercel Blob.
+- **A multi-commit hunt for a shared-element animation "ghost".** It included
+  a temporary on-screen debug panel, which was later removed.
 
 ## Stack
 
-Next.js (App Router) · Drizzle ORM + Postgres · hand-rolled Google OAuth
-(owner-only sign-in) · the **Google Photos Picker API** for ingest (see
-below — this replaced the original Library API design after Google
-deprecated it) · local filesystem photo storage.
+Next.js 16 (App Router) · React 19 · TypeScript · Drizzle ORM + Postgres
+(Neon in production) · Vercel Blob (private store) for photo bytes ·
+hand-rolled Google OAuth · Google Photos **Picker API** · Open-Meteo +
+`suncalc` · CSS Modules, no UI framework.
 
-## Google Photos access — read this before setting up OAuth
+## Quickstart (demo mode, no Google account)
 
-The original design assumed the old Library API: point the app at an album,
-poll it automatically every day, done. **Google removed that entirely**
-(`photoslibrary.readonly`, `albums.list`, `mediaItems.search` all return 403
-as of March 2025 — see
-[Google's migration notes](https://developers.google.com/photos/support/updates)).
-The replacement, the **Picker API**, is fundamentally different: it's a
-one-time, user-present selection flow with no concept of "watch this album
-for new items." There is no way to get unattended, automatic daily sync
-against a real Google Photos library anymore — this is a platform
-restriction, not a bug in this app.
+Demo mode seeds about 130 days of captures from 12 bundled sample photos,
+skips auth, and serves images from `public/seed-photos/`. With it you can
+click through every screen without any credentials.
 
-What that means here:
+Requires Node 20.9+ and Postgres.
 
-- **No more automatic daily sync / cron.** `/api/cron/sync` and the
-  `vercel.json` cron entry are gone. Every import is the owner explicitly
-  opening a picker.
-- **"Add photos" opens a real Google Photos tab.** The Picker API natively
-  supports multi-select (up to 2000 items in one go), so a first-time
-  bulk import and occasional top-ups both work in one pass — see
-  `src/hooks/usePickerImport.ts` for the create-session → open tab → poll →
-  import flow, used from onboarding, the settings sheet, and the web rail.
-- **Photo bytes are downloaded once, at import time, into local storage**
-  (`src/lib/storage.ts`), not proxied live from Google on each request. A
-  picked item's `baseUrl` expires in ~60 minutes and can't be refreshed once
-  the picker session is gone, so there's no "proxy on demand" option anymore
-  — see the note atop `src/lib/ingest.ts`.
-- **Local filesystem storage works for local dev, not for Vercel.**
-  Vercel's serverless functions have an ephemeral, read-only filesystem —
-  writes to `.photo-storage/` won't persist there. Before deploying to
-  Vercel, swap `src/lib/storage.ts` for Vercel Blob (`@vercel/blob`) or
-  S3/R2; the two-function interface (`saveImage`/`readImage`) is designed to
-  be a drop-in swap.
+```bash
+git clone https://github.com/aornelas/sunwalks.git && cd sunwalks
+npm install
+docker compose up -d          # or any local Postgres
+cp .env.example .env          # defaults point at the compose database
+```
 
-## Local setup
+Set `DEMO_MODE=true` in `.env`, then:
 
-1. **Postgres** — either:
-   - `docker compose up -d`, or
-   - a local Postgres (`brew install postgresql@16`), or
-   - a hosted one (Neon / Vercel Postgres) for `DATABASE_URL`.
-2. Copy `.env.example` to `.env` and fill in `DATABASE_URL` and `APP_SECRET`
-   (`openssl rand -base64 32`). Leave `GOOGLE_CLIENT_ID`/`SECRET` blank for now
-   if you just want to preview the UI (see **Demo mode** below).
-3. `npm install`
-4. `npm run db:push` — applies the schema (or `npm run db:generate` +
-   your own migration runner in production).
-5. `npm run dev`
+```bash
+npm run db:push               # create the schema
+npm run db:seed               # demo data (wipes the demo tables first)
+npm run dev
+```
 
-### Demo mode (no Google account needed)
+Open http://localhost:3000.
 
-Set `DEMO_MODE=true` in `.env`, then `npm run db:seed`. This seeds ~130 days
-of captures cycling the 12 sample photos from the design bundle, bypasses
-auth entirely, and serves images from `public/seed-photos/` instead of
-Google Photos — enough to click through every screen (month/week/year zoom,
-filter, photo view, landscape rotation, settings sheet, share link) without
-any external credentials. **Never set `DEMO_MODE=true` in production** — it
-disables the owner auth check on every API route.
+> **Never set `DEMO_MODE=true` in production.** It disables the owner check
+> on every route.
+>
+> **Env precedence gotcha.** `npm run db:seed` reads only `.env`, but
+> `next dev` also loads `.env.local`, which wins. If you've run
+> `vercel env pull`, `.env.local` may point the dev server at your production
+> database. Keep demo settings in `.env` and delete or rename `.env.local`
+> while demoing.
 
-### Real Google Photos
+## Real setup (your own Google Photos)
 
-1. In Google Cloud Console: enable the **Google Photos Picker API** (not
-   "Photos Library API" — that's the deprecated one), create an OAuth
-   client (type "Web application"), add
-   `{SITE_URL}/api/auth/google/callback` as an authorized redirect URI, and
-   on the **OAuth consent screen** add the
-   `https://www.googleapis.com/auth/photospicker.mediaitems.readonly` scope
-   under Data Access. If your project shows "Internal" user type and you're
-   not signing in with a Workspace account in that org, switch it to
-   **External** and add yourself under **Test users** — otherwise you'll
-   hit "Access blocked: can only be used within its organization."
-2. Fill in `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in `.env`.
-3. Set `OWNER_EMAIL` once you know it, so the (currently open) owner slot
-   can't be claimed by a different Google account.
-4. `npm run dev`, visit `/login`, sign in, choose your sunrise photos on
-   `/onboarding` (multi-select works — pick as many as you want in one go).
-5. While the app is in "Testing" publish status, Google expires refresh
-   tokens after 7 days — you'll need to re-sign-in (Settings → Change)
-   periodically until you publish the consent screen to Production (doesn't
-   require Google's verification process for a single-user personal app,
-   though you may see a one-time "unverified app" click-through).
+### Google Photos access
 
-## Known gaps
+The original design assumed the Photos **Library** API: point the app at an
+album and sync it daily. Google
+[removed that access](https://developers.google.com/photos/support/updates)
+on 2025-03-31 (`photoslibrary.readonly`, `albums.list` and
+`mediaItems.search` now return 403). The replacement **Picker API** is a
+one-time, user-present selection flow, so:
 
-- **"place" captions.** The design shows a location under the time (e.g.
-  "6:24 AM · Telegraph Hill"). Neither the old Library API nor the Picker
-  API expose photo location data, so `place` is left `undefined` throughout
-  and the UI simply omits it from the caption.
-- **AVIF/WebP and Display P3.** `design_handoff_sunrise_calendar/ANDROID_UPDATE.md`
-  §9 asks for modern image formats and a wide-gamut export for the Pixel's
-  panel. Imported photos are plain sRGB JPEGs downloaded as-is from Google's
-  derivative endpoint (see `src/lib/image.ts`) — real format/gamut control
-  would mean re-encoding on import, not implemented here.
-- **No automatic sync**, as described above — this is a Google platform
-  restriction as of March 2025, not something fixable in this app.
+- **No automatic sync.** Every import is you opening the picker ("Add
+  photos"). It supports multi-select (up to 2000 items), so a first bulk
+  import and later top-ups each take one pass. See
+  `src/hooks/usePickerImport.ts` (create session → open picker → poll →
+  import).
+- **Photos are copied at import time.** A picked item's `baseUrl` expires
+  after about an hour, so a square (480px) and a full (1600px) derivative are
+  downloaded once and stored in a private Vercel Blob store
+  (`src/lib/storage.ts`). After that they're served through
+  `/api/photos/[id]/image`.
 
-## Android platform update
+### Steps
 
-`design_handoff_sunrise_calendar/ANDROID_UPDATE.md` is a platform-plumbing
-pass for the Pixel 10 Pro XL / Chrome — safe-area insets instead of iOS
-paddings, hardware-back closing overlays via real history entries (with
-`?d=YYYY-MM-DD` / `?d=today` deep links), 48dp touch targets drawn at their
-original visual size, swipe-down-to-dismiss on the photo view, orientation
-unlock scoped to the photo view only, `rem`-based type for system font
-scaling, and `content-visibility`/sticky-header/transform-only-animation
-tweaks for 120Hz scrolling. No visual design changed. Notably, fixing this
-surfaced a real bug: the desktop-layout breakpoint (`min-width: 900px`) was
-misreading this phone's ~998px-wide landscape orientation as a desktop —
-`useIsDesktop` now also requires `pointer: fine`.
+1. **Google Cloud Console.**
+   - Enable the **Google Photos Picker API**. Not the "Photos Library API";
+     that's the retired one.
+   - Create an OAuth client of type *Web application*.
+   - Add `{SITE_URL}/api/auth/google/callback` as an authorized redirect URI.
+   - On the consent screen, add the
+     `https://www.googleapis.com/auth/photospicker.mediaitems.readonly`
+     scope.
+   - Use user type **External** and add yourself as a test user. Otherwise
+     personal accounts get "Access blocked".
+2. **Vercel Blob.** Create a Blob store and set `BLOB_READ_WRITE_TOKEN`.
+3. **Fill in `.env`** (see below), keeping `DEMO_MODE=false`. Run
+   `npm run db:push` and then `npm run dev`.
+4. **Sign in and import.** Visit `/login`, sign in, then pick your sunrise
+   photos on `/onboarding`.
+5. **Lock the owner slot.** Set `OWNER_EMAIL` to your address so no other
+   Google account can claim it.
+6. **Mind the 7-day token expiry.** While the consent screen is in
+   *Testing*, Google expires refresh tokens after 7 days, so you'll need to
+   re-sign-in (Settings → Change). Publishing the app to *Production* ends
+   that. A single-user app doesn't need Google's verification, though you'll
+   see a one-time "unverified app" screen.
+
+### Environment variables
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | yes | Postgres connection string |
+| `APP_SECRET` | yes | Passphrase for the AES-256 key that encrypts the stored Google refresh token (`openssl rand -base64 32`) |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | real mode | OAuth client from the steps above |
+| `BLOB_READ_WRITE_TOKEN` | real mode | Vercel Blob store for imported photos |
+| `SITE_URL` | yes | Public origin; used for the OAuth redirect and share links |
+| `OWNER_EMAIL` | recommended | Restricts sign-in to this Google account |
+| `APP_TIMEZONE` | no | IANA zone that defines a "day" (default `America/Los_Angeles`) |
+| `OWNER_LAT` / `OWNER_LON` | no | Location for the planning forecast (defaults to San Francisco) |
+| `DEMO_MODE` | no | `true` = seeded local preview, no auth |
+
+### Deploying
+
+The app runs on Vercel as-is:
+
+1. Import the repo into Vercel.
+2. Attach a Postgres database (e.g. Neon from the Vercel Marketplace) and a
+   Blob store.
+3. Set the variables above.
+4. Run `npm run db:push` against the production `DATABASE_URL` once.
 
 ## Project layout
 
-- `src/lib/` — dates/calendar-grid math, Google OAuth + Picker API client,
-  ingest (picker-session import), local photo storage, stats, crypto,
-  session, DB queries.
-- `src/db/` — Drizzle schema (`owner_account`, `photos`, `days`, `sync_log`,
-  `share_links`, `sessions`).
-- `src/app/api/picker/session/` — create a picker session, poll its status,
-  and import once the owner's done picking (`src/hooks/usePickerImport.ts`
-  drives these three from the client).
-- `src/app/api/` (rest) — auth, day-photo, share-links, image proxy, and the
-  `/api/s/[token]/*` read-only mirrors used by the share page.
-- `src/components/calendar/` — `CalendarApp` (state/orchestration) plus the
-  mobile shell, web shell, month/week/year zoom views, photo view (portrait,
-  landscape, web), and the settings sheet.
-- `src/components/onboarding/` — the first-run picker flow.
-- `scripts/seed.ts` — demo-mode seed data.
+```
+src/app/                 routes: calendar, /login, /onboarding, /s/[token] share page
+src/app/api/             auth, picker sessions + import, days/stats, planning,
+                         share links, image proxy, /api/s/[token]/* read-only mirrors
+src/components/calendar/ CalendarApp (state) + mobile/web shells, zoom views,
+                         photo views, planning view, settings sheet
+src/lib/                 dates + grid maths, Google OAuth/Picker client, ingest,
+                         Blob storage, stats, weather + verdict rules, crypto, session
+src/db/                  Drizzle schema
+scripts/seed.ts          demo-mode seed data
+design_handoff_*/        the Claude Design specs this was built from
+```
 
-See the design handoff's own README for the full visual spec this
-implementation follows.
+## Known gaps
+
+- **No location captions.** The design shows a place under the time; the
+  Picker API exposes no location data, so it's omitted.
+- **No AVIF/WebP or Display P3.** Imported photos are the sRGB JPEGs Google
+  serves; re-encoding on import isn't implemented.
+- **No automatic sync.** This is a Google platform restriction (see above).
+- **Built for one person in one place.** The verdict copy assumes coastal fog
+  ("marine layer"), and the Android tuning targeted a Pixel 10 Pro XL.
+
+## License
+
+[MIT](LICENSE)

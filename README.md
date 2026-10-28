@@ -235,7 +235,8 @@ design_handoff_*/        the Claude Design specs this was built from
 ## Known gaps
 
 - **No location captions.** The design shows a place under the time; the
-  Picker API exposes no location data, so it's omitted.
+  Picker API exposes no location data, so it's omitted. The roadmap fills it
+  in from what you tell the walk buddy instead.
 - **No AVIF/WebP or Display P3.** Imported photos are the sRGB JPEGs Google
   serves; re-encoding on import isn't implemented.
 - **No automatic sync.** This is a Google platform restriction (see above).
@@ -244,12 +245,30 @@ design_handoff_*/        the Claude Design specs this was built from
 
 ## Roadmap
 
-- **Claude layer**
+The next step turns the planning view from "is it worth going out?" into
+"where should I walk?", and gives every kind of morning a good answer.
+
+- **Walk planning that learns** (Claude API)
   - A photo-source interface between the app and wherever photos live.
-  - Vision tagging of each sunrise (colours, cloud type, a "drama" score,
-    alt text) through the Claude API, with a Batch API backfill.
-  - An MCP server exposing the archive to Claude.
-  - A "worth it tomorrow?" forecast agent that posts to Slack.
+  - Vision tagging of each sunrise (colours, cloud type, alt text, which
+    category the sky actually turned out to be, and a place suggestion from
+    visible landmarks), with a Batch API backfill.
+  - An evening recommendation of where to walk tomorrow, starting from
+    these defaults and replacing them with what has worked for you:
+    - *Stunning* or *Nice*: a high vantage point.
+    - *Clear*: a short walk.
+    - *Foggy*: a forest walk, for the "tree rain" as fog condenses on the
+      leaves (or somewhere high enough to get above a shallow marine layer).
+    - *Wet*: enjoy staying in bed!
+  - Learning from every morning: how often each forecast came true (shown
+    as a confidence), which spots worked for which sky, and what you tell it
+    ("Telegraph Hill is perfect for Stunning days").
+- **Telegram walk buddy**: the evening plan arrives as a message with
+  tap-to-pick buttons for the suggested spots, and a morning photo plus a few
+  words logs the walk and teaches the recommender.
+- **Sunwalks in Claude** (MCP): an MCP server over the same tools, so Claude
+  can plan a walk, log feedback or search the archive, with tomorrow's
+  planning card rendered inside the conversation as an MCP App.
 - **Native Android**: read sunrise photos straight from the device instead
   of importing them, plus home-screen widgets.
 

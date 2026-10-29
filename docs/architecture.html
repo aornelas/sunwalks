@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sunwalks Claude Layer</title>
+<style>
+  :root {
+    --bg: #fbf8f3; --surface: #ffffff; --ink: #1f1d1a; --muted: #6b655c;
+    --line: #e6dfd3; --accent: #d9792b; --accent-soft: #fbe9d8;
+    --blue: #3d6fb6; --blue-soft: #e3ecf8; --green: #3f8a5a; --green-soft: #e1f1e6;
+    --violet: #7a58b5; --violet-soft: #eee6fa; --code-bg: #f3eee6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17161a; --surface: #201f24; --ink: #ece8e1; --muted: #a29c92;
+      --line: #34323a; --accent: #f0974d; --accent-soft: #3a2a1c;
+      --blue: #7aa5e6; --blue-soft: #1f2a3b; --green: #73c08f; --green-soft: #1c3025;
+      --violet: #b399e6; --violet-soft: #2a2238; --code-bg: #2a2830;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17161a; --surface: #201f24; --ink: #ece8e1; --muted: #a29c92;
+    --line: #34323a; --accent: #f0974d; --accent-soft: #3a2a1c;
+    --blue: #7aa5e6; --blue-soft: #1f2a3b; --green: #73c08f; --green-soft: #1c3025;
+    --violet: #b399e6; --violet-soft: #2a2238; --code-bg: #2a2830;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  main { max-width: 920px; margin: 0 auto; padding: 48px 16px 96px; }
+  h1 { font-size: 2.1rem; line-height: 1.2; margin: 0 0 8px; letter-spacing: -0.01em; }
+  h2 { font-size: 1.45rem; margin: 56px 0 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+  h3 { font-size: 1.1rem; margin: 32px 0 8px; }
+  p { margin: 0 0 14px; }
+  .lede { color: var(--muted); font-size: 1.08rem; max-width: 680px; }
+  code { font: 0.86em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+  a { color: var(--blue); }
+  nav.toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 8px; }
+  nav.toc a { text-decoration: none; font-size: 0.88rem; padding: 4px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink); background: var(--surface); }
+  nav.toc a:hover { border-color: var(--accent); }
+
+  .diagram { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin: 28px 0; overflow-x: auto; }
+  .diagram svg { display: block; width: 100%; min-width: 640px; height: auto; }
+  .diagram svg text { fill: var(--ink); font: 13px -apple-system, system-ui, sans-serif; }
+  .diagram svg .mono { font: 12px ui-monospace, Menlo, monospace; }
+  .diagram svg .sub { fill: var(--muted); font-size: 11.5px; }
+  .diagram svg .arrow { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+  .diagram svg .dashed { stroke-dasharray: 5 4; }
+  .box-src { fill: var(--accent-soft); stroke: var(--accent); }
+  .box-api { fill: var(--blue-soft); stroke: var(--blue); }
+  .box-db { fill: var(--green-soft); stroke: var(--green); }
+  .box-future { fill: var(--surface); stroke: var(--muted); stroke-dasharray: 5 4; }
+  .box-run { fill: var(--violet-soft); stroke: var(--violet); }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.82rem; color: var(--muted); margin-top: 10px; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 1.5px solid; }
+  .lg-src::before { background: var(--accent-soft); border-color: var(--accent) !important; }
+  .lg-run::before { background: var(--violet-soft); border-color: var(--violet) !important; }
+  .lg-api::before { background: var(--blue-soft); border-color: var(--blue) !important; }
+  .lg-db::before { background: var(--green-soft); border-color: var(--green) !important; }
+  .lg-fut::before { border-style: dashed !important; border-color: var(--muted) !important; }
+
+  .table-wrap { overflow-x: auto; margin: 16px 0 20px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.93rem; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; }
+  tr:last-child td { border-bottom: 0; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  th.num { text-align: right; }
+
+  .impls { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 16px 0 24px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .card h4 { margin: 0 0 4px; font-size: 0.98rem; }
+  .card p { margin: 0; font-size: 0.9rem; color: var(--muted); }
+  .card.future { border-style: dashed; }
+  .tag { display: inline-block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 1px 8px; border-radius: 999px; margin-bottom: 6px; }
+  .tag.now { background: var(--green-soft); color: var(--green); }
+  .tag.later { background: var(--code-bg); color: var(--muted); }
+
+  .callout { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 16px 0 20px; }
+  .callout p:last-child { margin: 0; }
+
+  .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin: 16px 0; }
+  .choices .card h4 { color: var(--ink); }
+  .choices .card p { color: var(--ink); opacity: 0.85; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 20px 0; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .stat .v { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.02em; }
+  .stat .l { font-size: 0.85rem; color: var(--muted); }
+
+  .bars { margin: 8px 0 20px; }
+  .bar-row { display: grid; grid-template-columns: 150px 1fr 70px; gap: 10px; align-items: center; font-size: 0.88rem; margin: 6px 0; }
+  .bar-track { height: 14px; background: var(--code-bg); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--accent); border-radius: 4px; }
+  .bar-row .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .leads { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+  @media (max-width: 640px) { .leads { grid-template-columns: 1fr; } .bar-row { grid-template-columns: 110px 1fr 60px; } }
+
+  ul.todo { list-style: none; padding: 0; margin: 12px 0; }
+  ul.todo li { background: var(--surface); border: 1px dashed var(--line); border-radius: 10px; padding: 12px 16px 12px 44px; margin-bottom: 10px; position: relative; }
+  ul.todo li::before { content: ""; position: absolute; left: 16px; top: 16px; width: 14px; height: 14px; border: 2px solid var(--muted); border-radius: 4px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Architecture: the Claude layer</h1>
+  <p class="lede">The README covers the calendar itself. This page covers what sits on top of it: the photo-source interface, vision tagging, and the forecast record they're compared against. Together they're the foundations for the walk recommender, the Telegram bot and the MCP server on the roadmap.</p>
+
+  <nav class="toc">
+    <a href="#photo-source">Photo-source interface</a>
+    <a href="#tagging">Vision tagging</a>
+    <a href="#cost">Cost</a>
+    <a href="#forecast">Forecast record</a>
+    <a href="#not-built">Not built yet</a>
+  </nav>
+
+  <div class="diagram">
+    <svg viewBox="0 0 860 470" role="img" aria-label="Data flow: photo sources feed tagging via the Files and Messages APIs into photo_tags; forecasts are snapshotted into forecast_snapshots; both feed calibration.">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="currentColor" style="color: var(--muted)"/>
+        </marker>
+      </defs>
+
+      <!-- PhotoSource -->
+      <rect class="box-src" x="200" y="14" width="460" height="64" rx="10"/>
+      <text x="430" y="38" text-anchor="middle" font-weight="600">PhotoSource</text>
+      <text x="430" y="60" text-anchor="middle" class="mono sub">listPhotos · getPhoto · getImage · getMetadata · setMetadata</text>
+
+      <!-- implementations -->
+      <rect class="box-src" x="80" y="108" width="230" height="44" rx="8"/>
+      <text x="195" y="135" text-anchor="middle">Google Photos imports <tspan class="sub">(today)</tspan></text>
+      <rect class="box-future" x="550" y="108" width="230" height="44" rx="8"/>
+      <text x="665" y="135" text-anchor="middle">The phone itself <tspan class="sub">(Android, later)</tspan></text>
+      <path class="arrow" d="M300,78 L240,108" marker-end="url(#ah)"/>
+      <path class="arrow dashed" d="M560,78 L620,108" marker-end="url(#ah)"/>
+
+      <!-- tag-photos -->
+      <rect class="box-run" x="80" y="190" width="230" height="44" rx="8"/>
+      <text x="195" y="217" text-anchor="middle" class="mono">npm run tag-photos</text>
+      <path class="arrow" d="M195,152 L195,190" marker-end="url(#ah)"/>
+
+      <!-- Files API -->
+      <rect class="box-api" x="400" y="190" width="250" height="44" rx="8"/>
+      <text x="525" y="211" text-anchor="middle" font-weight="600">Files API</text>
+      <text x="525" y="226" text-anchor="middle" class="sub">each photo uploaded once</text>
+      <path class="arrow" d="M310,212 L400,212" marker-end="url(#ah)"/>
+
+      <!-- Messages API -->
+      <rect class="box-api" x="400" y="272" width="250" height="56" rx="8"/>
+      <text x="525" y="294" text-anchor="middle" font-weight="600">Messages API / Batches</text>
+      <text x="525" y="314" text-anchor="middle" class="mono sub">prompts/tag-photo/v1.md + schema</text>
+      <path class="arrow" d="M525,234 L525,272" marker-end="url(#ah)"/>
+      <path class="arrow" d="M195,234 L195,300 L400,300" marker-end="url(#ah)"/>
+
+      <!-- photo_tags -->
+      <rect class="box-db" x="440" y="356" width="170" height="40" rx="8"/>
+      <text x="525" y="381" text-anchor="middle" class="mono">photo_tags</text>
+      <path class="arrow" d="M525,328 L525,356" marker-end="url(#ah)"/>
+
+      <!-- forecasts -->
+      <rect class="box-run" x="20" y="356" width="170" height="40" rx="8"/>
+      <text x="105" y="381" text-anchor="middle">nightly cron</text>
+      <rect class="box-run" x="20" y="414" width="220" height="40" rx="8"/>
+      <text x="130" y="439" text-anchor="middle" class="mono">npm run backfill-forecasts</text>
+
+      <rect class="box-db" x="270" y="384" width="150" height="56" rx="8"/>
+      <text x="345" y="406" text-anchor="middle" class="mono">forecast_</text>
+      <text x="345" y="424" text-anchor="middle" class="mono">snapshots</text>
+      <path class="arrow" d="M190,376 L270,400" marker-end="url(#ah)"/>
+      <text x="228" y="372" text-anchor="middle" class="sub">live</text>
+      <path class="arrow" d="M240,434 L270,426" marker-end="url(#ah)"/>
+      <text x="255" y="462" text-anchor="middle" class="sub">historical</text>
+
+      <!-- calibration -->
+      <rect class="box-future" x="660" y="384" width="180" height="56" rx="8"/>
+      <text x="750" y="408" text-anchor="middle" font-weight="600">Calibration</text>
+      <text x="750" y="426" text-anchor="middle" class="sub">roadmap</text>
+      <path class="arrow dashed" d="M610,376 L660,400" marker-end="url(#ah)"/>
+      <path class="arrow dashed" d="M420,440 L470,460 L640,460 L660,430" marker-end="url(#ah)"/>
+    </svg>
+    <div class="legend">
+      <span class="lg-src">Photo source</span>
+      <span class="lg-run">Script / job</span>
+      <span class="lg-api">Claude API</span>
+      <span class="lg-db">Database table</span>
+      <span class="lg-fut">Not built yet</span>
+    </div>
+  </div>
+
+  <h2 id="photo-source">The photo-source interface</h2>
+  <p><code>src/lib/photo-source.ts</code> is the only thing that knows where photos live. Code that needs a photo's bytes or metadata (the image route, tagging) asks <code>getPhotoSource()</code> for it rather than reading the database or Blob storage directly.</p>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Method</th><th>Returns</th></tr></thead>
+    <tbody>
+      <tr><td><code>listPhotos(range?)</code></td><td>photos oldest first, optionally within a day-key range</td></tr>
+      <tr><td><code>getPhoto(id)</code></td><td>one photo's date, time taken, size and place</td></tr>
+      <tr><td><code>getImage(id, size)</code></td><td>JPEG bytes of the <code>sq</code> (480px square) or <code>full</code> (1600px) derivative</td></tr>
+      <tr><td><code>getMetadata(id)</code> / <code>setMetadata(id, patch)</code></td><td>the metadata the app writes back, which today is just <code>place</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="impls">
+    <div class="card"><span class="tag now">Today</span><h4>Google Photos imports</h4><p>Rows in <code>photos</code>, bytes in Vercel Blob.</p></div>
+    <div class="card"><span class="tag now">Today</span><h4>Demo mode</h4><p>Seeded rows, bytes from <code>public/seed-photos/</code>.</p></div>
+    <div class="card future"><span class="tag later">Later</span><h4>Android port</h4><p>Reads the device's own photos. Same five methods, so nothing in the Claude layer changes.</p></div>
+  </div>
+
+  <div class="callout">
+    <p><strong>Place</strong> is the one piece of metadata the app writes. The Picker API gives no GPS, so a place comes from the owner, or from a Claude suggestion the owner confirms. Places are location data: they live only in the database, never in committed files, and the share link never receives them (its routes call <code>getDaysInRange(..., { includePlace: false })</code>). Demo places are public landmarks, names only.</p>
+  </div>
+
+  <h2 id="tagging">Vision tagging</h2>
+  <p><code>src/lib/tagging.ts</code> sends each photo to Claude with the prompt in <code>prompts/tag-photo/v1.md</code> and gets back:</p>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Field</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr><td><code>observed_category</code> + <code>category_confidence</code></td><td><strong>Calibration:</strong> the sky the morning actually had, in the forecast's own five words (Stunning, Nice, Clear, Foggy, Wet), to compare with <code>forecast_snapshots</code></td></tr>
+      <tr><td><code>suggested_place</code> + <code>landmarks</code></td><td><strong>Place affinity:</strong> a suggestion from visible landmarks, reusing the owner's place names when one fits</td></tr>
+      <tr><td><code>alt_text</code></td><td><strong>Accessibility:</strong> the <code>alt</code> of the full-size photo in every photo view</td></tr>
+      <tr><td><code>colours</code>, <code>cloud_type</code>, <code>cloud_cover</code>, <code>drama</code> + <code>drama_reason</code>, <code>mood</code>, <code>vantage</code></td><td><strong>Scoring places</strong>, and search later on</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Choices worth knowing about</h3>
+  <div class="choices">
+    <div class="card"><h4>Structured outputs, not forced tool use</h4><p>The request sets <code>output_config.format</code> to a JSON schema, so decoding is constrained (forced <code>tool_choice</code> returns a 400 on Claude Opus 5.5 anyway). The schema is generated from Zod with unsupported keywords (ranges, lengths, patterns) removed; Zod then validates every response, so those limits still hold. <code>zodOutputFormat</code> isn't used because it turns enums into descriptions, dropping the category constraint.</p></div>
+    <div class="card"><h4>Versioned prompts</h4><p>Each prompt is a file under <code>prompts/</code>, and every tag row records the version that produced it. Bumping <code>TAG_PROMPT_VERSION</code> makes every photo pending again, so the next run re-tags the archive.</p></div>
+    <div class="card"><h4>Prompt caching</h4><p>The prompt and the list of known places come first in the system prompt and carry the cache breakpoint; the photo comes after. Every request after the first reads that ~2,200-token prefix from cache.</p></div>
+    <div class="card"><h4>Files API</h4><p>Each photo is uploaded once and its <code>file_id</code> stored on <code>photos.claude_file_id</code>, so re-tagging doesn't resend bytes. Uploaded files stay in the Anthropic account until deleted.</p></div>
+    <div class="card"><h4>Low effort</h4><p>Reading a sky is perception rather than long reasoning, so requests run at <code>effort: "low"</code>. Most output tokens are still thinking, so output dominates the cost.</p></div>
+    <div class="card"><h4>No refusal fallback</h4><p>Server-side <code>fallbacks</code> would re-run a refused request on another model, but the Batches API rejects the parameter. A refusal is logged and the photo stays pending.</p></div>
+  </div>
+
+  <h3>Running it</h3>
+  <p><code>npm run tag-photos</code> tags every photo that has no tags at the current prompt version. By default it submits one Message Batch (half price, usually done within the hour), stores the batch id in <code>tagging_batches</code>, and polls it. Interrupting it is safe: the next run resumes the unfinished batch instead of submitting a new one.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Flag</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td><em>(default)</em></td><td>One Message Batch, resumable</td></tr>
+      <tr><td><code>--sync</code></td><td>Tags photo by photo; quicker for a few photos</td></tr>
+      <tr><td><code>--limit N</code></td><td>Caps a run</td></tr>
+    </tbody>
+  </table></div>
+  <p>With nothing left to tag, a run makes no API calls. Every run prints its token use: requests, how many hit the cache, and uncached input, cache reads, cache writes and output. Each tag row also keeps its own counts.</p>
+
+  <h3 id="cost">Cost</h3>
+  <p>Measured on the 113 sample photos (1600px JPEGs) with Claude Opus 5.5 ($4 per million input tokens, $20 per million output) on 2026-10-29.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="v">$1.60</div><div class="l">per 100 photos, Messages API</div></div>
+    <div class="stat"><div class="v">$0.80</div><div class="l">per 100 photos, Message Batches</div></div>
+    <div class="stat"><div class="v">54%</div><div class="l">of prompt tokens read from cache (97 of 111 requests hit)</div></div>
+  </div>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Per photo, on average</th><th class="num">Tokens</th><th class="num">Cost</th></tr></thead>
+    <tbody>
+      <tr><td>Uncached input (mostly the image)</td><td class="num">1,388</td><td class="num">$0.0056</td></tr>
+      <tr><td>Cache read (the shared prompt)</td><td class="num">1,931</td><td class="num">$0.0004</td></tr>
+      <tr><td>Cache write (first requests of a run)</td><td class="num">279</td><td class="num">$0.0014</td></tr>
+      <tr><td>Output (mostly thinking, at low effort)</td><td class="num">440</td><td class="num">$0.0088</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="bars" aria-label="Cost share per photo">
+    <div class="bar-row"><span>Output</span><div class="bar-track"><div class="bar-fill" style="width:54.3%"></div></div><span class="num">54%</span></div>
+    <div class="bar-row"><span>Uncached input</span><div class="bar-track"><div class="bar-fill" style="width:34.6%"></div></div><span class="num">35%</span></div>
+    <div class="bar-row"><span>Cache write</span><div class="bar-track"><div class="bar-fill" style="width:8.6%"></div></div><span class="num">9%</span></div>
+    <div class="bar-row"><span>Cache read</span><div class="bar-track"><div class="bar-fill" style="width:2.5%"></div></div><span class="num">2%</span></div>
+  </div>
+
+  <div class="callout">
+    <p>Output is the biggest line, so <code>TAGGING_MODEL</code> is the lever if the archive grows large: Claude Haiku 5.5 is roughly 40 times cheaper per token. Compare its categories against Opus on a sample before switching.</p>
+  </div>
+
+  <h2 id="forecast">The forecast record</h2>
+  <p><code>forecast_days</code> is a cache: one row per date, overwritten on every fetch, so by morning the evening-before forecast is gone. <code>forecast_snapshots</code> keeps it, one row per <strong>(date, lead time, source)</strong>:</p>
+
+  <div class="leads">
+    <div class="card"><span class="tag now">live</span><h4>From every forecast fetch</h4><p><code>lead_days</code> is the number of owner-local days between the fetch and the morning, so lead 1 is the forecast as it stood the day before. A later fetch on the same day replaces the row, so lead 1 ends up holding the last forecast issued that evening. The nightly cron (<code>/api/cron/forecast</code>, scheduled in <code>vercel.json</code>) makes sure that fetch happens even if the app isn't opened.</p></div>
+    <div class="card"><span class="tag later">historical</span><h4>Rebuilt by backfill</h4><p><code>npm run backfill-forecasts</code> rebuilds these from Open-Meteo's <a href="https://open-meteo.com/en/docs/historical-forecast-api">Historical Forecast API</a>, so calibration can start with the whole archive. These are lead 0: the archive is stitched from the first hours of each model run. The <a href="https://open-meteo.com/en/docs/previous-runs-api">Previous Runs API</a> has true day-ahead values, but lacks the low/mid/high cloud split and visibility the verdict rules need.</p></div>
+  </div>
+
+  <p>Snapshots store the forecast inputs as well as the verdict. Calibration should re-derive the verdict from the inputs, as the planning view already does, so a rule change applies to the whole history.</p>
+
+  <h2 id="not-built">Not built yet</h2>
+  <ul class="todo">
+    <li>Nothing tags new photos when they're imported. Run <code>npm run tag-photos</code> after an import; the Telegram bot will tag the photos it receives.</li>
+    <li>There's no UI to set or confirm a place. The walk log (spot picker, Telegram buttons) is where places come from.</li>
+    <li>Tagging reads its prompt from disk with <code>process.cwd()</code>. That's fine for scripts, but calling it from a Vercel function will need the <code>prompts/</code> folder added to <code>outputFileTracingIncludes</code>.</li>
+  </ul>
+</main>
+</body>
+</html>

@@ -8,6 +8,7 @@ const PUBLIC_PREFIXES = [
   "/login",
   "/api/auth",
   "/api/cron/", // authenticated by CRON_SECRET in the route itself
+  "/api/telegram", // authenticated by the webhook secret and chat ID in the route
   "/s/",
   "/api/s/",
   "/api/photos/",

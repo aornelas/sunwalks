@@ -1,9 +1,11 @@
 # Architecture: the Claude layer
 
 The README covers the calendar itself. This page covers what sits on top of
-it: the photo-source interface, vision tagging, and the forecast record
-they're compared against. Together they're the foundations for the walk
-recommender, the Telegram bot and the MCP server on the roadmap.
+it: the photo-source interface, vision tagging, the forecast record they're
+compared against, the engine that turns all three into a plan for
+tomorrow's walk, and the Telegram walk buddy that delivers the plan and
+collects what happened. The MCP server on the roadmap is a second way to
+reach the same engine.
 
 ```
             ┌───────────────── PhotoSource ─────────────────┐
@@ -22,7 +24,7 @@ recommender, the Telegram bot and the MCP server on the roadmap.
                                 ▼
                           photo_tags ──────────────┐
                                                    ▼
-   nightly cron ──▶ forecast_snapshots (live) ──▶ calibration (roadmap)
+   nightly cron ──▶ forecast_snapshots (live) ──▶ the engine
    npm run backfill-forecasts ──▶ forecast_snapshots (historical)
 ```
 
@@ -226,15 +228,87 @@ on the demo data, about 12,000 of 17,600 prompt tokens were cache reads,
 and the whole plan cost about 6 cents with Claude Opus 5.5, half of it
 the first turn's cache write.
 
+## The walk buddy (Telegram)
+
+The walk buddy is the engine's daily surface: a private chat with your own
+Telegram bot, run from the Vercel app through the Bot API, so it works
+without a laptop or a Claude Code session.
+
+```
+ Vercel cron (evening) ──▶ recommendWalk ──▶ sendMessage + a button per spot
+                                                        │
+ Telegram ──▶ POST /api/telegram ── secret header? owner's chat? new update_id?
+                     │ (answers 200 at once; the work runs in after())
+                     ▼
+     button tap ──▶ logWalk ──▶ editMessageText (✓ spot, then 1–5 rating buttons)
+     photo ──▶ getFile ──▶ sharp derivatives ──▶ Blob + Files API ──▶ tagPhoto
+     photo or text ──▶ Claude: log_walk, add_spot, memory ──▶ reply
+                     │
+                     ▼
+              telegram_updates (kind, error, tokens)
+ Vercel cron (Sunday) ──▶ weekly "what I learned" (plain counting, no Claude call)
+```
+
+- **The evening plan** (`/api/cron/evening-plan`, 03:15 UTC) plans the
+  next morning with the engine and sends its message with one button per
+  suggested spot, plus "Stay in". A tap logs the walk (keeping any rating
+  or note already there) and edits the plan in place to show it, with a row
+  of 1–5 buttons to rate the morning. One message per morning, no replies.
+- **A photo** is downloaded at its largest size, cut into the same two
+  derivatives a Google Photos import stores (a 480 px square and up to
+  1600 px wide), saved to Blob, uploaded to the Files API from the bytes in
+  hand and tagged. It goes in the calendar on the morning it was sent:
+  Telegram strips EXIF, so the message time stands in for when it was taken.
+- **Words, with or without a photo,** go to Claude (`walk-buddy.ts`, prompt
+  in `prompts/walk-buddy/v1.md`) with the morning's context: what's logged,
+  last night's plan, the spots and the photo's tag. It has three tools:
+  `log_walk` (a null field keeps what's logged), `add_spot` for a new place,
+  and the memory tool for anything that should change future plans. Its
+  reply says what it changed, so a mistake is easy to spot. A photo with no
+  place takes the logged spot afterwards.
+- **The weekly summary** (`/api/cron/weekly-summary`, Sundays) counts the
+  last seven mornings: walks, ratings, the best morning, how often the
+  week's forecasts held, the running held-rate per category, and which
+  preference files changed. `/plan` and `/week` do the same on demand.
+
+### Trust
+
+The webhook rejects any request without the secret given to `setWebhook`
+(Telegram echoes it in `X-Telegram-Bot-Api-Secret-Token`; compared in
+constant time), then drops updates from any chat but `TELEGRAM_CHAT_ID`
+with an empty 200. Past those checks the text is still not trusted: Claude
+gets it fenced as the owner's account of a walk, the prompt says nothing in
+it changes the rules, and the tools can only touch the one morning the code
+chose. `log_walk` has no date parameter.
+
+Telegram redelivers an update when the webhook is slow, so the route
+records each `update_id` in `telegram_updates` before doing anything, and a
+second copy is a no-op. The same row records the update's kind, any error
+(also sent to the chat as "That didn't work: …") and the tokens it cost.
+
+### Running it
+
+1. Create a bot with @BotFather and set `TELEGRAM_BOT_TOKEN`.
+2. Send it `/start` from your phone, then `npm run telegram -- chats` to
+   find `TELEGRAM_CHAT_ID`.
+3. Set `TELEGRAM_WEBHOOK_SECRET` (`openssl rand -hex 32`) and, with
+   `SITE_URL` pointing at the deployment, `npm run telegram -- set-webhook`.
+   `npm run telegram -- info` shows the webhook Telegram has on file and its
+   last delivery error.
+
+`npm run telegram -- plan` and `-- week` send the plan or the summary now.
+`TELEGRAM_API_BASE` points the client somewhere else, which is how it was
+tested: against a stand-in Bot API that logged every call. On demo data a
+plan took 9 seconds; a photo with a caption (tag plus a 3-turn loop) read
+7,100 prompt tokens from the cache, wrote 6,100 and sent 1,400 uncached;
+a text message read 10,700 from the cache. Button taps make no Claude call.
+
 ## Not built yet
 
-- Nothing tags new photos when they're imported. Run `npm run tag-photos`
-  after an import; the Telegram bot will tag the photos it receives.
-- There's no UI to set or confirm a place, log a walk or add a spot yet;
-  `npm run walk` does it from the command line until the Telegram bot and
-  MCP server do.
-- Logging a walk doesn't set the morning's photos' place. The two are
-  joined by date for now.
-- Tagging reads its prompt from disk with `process.cwd()`. That's fine for
-  scripts, but calling it from a Vercel function will need the `prompts/`
-  folder added to `outputFileTracingIncludes`.
+- Nothing tags photos imported from Google Photos as they arrive. Run
+  `npm run tag-photos` after an import; photos sent to the walk buddy are
+  tagged on arrival.
+- There's no UI in the app to set or confirm a place, log a walk or add a
+  spot; the walk buddy and `npm run walk` do it until the MCP server does.
+- Logging a walk only sets the place of a photo sent with it. Photos
+  imported from Google Photos are joined to the walk log by date.

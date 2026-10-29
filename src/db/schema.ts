@@ -9,6 +9,7 @@ import {
   index,
   jsonb,
   boolean,
+  bigint,
 } from "drizzle-orm/pg-core";
 
 /**
@@ -245,4 +246,21 @@ export const recommendations = pgTable("recommendations", {
   outputTokens: integer("output_tokens").notNull().default(0),
   cacheReadTokens: integer("cache_read_tokens").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * Every update the Telegram webhook accepted (see app/api/telegram). The
+ * primary key makes a redelivered update a no-op, and each row records how
+ * handling went and what the Claude calls behind it cost.
+ */
+export const telegramUpdates = pgTable("telegram_updates", {
+  updateId: bigint("update_id", { mode: "number" }).primaryKey(),
+  kind: text("kind", { enum: ["command", "text", "photo", "button", "other"] }).notNull(),
+  receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
+  handledAt: timestamp("handled_at", { withTimezone: true }),
+  error: text("error"),
+  inputTokens: integer("input_tokens").notNull().default(0),
+  outputTokens: integer("output_tokens").notNull().default(0),
+  cacheReadTokens: integer("cache_read_tokens").notNull().default(0),
+  cacheCreationTokens: integer("cache_creation_tokens").notNull().default(0),
 });

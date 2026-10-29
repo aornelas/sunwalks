@@ -12,6 +12,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ toke
   if (!start || !end) {
     return NextResponse.json({ error: "start and end are required" }, { status: 400 });
   }
-  const data = await getDaysInRange(start, end);
+  const data = await getDaysInRange(start, end, { includePlace: false });
   return NextResponse.json({ days: data });
 }

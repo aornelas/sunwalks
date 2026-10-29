@@ -53,8 +53,20 @@ const HOURLY_VARS = [
   "visibility",
 ].join(",");
 
-async function fetchHourly(lat: number, lon: number, forecastDays: number): Promise<OpenMeteoHourly> {
-  const url = new URL("https://api.open-meteo.com/v1/forecast");
+const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
+// Stitched from the first hours of each past model run, so it's what the
+// forecast said shortly before each hour (from about 2022 on). The
+// Previous Runs API would give true day-ahead values, but its archive has
+// no low/mid/high cloud split or visibility, which the verdict depends on.
+const HISTORICAL_FORECAST_URL = "https://historical-forecast-api.open-meteo.com/v1/forecast";
+
+async function fetchHourly(
+  baseUrl: string,
+  lat: number,
+  lon: number,
+  window: { forecastDays: number } | { startDate: string; endDate: string },
+): Promise<OpenMeteoHourly> {
+  const url = new URL(baseUrl);
   url.searchParams.set("latitude", String(lat));
   url.searchParams.set("longitude", String(lon));
   url.searchParams.set("hourly", HOURLY_VARS);
@@ -66,7 +78,12 @@ async function fetchHourly(lat: number, lon: number, forecastDays: number): Prom
   // the civil day Open-Meteo thinks "today" is doesn't matter as long as
   // the buffer below covers it.
   url.searchParams.set("timezone", "UTC");
-  url.searchParams.set("forecast_days", String(forecastDays));
+  if ("forecastDays" in window) {
+    url.searchParams.set("forecast_days", String(window.forecastDays));
+  } else {
+    url.searchParams.set("start_date", window.startDate);
+    url.searchParams.set("end_date", window.endDate);
+  }
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`Open-Meteo request failed: ${res.status}`);
   const data = await res.json();
@@ -99,31 +116,32 @@ function ceilingFromDewpointSpread(tempF: number, dewpointF: number, cloudLow: n
 }
 
 /**
- * `days` consecutive days of forecast starting at `startDate` (a civil day
- * key). Solar times are computed directly from lat/lon; everything else is
- * sampled from the Open-Meteo hourly array at the hour nearest that day's
- * sunrise, per PLANNING.md's "sample the hour containing sunrise".
+ * Samples the hourly arrays at the hour nearest each date's sunrise, per
+ * PLANNING.md's "sample the hour containing sunrise". Solar times are
+ * computed directly from lat/lon. A date whose sunrise hour has no data
+ * (the archive has gaps) is left out rather than filled with zeros.
  */
-export async function fetchForecastDays(
-  lat: number,
-  lon: number,
-  startDate: string,
-  days: number,
-): Promise<RawDayForecast[]> {
-  // Buffer past `days` so the UTC-anchored request window still covers
-  // every owner-local morning in range regardless of UTC offset.
-  const hourly = await fetchHourly(lat, lon, days + 3);
+function sampleMornings(hourly: OpenMeteoHourly, lat: number, lon: number, dates: string[]): RawDayForecast[] {
   const hourlyTimes = hourly.time.map((t) => new Date(`${t}:00Z`));
 
   const out: RawDayForecast[] = [];
-  for (let i = 0; i < days; i++) {
-    const date = addDays(startDate, i);
+  for (const date of dates) {
     const solar = SunCalc.getTimes(dayKeyToDate(date), lat, lon);
     // solarNoon is the one SunTimes field that's never null — a safe stand-in
     // for the rare (near-polar) owner location/date where dawn/sunrise/
     // goldenHourEnd genuinely don't occur.
     const sunrise = solar.sunrise ?? solar.solarNoon;
     const idx = nearestHourIndex(hourlyTimes, sunrise);
+    const required = [
+      hourly.cloudcover[idx],
+      hourly.cloudcover_low[idx],
+      hourly.cloudcover_mid[idx],
+      hourly.cloudcover_high[idx],
+      hourly.temperature_2m[idx],
+      hourly.precipitation_probability[idx],
+      hourly.visibility[idx],
+    ];
+    if (required.some((v) => v == null)) continue;
 
     out.push({
       date,
@@ -148,4 +166,38 @@ export async function fetchForecastDays(
     });
   }
   return out;
+}
+
+function dateRange(startDate: string, endDate: string): string[] {
+  const dates: string[] = [];
+  for (let d = startDate; d <= endDate; d = addDays(d, 1)) dates.push(d);
+  return dates;
+}
+
+/** `days` consecutive days of forecast starting at `startDate` (a civil day key). */
+export async function fetchForecastDays(
+  lat: number,
+  lon: number,
+  startDate: string,
+  days: number,
+): Promise<RawDayForecast[]> {
+  // Buffer past `days` so the UTC-anchored request window still covers
+  // every owner-local morning in range regardless of UTC offset.
+  const hourly = await fetchHourly(FORECAST_URL, lat, lon, { forecastDays: days + 3 });
+  return sampleMornings(hourly, lat, lon, dateRange(startDate, addDays(startDate, days - 1)));
+}
+
+/** What the forecast said shortly before each morning from `startDate` to `endDate` (inclusive), for backfilling forecast_snapshots. */
+export async function fetchHistoricalForecastDays(
+  lat: number,
+  lon: number,
+  startDate: string,
+  endDate: string,
+): Promise<RawDayForecast[]> {
+  // A day either side, for the same UTC-offset reason as above.
+  const hourly = await fetchHourly(HISTORICAL_FORECAST_URL, lat, lon, {
+    startDate: addDays(startDate, -1),
+    endDate: addDays(endDate, 1),
+  });
+  return sampleMornings(hourly, lat, lon, dateRange(startDate, endDate));
 }

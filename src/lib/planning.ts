@@ -9,6 +9,7 @@ import { forecastDays } from "@/db/schema";
 import { addDays, dayKeyToDate, todayDayKey } from "./dates";
 import { env } from "./env";
 import { fetchForecastDays, type RawDayForecast } from "./weather";
+import { recordLiveSnapshots } from "./forecast-snapshots";
 import { deriveVerdict, buildReason } from "./verdict";
 import { computeTimelineWindow } from "./timeline";
 import type { PlanningDay, PlanningResponse } from "./types";
@@ -85,6 +86,26 @@ async function upsertForecast(raw: RawDayForecast[], fetchedAt: Date): Promise<v
   }
 }
 
+/** Fetches a fresh forecast window and stores it, both as the planning cache and as snapshots. */
+async function fetchAndStore(startDate: string, count: number): Promise<Date> {
+  const raw = await fetchForecastDays(env.ownerLat, env.ownerLon, startDate, count);
+  const fetchedAt = new Date();
+  await upsertForecast(raw, fetchedAt);
+  await recordLiveSnapshots(raw, fetchedAt);
+  return fetchedAt;
+}
+
+/**
+ * Refreshes the forecast whether or not the cache is fresh. The nightly
+ * cron calls this so the evening-before snapshot exists even on days the
+ * app isn't opened.
+ */
+export async function refreshForecast(): Promise<{ startDate: string; fetchedAt: string }> {
+  const startDate = planningStartDate();
+  const fetchedAt = await fetchAndStore(startDate, WINDOW_DAYS);
+  return { startDate, fetchedAt: fetchedAt.toISOString() };
+}
+
 async function readCached(startDate: string, endDate: string): Promise<ForecastRow[]> {
   return db
     .select()
@@ -111,9 +132,7 @@ async function getPlanningDays(startDate: string, count = WINDOW_DAYS): Promise<
   }
 
   try {
-    const raw = await fetchForecastDays(env.ownerLat, env.ownerLon, startDate, count);
-    const fetchedAt = new Date();
-    await upsertForecast(raw, fetchedAt);
+    const fetchedAt = await fetchAndStore(startDate, count);
     const refreshed = await readCached(startDate, endDate);
     return { days: refreshed.map(toPlanningDay), fetchedAt: fetchedAt.toISOString(), stale: false };
   } catch (err) {

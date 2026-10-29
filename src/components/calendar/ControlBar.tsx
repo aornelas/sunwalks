@@ -1,8 +1,10 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
-import { Sunrise } from "lucide-react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { ListFilter, Sunrise } from "lucide-react";
 import type { ZoomLevel } from "@/lib/types";
+import { isFacetActive, type Facet } from "@/lib/facets";
+import { FacetSelects } from "./FacetSelects";
 import { EASE_SOFT, prefersReducedMotion } from "@/lib/motion";
 import styles from "./ControlBar.module.css";
 
@@ -17,9 +19,16 @@ interface ControlBarProps {
   onZoomChange(zoom: ZoomLevel): void;
   filter: boolean;
   onFilterChange(filter: boolean): void;
+  facet: Facet;
+  onFacetChange(facet: Facet): void;
+  places: string[];
 }
 
-export function ControlBar({ zoom, onZoomChange, filter, onFilterChange }: ControlBarProps) {
+export function ControlBar({ zoom, onZoomChange, filter, onFilterChange, facet, onFacetChange, places }: ControlBarProps) {
+  // The sky/place selects don't fit in the bar on a phone, so they sit in a
+  // small tray above it, opened from the filter button.
+  const [facetsOpen, setFacetsOpen] = useState(false);
+  const facetActive = isFacetActive(facet);
   const pillRefs = useRef(new Map<string, HTMLButtonElement>());
   const pillsRef = useRef<HTMLDivElement>(null);
   const fillRef = useRef<HTMLSpanElement>(null);
@@ -73,6 +82,12 @@ export function ControlBar({ zoom, onZoomChange, filter, onFilterChange }: Contr
   }, []);
 
   return (
+    <>
+      {facetsOpen && (
+        <div className={styles.tray} id="facet-tray">
+          <FacetSelects facet={facet} onFacetChange={onFacetChange} places={places} />
+        </div>
+      )}
     <div className={styles.bar}>
       <div className={styles.pills} ref={pillsRef}>
         <span ref={fillRef} className={styles.pillFill} aria-hidden="true" />
@@ -100,6 +115,17 @@ export function ControlBar({ zoom, onZoomChange, filter, onFilterChange }: Contr
       >
         <Sunrise size={17} strokeWidth={2.75} />
       </button>
+      <button
+        type="button"
+        className={`${styles.toggle} ${facetActive ? styles.toggleOn : ""}`}
+        onClick={() => setFacetsOpen((open) => !open)}
+        aria-label="Filter by sky or place"
+        aria-expanded={facetsOpen}
+        aria-controls="facet-tray"
+      >
+        <ListFilter size={17} strokeWidth={2.75} />
+      </button>
     </div>
+    </>
   );
 }

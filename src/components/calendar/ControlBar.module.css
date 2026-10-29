@@ -73,3 +73,17 @@
   background-color: var(--color-accent-2-600);
   color: #fff;
 }
+
+/* Sits just above the bar, right-aligned under the filter button. */
+.tray {
+  position: fixed;
+  right: 14px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 14px + 60px);
+  z-index: 10;
+  max-width: calc(100vw - 28px);
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(245, 234, 216, 0.86);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-md);
+}

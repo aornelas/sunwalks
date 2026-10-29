@@ -4,18 +4,22 @@
 // so every zoom/filter/stat has something real to show.
 import "dotenv/config";
 import { db } from "../src/db";
-import { days, ownerAccount, photos, shareLinks, syncLog } from "../src/db/schema";
+import { days, ownerAccount, photos, shareLinks, syncLog, taggingBatches } from "../src/db/schema";
 import { addDays, localDayKey } from "../src/lib/dates";
 import { env } from "../src/lib/env";
 
 const PHOTO_COUNT = 12;
 const HISTORY_DAYS = 165; // first-photo date is HISTORY_DAYS ago
 const CAPTURE_RATE = 0.6; // ~99 captured days out of ~165 mornings tried
+// Public landmarks, names only, so the place filter has something to show.
+// Real places are location data and live only in the database.
+const DEMO_PLACES = ["Telegraph Hill", "Crissy Field", "Treasure Island", "Rincon Park"];
 
 async function main() {
   console.log("Seeding demo data…");
 
-  await db.delete(photos);
+  await db.delete(taggingBatches);
+  await db.delete(photos); // cascades to photo_tags
   await db.delete(days);
   await db.delete(syncLog);
   await db.delete(shareLinks);
@@ -46,6 +50,7 @@ async function main() {
       filename,
       width: 1360,
       height: 765,
+      place: DEMO_PLACES[photoIndex % DEMO_PLACES.length],
     });
     await db.insert(days).values({ date: dayKey, dayShotId: id });
 

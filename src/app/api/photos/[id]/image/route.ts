@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { photos } from "@/db/schema";
-import { readImage } from "@/lib/storage";
+import { getPhotoSource } from "@/lib/photo-source";
 import { env } from "@/lib/env";
 
 // Public by design: the owner's share link renders these same <img> tags for
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.redirect(url, { status: 302 });
   }
 
-  const bytes = await readImage(`${id}-${size}.jpg`);
+  const bytes = await getPhotoSource().getImage(id, size);
   if (!bytes) return NextResponse.json({ error: "Image not stored" }, { status: 404 });
 
   return new NextResponse(new Uint8Array(bytes), {

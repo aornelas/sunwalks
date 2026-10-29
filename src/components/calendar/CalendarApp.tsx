@@ -7,6 +7,7 @@ import { useCalendarData } from "@/hooks/useCalendarData";
 import { usePickerImport } from "@/hooks/usePickerImport";
 import { createOwnerApi, createShareApi } from "@/lib/api-client";
 import { consumePendingOrigin, type PhotoOrigin } from "@/lib/photo-origin";
+import { NO_FACET, withFacet, type Facet } from "@/lib/facets";
 import type { AccountInfo, DayData, PlanningResponse, Stats, ZoomLevel } from "@/lib/types";
 import { MobileShell } from "./MobileShell";
 import { WebShell } from "./WebShell";
@@ -39,6 +40,8 @@ export interface CalendarAppProps {
   initialDayKeys: string[];
   initialPlanning?: PlanningResponse;
   account?: AccountInfo;
+  /** The owner's named places, for the place filter. Never passed on the share link. */
+  places?: string[];
 }
 
 export function CalendarApp({
@@ -51,6 +54,7 @@ export function CalendarApp({
   initialDayKeys,
   initialPlanning,
   account,
+  places = [],
 }: CalendarAppProps) {
   const api = useMemo(
     () => (readOnly && shareToken ? createShareApi(shareToken) : createOwnerApi()),
@@ -72,6 +76,7 @@ export function CalendarApp({
   // overrides this once the cookie-read effect below runs.
   const [zoom, setZoom] = useState<ZoomLevel>("month");
   const [filter, setFilter] = useState(readOnly);
+  const [facet, setFacet] = useState<Facet>(NO_FACET);
   const [prefsReady, setPrefsReady] = useState(false);
   const [detail, setDetail] = useState<DetailState | null>(null);
   const [photoOrigin, setPhotoOrigin] = useState<PhotoOrigin | null>(null);
@@ -391,6 +396,8 @@ export function CalendarApp({
   }, [shareUrl, fetchShareUrl]);
 
   const detailDay = detail ? calendarData.getDay(detail.date) : undefined;
+  // The grids see only matching shots; the photo view keeps the whole day.
+  const facetedGetDay = useMemo(() => withFacet(calendarData.getDay, facet), [calendarData.getDay, facet]);
 
   const shellProps = {
     today,
@@ -400,8 +407,11 @@ export function CalendarApp({
     onZoomChange: setZoom,
     filter,
     onFilterChange: setFilter,
+    facet,
+    onFacetChange: setFacet,
+    places: readOnly ? [] : places,
     stats: calendarData.stats,
-    getDay: calendarData.getDay,
+    getDay: facetedGetDay,
     ensureLoaded: calendarData.ensureLoaded,
     onOpenDay: openDetailFor,
     onJumpToMonth: handleJumpToMonth,

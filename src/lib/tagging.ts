@@ -5,6 +5,7 @@ import { asc, eq, isNull, ne, or } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { photoTags, photos } from "@/db/schema";
+import { jsonSchemaFor } from "./json-schema";
 import type { PhotoSource, SourcePhoto } from "./photo-source";
 
 /**
@@ -64,28 +65,9 @@ export const PhotoTagSchema = z.object({
 
 export type PhotoTag = z.infer<typeof PhotoTagSchema>;
 
-// Structured outputs constrain decoding to the schema but don't support
-// numeric ranges, string lengths or patterns, so those are dropped here and
-// enforced by PhotoTagSchema.parse afterwards. Built by hand rather than
-// with the SDK's zodOutputFormat, which turns enums into descriptions and so
-// loses the constraint that matters most (the category).
-const UNSUPPORTED_KEYWORDS = new Set(["$schema", "minimum", "maximum", "minLength", "maxLength", "pattern", "maxItems"]);
-
-function stripUnsupported(node: unknown): unknown {
-  if (Array.isArray(node)) return node.map(stripUnsupported);
-  if (node && typeof node === "object") {
-    return Object.fromEntries(
-      Object.entries(node)
-        .filter(([key]) => !UNSUPPORTED_KEYWORDS.has(key))
-        .map(([key, value]) => [key, stripUnsupported(value)]),
-    );
-  }
-  return node;
-}
-
 export const OUTPUT_FORMAT: Anthropic.JSONOutputFormat = {
   type: "json_schema",
-  schema: stripUnsupported(z.toJSONSchema(PhotoTagSchema)) as Record<string, unknown>,
+  schema: jsonSchemaFor(PhotoTagSchema),
 };
 
 let promptCache: string | null = null;

@@ -8,6 +8,7 @@ import {
   uniqueIndex,
   index,
   jsonb,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 /**
@@ -186,3 +187,62 @@ export const forecastSnapshots = pgTable(
   },
   (t) => [uniqueIndex("forecast_snapshots_date_lead_source_idx").on(t.date, t.leadDays, t.source)],
 );
+
+/**
+ * Named places the owner walks to (see lib/spots.ts). Names only by default:
+ * coordinates are optional and unused until per-spot forecasts exist, and
+ * real spots, like photos.place, live only in the database. `kind` sets the
+ * engine's starting assumption about which skies a spot suits, before any
+ * walks there have been logged.
+ */
+export const spots = pgTable("spots", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  name: text("name").notNull().unique(),
+  kind: text("kind", { enum: ["vantage", "forest", "short_walk", "waterfront"] }).notNull(),
+  notes: text("notes"),
+  lat: real("lat"),
+  lon: real("lon"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * One row per morning: where the owner went (or that they stayed in), how
+ * it was, and anything they said about it. Photos aren't linked directly;
+ * a morning's photos are the ones with the same date.
+ */
+export const walks = pgTable("walks", {
+  date: date("date", { mode: "string" }).primaryKey(),
+  spotId: integer("spot_id").references(() => spots.id, { onDelete: "set null" }),
+  stayedIn: boolean("stayed_in").notNull().default(false),
+  /** 1 (wasted trip) to 5 (best of the year). */
+  rating: integer("rating"),
+  note: text("note"),
+  source: text("source", { enum: ["app", "cli", "telegram", "mcp", "seed"] }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * The files behind Claude's memory tool (see lib/memory-store.ts): the
+ * owner's preferences, in their own words as Claude has filed them, under
+ * /memories. Kept in the database so every surface (CLI, Telegram, MCP)
+ * reads and writes the same memory.
+ */
+export const memoryFiles = pgTable("memory_files", {
+  path: text("path").primaryKey(),
+  content: text("content").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** The latest recommendation for each morning, as the engine made it (see lib/recommend.ts). */
+export const recommendations = pgTable("recommendations", {
+  date: date("date", { mode: "string" }).primaryKey(),
+  category: text("category").notNull(),
+  confidence: real("confidence").notNull(),
+  spot: text("spot").notNull(),
+  payload: jsonb("payload").notNull(),
+  model: text("model").notNull(),
+  inputTokens: integer("input_tokens").notNull().default(0),
+  outputTokens: integer("output_tokens").notNull().default(0),
+  cacheReadTokens: integer("cache_read_tokens").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

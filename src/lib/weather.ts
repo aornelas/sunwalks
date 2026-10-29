@@ -132,6 +132,9 @@ function sampleMornings(hourly: OpenMeteoHourly, lat: number, lon: number, dates
     // goldenHourEnd genuinely don't occur.
     const sunrise = solar.sunrise ?? solar.solarNoon;
     const idx = nearestHourIndex(hourlyTimes, sunrise);
+    // A date outside the fetched window would otherwise borrow the nearest
+    // hour it has, possibly days away.
+    if (hourlyTimes.length === 0 || Math.abs(hourlyTimes[idx].getTime() - sunrise.getTime()) > 90 * 60_000) continue;
     const required = [
       hourly.cloudcover[idx],
       hourly.cloudcover_low[idx],

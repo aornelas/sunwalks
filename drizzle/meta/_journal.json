@@ -29,6 +29,13 @@
       "when": 1793299724994,
       "tag": "0003_engine",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793301702482,
+      "tag": "0004_telegram",
+      "breakpoints": true
     }
   ]
 }

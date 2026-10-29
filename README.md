@@ -247,10 +247,13 @@ one-time, user-present selection flow, so:
 | `APP_TIMEZONE` | no | IANA zone that defines a "day" (default `America/Los_Angeles`) |
 | `OWNER_LAT` / `OWNER_LON` | no | Location for the planning forecast (defaults to San Francisco) |
 | `DEMO_MODE` | no | `true` = seeded local preview, no auth |
-| `ANTHROPIC_API_KEY` | for tagging | Claude API key used by `npm run tag-photos` |
+| `ANTHROPIC_API_KEY` | for Claude features | Claude API key for tagging, walk plans and the walk buddy |
 | `TAGGING_MODEL` | no | Model for tagging (default `claude-opus-5-5`) |
 | `RECOMMEND_MODEL` | no | Model for walk plans and feedback (default `claude-opus-5-5`) |
-| `CRON_SECRET` | production | Authenticates Vercel's call to the nightly forecast job |
+| `CRON_SECRET` | production | Authenticates Vercel's calls to the cron jobs |
+| `TELEGRAM_BOT_TOKEN` | for the walk buddy | Bot token from @BotFather; unset turns the bot off |
+| `TELEGRAM_CHAT_ID` | for the walk buddy | Your chat with the bot; every other chat is ignored (`npm run telegram -- chats` finds it) |
+| `TELEGRAM_WEBHOOK_SECRET` | for the walk buddy | Shared with Telegram by `npm run telegram -- set-webhook`; the webhook rejects requests without it |
 
 ### Deploying
 
@@ -263,9 +266,17 @@ The app runs on Vercel as-is:
 4. Run `npm run db:push` against the production `DATABASE_URL` once (and
    again after pulling a schema change).
 
-`vercel.json` schedules `/api/cron/forecast` nightly at 03:00 UTC (8 PM
-Pacific in summer), which records the evening-before forecast even on days
-the app isn't opened.
+`vercel.json` schedules three jobs:
+
+- `/api/cron/forecast`, nightly at 03:00 UTC (8 PM Pacific in summer),
+  records the evening-before forecast even on days the app isn't opened.
+- `/api/cron/evening-plan`, at 03:15 UTC, sends tomorrow's walk plan to
+  the Telegram walk buddy.
+- `/api/cron/weekly-summary`, Sundays at 16:00 UTC, sends what the
+  calibration learned that week.
+
+The two Telegram jobs do nothing until the `TELEGRAM_*` variables are set.
+To turn the bot on, see [the walk buddy](docs/architecture.md#the-walk-buddy-telegram).
 
 ## Project layout
 
@@ -282,9 +293,11 @@ src/lib/photo-source.ts  the interface between the app and wherever photos live
 src/lib/tagging.ts       vision tagging: schema, request, validation
 src/lib/recommend.ts     the walk planner: tools over the engine's data, run by tool-loop.ts
 src/lib/calibration.ts   how often each forecast held; place-scores.ts: which spots suit which skies
-prompts/                 versioned prompts (tag-photo/v1.md)
+src/lib/walk-buddy.ts    the Telegram bot: evening plan, button taps, photo + caption logging,
+                         weekly summary; telegram.ts is the Bot API client
+prompts/                 versioned prompts (tag-photo, recommend-walk, file-feedback, walk-buddy)
 scripts/                 seed, tag-photos, backfill-forecasts, recommend, calibration,
-                         feedback, walk, sample-photos
+                         feedback, walk, telegram, sample-photos
 test/                    unit tests (`npm test`); the Claude API is mocked
 design_handoff_*/        the Claude Design specs this was built from
 ```
@@ -293,8 +306,9 @@ design_handoff_*/        the Claude Design specs this was built from
 
 - **Places have to come from you.** The Picker API exposes no location
   data. Tagging suggests a place from visible landmarks, but only a place
-  you've set appears in captions and the place filter; setting one in the
-  app arrives with the walk log (roadmap).
+  you've set appears in captions and the place filter. A photo sent to the
+  walk buddy takes the spot you logged; for imported photos, setting one in
+  the app is still on the roadmap.
 - **No AVIF/WebP or Display P3.** Imported photos are the sRGB JPEGs Google
   serves; re-encoding on import isn't implemented.
 - **No automatic sync.** This is a Google platform restriction (see above).
@@ -314,8 +328,7 @@ The next step turns the planning view from "is it worth going out?" into
     the forecast said each evening, backfilled from Open-Meteo's archive.
   - *Done:* the engine. A walk log and named spots, calibration and place
     scores in plain TypeScript, preferences kept with Claude's memory tool,
-    and a recommender that runs as an explicit tool loop. For now it runs
-    from the command line; the Telegram bot and MCP server put it in reach.
+    and a recommender that runs as an explicit tool loop.
   - An evening recommendation of where to walk tomorrow, starting from
     these defaults and replacing them with what has worked for you:
     - *Stunning* or *Nice*: a high vantage point.
@@ -326,9 +339,10 @@ The next step turns the planning view from "is it worth going out?" into
   - Learning from every morning: how often each forecast came true (shown
     as a confidence), which spots worked for which sky, and what you tell it
     ("Telegraph Hill is perfect for Stunning days").
-- **Telegram walk buddy**: the evening plan arrives as a message with
-  tap-to-pick buttons for the suggested spots, and a morning photo plus a few
-  words logs the walk and teaches the recommender.
+- **Telegram walk buddy** (*done*): the evening plan arrives as a message
+  with tap-to-pick buttons for the suggested spots and then a 1–5 rating, a
+  morning photo plus a few words is tagged and logs the walk (corrections
+  and preferences included), and a weekly message says what it has learned.
 - **Sunwalks in Claude** (MCP): an MCP server over the same tools, so Claude
   can plan a walk, log feedback or search the archive, with tomorrow's
   planning card rendered inside the conversation as an MCP App.

@@ -37,6 +37,22 @@ export const env = {
   get cronSecret() {
     return process.env.CRON_SECRET;
   },
+  /** The walk buddy's bot, from @BotFather. Unset means the bot is off: the webhook refuses every call and the crons send nothing. */
+  get telegramBotToken() {
+    return process.env.TELEGRAM_BOT_TOKEN;
+  },
+  /** Given to setWebhook; Telegram echoes it in a header so the webhook can reject anything else. */
+  get telegramWebhookSecret() {
+    return process.env.TELEGRAM_WEBHOOK_SECRET;
+  },
+  /** The owner's own chat with the bot. Updates from any other chat are dropped. */
+  get telegramChatId() {
+    return process.env.TELEGRAM_CHAT_ID;
+  },
+  /** For tests and local runs against a fake Bot API. */
+  get telegramApiBase() {
+    return process.env.TELEGRAM_API_BASE || "https://api.telegram.org";
+  },
   /** Serves seeded local images instead of calling Google — local dev/demo only. */
   get demoMode() {
     return process.env.DEMO_MODE === "true";

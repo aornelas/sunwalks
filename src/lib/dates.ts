@@ -17,6 +17,38 @@ export function localDayKey(instant: Date, timeZone: string): string {
   return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
+/** Minutes the zone is ahead of UTC at `instant` (negative west of Greenwich). */
+function zoneOffsetMinutes(instant: Date, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(instant);
+  const get = (t: string) => Number(parts.find((p) => p.type === t)!.value);
+  const asUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+  return Math.round((asUtc - instant.getTime()) / 60000);
+}
+
+/**
+ * The instant at which clocks in `timeZone` show the wall time carried in
+ * `wall`'s UTC fields (how EXIF times arrive: local, with no zone). Checked
+ * twice so a time near a daylight-saving change lands on the right side.
+ */
+export function wallClockToInstant(wall: Date, timeZone: string): Date {
+  const first = wall.getTime() - zoneOffsetMinutes(wall, timeZone) * 60000;
+  return new Date(wall.getTime() - zoneOffsetMinutes(new Date(first), timeZone) * 60000);
+}
+
+/** "07:50" on a day key, owner-local, as an instant. */
+export function zonedTimeToInstant(dayKey: string, hhmm: string, timeZone: string): Date {
+  return wallClockToInstant(new Date(`${dayKey}T${hhmm}:00Z`), timeZone);
+}
+
 export function dayKeyToDate(dayKey: string): Date {
   return new Date(`${dayKey}T00:00:00Z`);
 }

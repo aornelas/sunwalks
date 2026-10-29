@@ -36,6 +36,13 @@
       "when": 1793301702482,
       "tag": "0004_telegram",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793315476799,
+      "tag": "0005_check-ins",
+      "breakpoints": true
     }
   ]
 }

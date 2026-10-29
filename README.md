@@ -272,10 +272,12 @@ The app runs on Vercel as-is:
   records the evening-before forecast even on days the app isn't opened.
 - `/api/cron/evening-plan`, at 03:15 UTC, sends tomorrow's walk plan to
   the Telegram walk buddy.
+- `/api/cron/morning-nudge`, at 17:30 UTC (9:30 AM Pacific in winter),
+  asks for the morning's photo if nothing has been reported.
 - `/api/cron/weekly-summary`, Sundays at 16:00 UTC, sends what the
   calibration learned that week.
 
-The two Telegram jobs do nothing until the `TELEGRAM_*` variables are set.
+The Telegram jobs do nothing until the `TELEGRAM_*` variables are set.
 To turn the bot on, see [the walk buddy](docs/architecture.md#the-walk-buddy-telegram).
 
 ## Project layout
@@ -293,8 +295,9 @@ src/lib/photo-source.ts  the interface between the app and wherever photos live
 src/lib/tagging.ts       vision tagging: schema, request, validation
 src/lib/recommend.ts     the walk planner: tools over the engine's data, run by tool-loop.ts
 src/lib/calibration.ts   how often each forecast held; place-scores.ts: which spots suit which skies
-src/lib/walk-buddy.ts    the Telegram bot: evening plan, button taps, photo + caption logging,
-                         weekly summary; telegram.ts is the Bot API client
+src/lib/walk-buddy.ts    the Telegram bot: evening plan, morning reports (photo, place, rating),
+                         nudge, weekly summary; telegram.ts is the Bot API client
+src/lib/reach.ts         which spots fit a morning, from spot timings and schedule.ts's rules
 prompts/                 versioned prompts (tag-photo, recommend-walk, file-feedback, walk-buddy)
 scripts/                 seed, tag-photos, backfill-forecasts, recommend, calibration,
                          feedback, walk, telegram, sample-photos
@@ -339,10 +342,12 @@ The next step turns the planning view from "is it worth going out?" into
   - Learning from every morning: how often each forecast came true (shown
     as a confidence), which spots worked for which sky, and what you tell it
     ("Telegraph Hill is perfect for Stunning days").
-- **Telegram walk buddy** (*done*): the evening plan arrives as a message
-  with tap-to-pick buttons for the suggested spots and then a 1–5 rating, a
-  morning photo plus a few words is tagged and logs the walk (corrections
-  and preferences included), and a weekly message says what it has learned.
+- **Telegram walk buddy** (*done*): the evening plan arrives as a message,
+  suggesting only spots you can get back from in time (school days,
+  weekends and holidays each have their own deadline). Each morning a photo
+  (from the window counts), the place and a 1–5 rating make the report; the
+  bot asks with buttons for anything missing, files late photos on the
+  right morning, and a weekly message says what it has learned.
 - **Sunwalks in Claude** (MCP): an MCP server over the same tools, so Claude
   can plan a walk, log feedback or search the archive, with tomorrow's
   planning card rendered inside the conversation as an MCP App.

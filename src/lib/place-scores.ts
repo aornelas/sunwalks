@@ -1,6 +1,6 @@
-// Which spots have worked for which skies: each logged walk is scored from
-// the owner's rating and the photos' drama, then averaged per spot and
-// observed sky. A spot with few walks leans on a prior from its kind (the
+// Which spots have worked for which skies: each logged morning is scored
+// from the owner's rating (or, without one, the photos' drama), then
+// averaged per spot and observed sky. A spot with few walks leans on a prior from its kind (the
 // README's defaults: high places for colour, forest for fog, a short walk
 // for a clear sky, bed for rain), so a new spot can still be recommended
 // and a lucky single walk can't dominate.
@@ -10,8 +10,8 @@ import { CATEGORY_ORDER, type VerdictWord } from "./verdict";
 
 export type SpotKind = "vantage" | "forest" | "short_walk" | "waterfront";
 
-/** The pseudo-spot for mornings in bed. Logged as `stayedIn`, scored like any spot. */
-export const STAY_IN = "Stay in";
+/** The pseudo-spot for mornings at home (a window photo, or none). Logged as `stayedIn`, scored like any spot. */
+export const STAY_IN = "Home";
 
 /**
  * Starting score (0–1) for a kind of spot under each sky, before any walks
@@ -30,16 +30,16 @@ const KIND_PRIORS: Record<SpotKind | "stay_in", Record<VerdictWord, number>> = {
 const PRIOR_WEIGHT = 1;
 
 /**
- * 0–1 for one morning: the rating ((r−1)/4) and the drama ((d−1)/9),
- * averaged when both exist. Null when there's neither, which happens for a
- * walk with no rating and no tagged photo.
+ * 0–1 for one morning. The owner's rating ((r−1)/4) is the score: it's the
+ * only signal that says the choice of place paid off, where the photo's
+ * drama mostly says how good the sky was, which no choice of spot changes.
+ * Drama ((d−1)/9) stands in only when there's no rating, and never for a
+ * morning at home, where the window view says nothing about the choice.
  */
 export function walkScore(m: Pick<MorningRecord, "rating" | "drama" | "stayedIn">): number | null {
-  const parts: number[] = [];
-  if (m.rating != null) parts.push((m.rating - 1) / 4);
-  // Staying in has no photo to judge, only how it felt.
-  if (m.drama != null && !m.stayedIn) parts.push((m.drama - 1) / 9);
-  return parts.length > 0 ? parts.reduce((a, b) => a + b, 0) / parts.length : null;
+  if (m.rating != null) return (m.rating - 1) / 4;
+  if (m.drama != null && !m.stayedIn) return (m.drama - 1) / 9;
+  return null;
 }
 
 export interface SpotSkyScore {
@@ -65,11 +65,11 @@ export function computeSpotScores(
     const visits = mornings.filter((m) => (kind === "stay_in" ? m.stayedIn : m.spot === name));
     const bySky = Object.fromEntries(
       CATEGORY_ORDER.map((sky) => {
-        // A walk is filed under the sky its photo shows. A morning with no
-        // tagged photo (staying in, or a walk without one) falls back to
-        // the sky the forecast promised.
+        // A morning is filed under the sky its photo shows (a window photo
+        // counts). One with no tagged photo falls back to the sky the
+        // forecast promised.
         const scores = visits
-          .filter((m) => (m.stayedIn ? m.forecast : (m.observed ?? m.forecast)) === sky)
+          .filter((m) => (m.observed ?? m.forecast) === sky)
           .map(walkScore)
           .filter((s): s is number => s != null);
         const sum = scores.reduce((a, b) => a + b, 0);

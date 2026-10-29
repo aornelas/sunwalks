@@ -17,11 +17,13 @@ import { loadMornings, type MorningRecord } from "./mornings";
 import { computeSpotScores, rankSpots, STAY_IN } from "./place-scores";
 import { jsonSchemaFor } from "./json-schema";
 import { getPlanningResponse } from "./planning";
+import { HOME_TIMING, reachFor, type DayRule, type Reach } from "./reach";
+import { morningSchedule } from "./schedule";
 import { listSpots } from "./spots";
 import { runToolLoop, finalText, type LoopEvent, type LoopTool } from "./tool-loop";
 import { buildReason, CATEGORY_ORDER, type VerdictWord } from "./verdict";
 
-export const RECOMMEND_PROMPT_VERSION = "recommend-walk/v1";
+export const RECOMMEND_PROMPT_VERSION = "recommend-walk/v2";
 
 export function recommendModel(): string {
   return process.env.RECOMMEND_MODEL || "claude-opus-5-5";
@@ -55,17 +57,28 @@ interface EngineData {
   calibration: ReturnType<typeof computeCalibration>;
   spotScores: ReturnType<typeof computeSpotScores>;
   spotNotes: Map<string, string | null>;
+  /** The planned morning's schedule, and whether each spot (Home included) fits it. */
+  rule: DayRule;
+  reach: Map<string, Reach>;
 }
 
 async function loadEngineData(date: string): Promise<EngineData> {
-  const [all, spotList] = await Promise.all([loadMornings(), listSpots()]);
+  const [all, spotList, { rule, backBy, sunrise }] = await Promise.all([loadMornings(), listSpots(), morningSchedule(date)]);
   const mornings = all.filter((m) => m.date < date);
+  const reach = new Map(
+    [...spotList.map((s) => [s.name, s] as const), [STAY_IN, HOME_TIMING] as const].map(([name, timing]) => [
+      name,
+      reachFor(sunrise, rule, backBy, timing, env.timezone),
+    ]),
+  );
   return {
     mornings,
     target: all.find((m) => m.date === date),
     calibration: computeCalibration(mornings),
     spotScores: computeSpotScores(spotList, mornings),
     spotNotes: new Map(spotList.map((s) => [s.name, s.notes])),
+    rule,
+    reach,
   };
 }
 
@@ -150,25 +163,29 @@ function buildTools(data: EngineData): LoopTool[] {
       definition: {
         name: "spots_for",
         description:
-          "The owner's spots (and staying in) ranked for a forecast category. `expected` (0 to 1) blends how each spot has gone on each kind of sky with how likely each sky is given this forecast; spots with few walks lean on a default for their kind (high places for colour, forest for fog, a short walk for clear skies, bed for rain).",
+          "The owner's spots (and Home, for staying in) ranked for a forecast category, split by whether each fits the planned morning's schedule. `expected` (0 to 1) blends how each spot has gone on each kind of sky (mostly the owner's ratings) with how likely each sky is given this forecast; spots with few walks lean on a default for their kind (high places for colour, forest for fog, a short walk for clear skies, home for rain). `reach` says why a spot does or doesn't fit: sunrise, plus the time they stay, plus any walk there, plus the trip home, against the time they must be back.",
         strict: true,
         input_schema: categoryInput,
       },
       async run(input) {
         const { category } = input as { category: VerdictWord };
         const odds = observedDistribution(data.calibration, category);
+        const ranked = rankSpots(data.spotScores, odds, category).map((s) => ({
+          spot: s.spot,
+          kind: s.kind,
+          expected: round(s.expected),
+          walksUnderThisSky: s.walksUnderSky,
+          totalWalks: s.totalWalks,
+          notes: data.spotNotes.get(s.spot) ?? null,
+          reach: data.reach.get(s.spot)?.reason ?? null,
+          status: data.reach.get(s.spot)?.status ?? "unknown",
+        }));
+        const { rule } = data;
         return {
+          schedule: `${rule.label}: ${rule.backBy ? `back home by ${rule.backBy}` : "no time to be back"}, staying about ${rule.stayMinutes} min`,
           likelySkies: Object.fromEntries(CATEGORY_ORDER.map((c) => [c, round(odds[c])])),
-          spots: rankSpots(data.spotScores, odds, category)
-            .slice(0, 6)
-            .map((s) => ({
-              spot: s.spot,
-              kind: s.kind,
-              expected: round(s.expected),
-              walksUnderThisSky: s.walksUnderSky,
-              totalWalks: s.totalWalks,
-              notes: data.spotNotes.get(s.spot) ?? null,
-            })),
+          inReach: ranked.filter((s) => s.status !== "too_far").slice(0, 6),
+          outOfReach: ranked.filter((s) => s.status === "too_far").slice(0, 4).map(({ spot, expected, reach }) => ({ spot, expected, reach })),
         };
       },
     },
@@ -245,6 +262,7 @@ export async function recommendWalk(
   const known = new Set(data.spotScores.map((s) => s.spot));
   for (const pick of [recommendation.spot, ...recommendation.alternatives.map((a) => a.spot)]) {
     if (!known.has(pick)) throw new Error(`Recommended "${pick}", which isn't one of the owner's spots`);
+    if (data.reach.get(pick)?.status === "too_far") throw new Error(`Recommended "${pick}", which is out of reach that morning`);
   }
 
   const row = {

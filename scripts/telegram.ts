@@ -3,13 +3,14 @@
 //   npm run telegram -- set-webhook    points the bot at SITE_URL/api/telegram with TELEGRAM_WEBHOOK_SECRET
 //   npm run telegram -- info           shows the webhook Telegram has on file, and its last error
 //   npm run telegram -- plan [--date YYYY-MM-DD]   plans a morning and sends it now
+//   npm run telegram -- nudge          sends this morning's "no photo yet" nudge, if nothing's been reported
 //   npm run telegram -- week           sends the weekly summary now
 import "dotenv/config";
 import Anthropic from "@anthropic-ai/sdk";
 import { todayDayKey } from "../src/lib/dates";
 import { env } from "../src/lib/env";
 import type { TelegramUpdate } from "../src/lib/telegram";
-import { configuredBotApi, sendEveningPlan, sendWeeklySummary } from "../src/lib/walk-buddy";
+import { configuredBotApi, sendEveningPlan, sendMorningNudge, sendWeeklySummary } from "../src/lib/walk-buddy";
 
 async function main() {
   const api = configuredBotApi();
@@ -56,12 +57,15 @@ async function main() {
       console.log(`Sent. input ${usage.inputTokens} + ${usage.cacheReadTokens} cache read; output ${usage.outputTokens}`);
       break;
     }
+    case "nudge":
+      console.log((await sendMorningNudge({ api, chatId: requireChat() }, todayDayKey(env.timezone))) ? "Sent." : "This morning is already reported.");
+      break;
     case "week":
       await sendWeeklySummary({ api, chatId: requireChat() }, todayDayKey(env.timezone));
       console.log("Sent.");
       break;
     default:
-      throw new Error("Usage: npm run telegram -- chats | set-webhook | info | plan [--date YYYY-MM-DD] | week");
+      throw new Error("Usage: npm run telegram -- chats | set-webhook | info | plan [--date YYYY-MM-DD] | nudge | week");
   }
   process.exit(0);
 }

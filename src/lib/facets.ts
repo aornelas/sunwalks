@@ -3,10 +3,10 @@
 // it, so the thumbnail is a Foggy shot when filtering by Foggy. Days with
 // no match read as empty, which the "sunwalk days only" toggle then hides.
 
-import type { VerdictWord } from "./verdict";
+import { CATEGORY_ORDER, type VerdictWord } from "./verdict";
 import type { DayData } from "./types";
 
-export const CATEGORY_ORDER: VerdictWord[] = ["Stunning", "Nice", "Clear", "Foggy", "Wet"];
+export { CATEGORY_ORDER };
 
 export interface Facet {
   category: VerdictWord | null;

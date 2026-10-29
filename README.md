@@ -101,6 +101,10 @@ hand-rolled Google OAuth · Google Photos **Picker API** · Open-Meteo +
   - `photo_tags`: Claude's reading of each photo: the sky category it
     actually was, alt text, colours, drama, mood and a place suggestion.
   - `tagging_batches`: Message Batches in flight, so a re-run resumes them.
+  - `spots` and `walks`: named places, and the walk log (where you went,
+    or that you stayed in, with a rating and a note).
+  - `memory_files`: the preferences Claude has filed with its memory tool.
+  - `recommendations`: the latest plan for each morning.
 - **Photos go through one interface.** `src/lib/photo-source.ts` is the seam
   between the app and wherever photos live (Google Photos imports today,
   the phone itself on Android). See [docs/architecture.md](docs/architecture.md)
@@ -154,6 +158,20 @@ npm run backfill-forecasts               # what the forecast said each morning
 Both scripts are safe to re-run: photos already tagged with the current
 prompt version, and mornings that already have a forecast, are skipped.
 Tagging the ~115 sample photos as a batch costs about $1.
+
+The seed also logs a walk for each sample morning, so the walk planner has
+history to learn from:
+
+```bash
+npm run calibration                      # how often each forecast held, and which spots work (no API calls)
+npm run feedback -- "Telegraph Hill is perfect for Stunning days"
+npm run recommend                        # tomorrow's walk, showing each tool Claude calls
+npm run recommend -- --date 2026-10-22   # a past morning, using only what was known then
+npm run walk -- log 2026-10-30 "Telegraph Hill" --rating 5
+```
+
+`npm run db:seed -- --walks-only` resets the spots and walks without
+touching the photos or their tags.
 
 The sample photos are rebuilt with `npm run sample-photos -- <dir>`, which
 crops and resizes any folder of 16:9 images and strips their metadata
@@ -231,6 +249,7 @@ one-time, user-present selection flow, so:
 | `DEMO_MODE` | no | `true` = seeded local preview, no auth |
 | `ANTHROPIC_API_KEY` | for tagging | Claude API key used by `npm run tag-photos` |
 | `TAGGING_MODEL` | no | Model for tagging (default `claude-opus-5-5`) |
+| `RECOMMEND_MODEL` | no | Model for walk plans and feedback (default `claude-opus-5-5`) |
 | `CRON_SECRET` | production | Authenticates Vercel's call to the nightly forecast job |
 
 ### Deploying
@@ -261,8 +280,11 @@ src/lib/                 dates + grid maths, Google OAuth/Picker client, ingest,
 src/db/                  Drizzle schema
 src/lib/photo-source.ts  the interface between the app and wherever photos live
 src/lib/tagging.ts       vision tagging: schema, request, validation
+src/lib/recommend.ts     the walk planner: tools over the engine's data, run by tool-loop.ts
+src/lib/calibration.ts   how often each forecast held; place-scores.ts: which spots suit which skies
 prompts/                 versioned prompts (tag-photo/v1.md)
-scripts/                 seed, tag-photos, backfill-forecasts, sample-photos
+scripts/                 seed, tag-photos, backfill-forecasts, recommend, calibration,
+                         feedback, walk, sample-photos
 test/                    unit tests (`npm test`); the Claude API is mocked
 design_handoff_*/        the Claude Design specs this was built from
 ```
@@ -290,6 +312,10 @@ The next step turns the planning view from "is it worth going out?" into
     which category the sky actually turned out to be, and a place suggestion
     from visible landmarks) with a Batch API backfill; and a record of what
     the forecast said each evening, backfilled from Open-Meteo's archive.
+  - *Done:* the engine. A walk log and named spots, calibration and place
+    scores in plain TypeScript, preferences kept with Claude's memory tool,
+    and a recommender that runs as an explicit tool loop. For now it runs
+    from the command line; the Telegram bot and MCP server put it in reach.
   - An evening recommendation of where to walk tomorrow, starting from
     these defaults and replacing them with what has worked for you:
     - *Stunning* or *Nice*: a high vantage point.

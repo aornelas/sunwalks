@@ -14,7 +14,11 @@
     "db:seed": "tsx scripts/seed.ts",
     "sample-photos": "tsx scripts/prepare-sample-photos.ts",
     "tag-photos": "tsx scripts/tag-photos.ts",
-    "backfill-forecasts": "tsx scripts/backfill-forecasts.ts"
+    "backfill-forecasts": "tsx scripts/backfill-forecasts.ts",
+    "recommend": "tsx scripts/recommend.ts",
+    "calibration": "tsx scripts/calibration-report.ts",
+    "feedback": "tsx scripts/feedback.ts",
+    "walk": "tsx scripts/walk.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",

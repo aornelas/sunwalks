@@ -5,6 +5,9 @@
 
 export type VerdictWord = "Stunning" | "Nice" | "Clear" | "Foggy" | "Wet";
 
+/** Best to worst, the order every list of categories uses. */
+export const CATEGORY_ORDER: VerdictWord[] = ["Stunning", "Nice", "Clear", "Foggy", "Wet"];
+
 export interface VerdictTone {
   tone: 1 | 2 | 3 | 4 | 5;
   /** For use on the cream (light) ground. */

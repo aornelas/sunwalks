@@ -156,12 +156,85 @@ Snapshots store the forecast inputs as well as the verdict. Calibration
 should re-derive the verdict from the inputs, as the planning view already
 does, so a rule change applies to the whole history.
 
+## The engine
+
+The engine turns the forecast, the tagged photos and the walk log into a
+plan for tomorrow. It splits the work in two: plain TypeScript does the
+counting, and Claude does the judgement.
+
+```
+ forecast_snapshots ─┐
+ photo_tags ─────────┼─▶ mornings.ts ─▶ calibration.ts ──┐
+ walks + spots ──────┘   (one record     place-scores.ts ─┤
+                          per morning)                    ▼
+ memory_files ◀─▶ memory tool ◀──── Claude ◀── tools: get_forecast, forecast_accuracy,
+                                      │               spots_for, similar_mornings
+                                      ▼
+                              recommendations (category, confidence, spot, reason, message)
+```
+
+### What plain code does
+
+- **`mornings.ts`** joins everything known about each morning: the
+  forecast (the evening-before live snapshot when there is one, else the
+  historical one, with the verdict re-derived from its inputs), the sky the
+  day's photo shows, and the walk log entry.
+- **`calibration.ts`** counts, for each forecast category, how often the
+  sky in the photo matched. Confidence is the Laplace-smoothed held-rate,
+  `(held + 1) / (forecasts + 2)`, so a category with no history reads 0.5
+  rather than 0 or 1. It also gives P(observed sky | forecast), which says
+  how much to hedge.
+- **`place-scores.ts`** scores each walk from 0 to 1 (the rating and the
+  photos' drama, averaged) and averages them per spot and observed sky.
+  Each average is shrunk towards a default for the spot's kind (high places
+  for colour, forest for fog, a short walk for a clear sky, bed for rain),
+  carrying one walk's worth of weight, so a new spot can still be suggested
+  and one lucky morning can't dominate. A spot's rank for tomorrow is its
+  expected score across the skies the forecast tends to bring.
+
+`npm run calibration` prints all of this: the backtest (how often each
+forecast held, and the full forecast-against-observed table), the place
+scores, and the filed preferences. It makes no API calls.
+
+### What Claude does
+
+- **Planning** (`recommend.ts`, prompt in `prompts/recommend-walk/v1.md`):
+  Claude reads the owner's preferences through the memory tool, then calls
+  the four engine tools and decides, weighing stated preferences first,
+  then the ranking, then specific past mornings. The answer comes back as
+  structured output (category, confidence, spot, reason, up to two
+  alternatives and the message the owner reads) and is validated: the spots
+  must be real ones. Planning a past date uses only the mornings before it,
+  and answers `get_forecast` from what was forecast at the time, so the
+  recommender itself can be backtested.
+- **Filing feedback** (`feedback.ts`, prompt in `prompts/file-feedback/v1.md`):
+  Claude reads the existing preferences and edits them with the memory
+  tool, adding, sharpening or replacing rules instead of appending.
+
+Both run through `tool-loop.ts`, a manual tool-use loop written out on
+purpose as a teaching example: ask, run every requested tool, return all
+the results in one message, repeat. A failing tool goes back to Claude as
+an error result rather than ending the run, and the loop stops after 12
+turns. The custom tools use `strict: true`, so their inputs always match
+their schemas. The memory tool (`memory_20250818`) is client-side: Claude
+issues file commands and `memory-store.ts` carries them out against the
+`memory_files` table, confined to `/memories`.
+
+A plan takes 3 or 4 turns, since Claude batches its tool calls. With the
+automatic cache breakpoint, each turn reads the earlier ones from the cache:
+on the demo data, about 12,000 of 17,600 prompt tokens were cache reads,
+and the whole plan cost about 6 cents with Claude Opus 5.5, half of it
+the first turn's cache write.
+
 ## Not built yet
 
 - Nothing tags new photos when they're imported. Run `npm run tag-photos`
   after an import; the Telegram bot will tag the photos it receives.
-- There's no UI to set or confirm a place. The walk log (spot picker,
-  Telegram buttons) is where places come from.
+- There's no UI to set or confirm a place, log a walk or add a spot yet;
+  `npm run walk` does it from the command line until the Telegram bot and
+  MCP server do.
+- Logging a walk doesn't set the morning's photos' place. The two are
+  joined by date for now.
 - Tagging reads its prompt from disk with `process.cwd()`. That's fine for
   scripts, but calling it from a Vercel function will need the `prompts/`
   folder added to `outputFileTracingIncludes`.

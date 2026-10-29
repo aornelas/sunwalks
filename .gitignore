@@ -45,3 +45,6 @@ next-env.d.ts
 
 # gstack runtime data
 .gstack/
+
+# Claude Code local config (launch.json holds a local database URL)
+.claude/

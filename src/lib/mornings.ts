@@ -22,6 +22,8 @@ export interface MorningRecord {
   drama: number | null;
   spot: string | null;
   stayedIn: boolean;
+  /** The owner said they missed the sunrise. Not the same as no report. */
+  sleptIn: boolean;
   rating: number | null;
   note: string | null;
 }
@@ -78,6 +80,7 @@ export async function loadMornings(): Promise<MorningRecord[]> {
       drama: tags.length > 0 ? tags.reduce((sum, t) => sum + t.drama, 0) / tags.length : null,
       spot: walk?.spotName ?? null,
       stayedIn: walk?.walk.stayedIn ?? false,
+      sleptIn: walk?.walk.sleptIn ?? false,
       rating: walk?.walk.rating ?? null,
       note: walk?.walk.note ?? null,
     });

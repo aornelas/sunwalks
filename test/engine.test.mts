@@ -21,6 +21,7 @@ function morning(overrides: Partial<MorningRecord>): MorningRecord {
     drama: null,
     spot: null,
     stayedIn: false,
+    sleptIn: false,
     rating: null,
     note: null,
     ...overrides,

@@ -194,7 +194,8 @@ export const forecastSnapshots = pgTable(
  * coordinates are optional and unused until per-spot forecasts exist, and
  * real spots, like photos.place, live only in the database. `kind` sets the
  * engine's starting assumption about which skies a spot suits, before any
- * walks there have been logged.
+ * walks there have been logged. The two timings decide whether a spot is in
+ * reach on a morning with somewhere to be afterwards (see lib/reach.ts).
  */
 export const spots = pgTable("spots", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
@@ -203,18 +204,25 @@ export const spots = pgTable("spots", {
   notes: text("notes"),
   lat: real("lat"),
   lon: real("lon"),
+  /** From where the sunrise is watched back to the front door, every leg included. Null until the owner says. */
+  minutesHome: integer("minutes_home"),
+  /** A walk taken there after sunrise, before heading home. */
+  loopMinutes: integer("loop_minutes").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 /**
- * One row per morning: where the owner went (or that they stayed in), how
- * it was, and anything they said about it. Photos aren't linked directly;
- * a morning's photos are the ones with the same date.
+ * One row per morning: where the owner went (or that they stayed in, or
+ * slept in), how it was, and anything they said about it. Photos aren't
+ * linked directly; a morning's photos are the ones with the same date. A
+ * morning with no row is unreported, not slept in: only the owner says that.
  */
 export const walks = pgTable("walks", {
   date: date("date", { mode: "string" }).primaryKey(),
   spotId: integer("spot_id").references(() => spots.id, { onDelete: "set null" }),
   stayedIn: boolean("stayed_in").notNull().default(false),
+  /** Missed the sunrise. Kept out of calibration and the spot scores, which have nothing to learn from it. */
+  sleptIn: boolean("slept_in").notNull().default(false),
   /** 1 (wasted trip) to 5 (best of the year). */
   rating: integer("rating"),
   note: text("note"),
@@ -256,6 +264,8 @@ export const recommendations = pgTable("recommendations", {
 export const telegramUpdates = pgTable("telegram_updates", {
   updateId: bigint("update_id", { mode: "number" }).primaryKey(),
   kind: text("kind", { enum: ["command", "text", "photo", "button", "other"] }).notNull(),
+  /** Set for the photos of an album, so only the first one asks where it was taken. */
+  mediaGroupId: text("media_group_id"),
   receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
   handledAt: timestamp("handled_at", { withTimezone: true }),
   error: text("error"),
@@ -263,4 +273,24 @@ export const telegramUpdates = pgTable("telegram_updates", {
   outputTokens: integer("output_tokens").notNull().default(0),
   cacheReadTokens: integer("cache_read_tokens").notNull().default(0),
   cacheCreationTokens: integer("cache_creation_tokens").notNull().default(0),
+});
+
+/**
+ * When the owner has to be home after sunrise, and how long they like to
+ * stay out (see lib/schedule.ts). Rules without dates are the weekly
+ * pattern; a rule with dates (summer break, a school holiday) overrides it
+ * on those days. Personal schedule data: set from the chat or the CLI,
+ * never committed.
+ */
+export const scheduleRules = pgTable("schedule_rules", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  label: text("label").notNull(),
+  /** 0 = Sunday … 6 = Saturday. */
+  weekdays: jsonb("weekdays").$type<number[]>().notNull(),
+  startDate: date("start_date", { mode: "string" }),
+  endDate: date("end_date", { mode: "string" }),
+  /** "07:50", owner-local. Null means no time to be back. */
+  backBy: text("back_by"),
+  stayMinutes: integer("stay_minutes").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

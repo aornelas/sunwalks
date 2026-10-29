@@ -186,13 +186,27 @@ counting, and Claude does the judgement.
   `(held + 1) / (forecasts + 2)`, so a category with no history reads 0.5
   rather than 0 or 1. It also gives P(observed sky | forecast), which says
   how much to hedge.
-- **`place-scores.ts`** scores each walk from 0 to 1 (the rating and the
-  photos' drama, averaged) and averages them per spot and observed sky.
+- **`place-scores.ts`** scores each morning from 0 to 1 from the owner's
+  rating, which is the only signal that says the choice of place paid off
+  (drama mostly measures the sky, which no choice of spot changes, so it
+  only stands in when there's no rating), and averages them per spot and
+  observed sky. Home is scored like a spot, under the sky the window photo
+  shows.
   Each average is shrunk towards a default for the spot's kind (high places
-  for colour, forest for fog, a short walk for a clear sky, bed for rain),
+  for colour, forest for fog, a short walk for a clear sky, home for rain),
   carrying one walk's worth of weight, so a new spot can still be suggested
   and one lucky morning can't dominate. A spot's rank for tomorrow is its
   expected score across the skies the forecast tends to bring.
+- **`reach.ts`** and **`schedule.ts`** decide which spots fit a morning.
+  Each spot has two timings: minutes from where the sunrise is watched back
+  to the door (walking back to the car plus the drive), and any walk taken
+  there after sunrise. Schedule rules say when the owner must be home and
+  how long they stay out: a weekly pattern ("school days, back by 7:50, 5
+  minutes"; "weekends, 20 minutes, no deadline") plus dated exceptions
+  (a school holiday, summer break) that win on their days. A spot is in
+  reach when sunrise + stay + walk + trip home comes before the deadline.
+  When daylight saving ends, sunrise moves an hour earlier against the same
+  drop-off, and the farther spots come back into reach on school days.
 
 `npm run calibration` prints all of this: the backtest (how often each
 forecast held, and the full forecast-against-observed table), the place
@@ -200,7 +214,7 @@ scores, and the filed preferences. It makes no API calls.
 
 ### What Claude does
 
-- **Planning** (`recommend.ts`, prompt in `prompts/recommend-walk/v1.md`):
+- **Planning** (`recommend.ts`, prompt in `prompts/recommend-walk/v2.md`):
   Claude reads the owner's preferences through the memory tool, then calls
   the four engine tools and decides, weighing stated preferences first,
   then the ranking, then specific past mornings. The answer comes back as
@@ -235,41 +249,62 @@ Telegram bot, run from the Vercel app through the Bot API, so it works
 without a laptop or a Claude Code session.
 
 ```
- Vercel cron (evening) ──▶ recommendWalk ──▶ sendMessage + a button per spot
-                                                        │
+ Vercel cron (evening) ──▶ recommendWalk ──▶ the plan, as text
+ Vercel cron (late morning) ──▶ nothing reported today? ──▶ "no photo yet" + [Slept in]
+ Vercel cron (Sunday) ──▶ weekly "what I learned" (plain counting, no Claude call)
+
  Telegram ──▶ POST /api/telegram ── secret header? owner's chat? new update_id?
                      │ (answers 200 at once; the work runs in after())
                      ▼
-     button tap ──▶ logWalk ──▶ editMessageText (✓ spot, then 1–5 rating buttons)
-     photo ──▶ getFile ──▶ sharp derivatives ──▶ Blob + Files API ──▶ tagPhoto
-     photo or text ──▶ Claude: log_walk, add_spot, memory ──▶ reply
+     photo / file ──▶ getFile ──▶ EXIF date? ──▶ sharp derivatives ──▶ Blob + Files API ──▶ tagPhoto
+     words ──▶ Claude: log_walk, add_spot, set_spot_timing, schedule rules, memory ──▶ reply
+     anything missing ──▶ buttons: place (last night's picks first, Home last), then 1–5
+     button tap ──▶ logWalk ──▶ editMessageText (the report as it now stands)
                      │
                      ▼
-              telegram_updates (kind, error, tokens)
- Vercel cron (Sunday) ──▶ weekly "what I learned" (plain counting, no Claude call)
+              telegram_updates (kind, album, error, tokens)
 ```
 
-- **The evening plan** (`/api/cron/evening-plan`, 03:15 UTC) plans the
-  next morning with the engine and sends its message with one button per
-  suggested spot, plus "Stay in". A tap logs the walk (keeping any rating
-  or note already there) and edits the plan in place to show it, with a row
-  of 1–5 buttons to rate the morning. One message per morning, no replies.
-- **A photo** is downloaded at its largest size, cut into the same two
-  derivatives a Google Photos import stores (a 480 px square and up to
-  1600 px wide), saved to Blob, uploaded to the Files API from the bytes in
-  hand and tagged. It goes in the calendar on the morning it was sent:
-  Telegram strips EXIF, so the message time stands in for when it was taken.
-- **Words, with or without a photo,** go to Claude (`walk-buddy.ts`, prompt
-  in `prompts/walk-buddy/v1.md`) with the morning's context: what's logged,
-  last night's plan, the spots and the photo's tag. It has three tools:
-  `log_walk` (a null field keeps what's logged), `add_spot` for a new place,
-  and the memory tool for anything that should change future plans. Its
-  reply says what it changed, so a mistake is easy to spot. A photo with no
-  place takes the logged spot afterwards.
+**The morning report** is the record the engine learns from: a photo, a
+place and a rating, every morning. A morning at home counts (a window photo
+on a wet morning, place Home), because that's how calibration sees the
+skies on days nobody goes out, and how the engine learns when staying in
+was the right call. The rating asks whether the choice paid off: 5 exactly
+right, 4 glad I went (or stayed), 3 fine, 2 somewhere else would have been
+better, 1 the wrong call.
+
+- **The evening plan** (`/api/cron/evening-plan`, 03:15 UTC) is text only:
+  a suggestion, not a question. Nothing is logged until the morning
+  happens.
+- **A photo** is filed, tagged and acknowledged. With words, Claude
+  (`walk-buddy.ts`, prompt in `prompts/walk-buddy/v2.md`) logs what they
+  say; without, the code just asks. Either way the code then asks with
+  buttons for whatever is still missing: the place (last night's
+  suggestions first, then the other spots, then Home), then the rating.
+  Each tap edits that one message, so a morning stays one message. Only the
+  first photo of an album asks.
+- **Which morning a photo belongs to.** Telegram strips EXIF from photos,
+  but not from an image sent as a file: that keeps the time it was taken,
+  and decides the date whenever it's sent. A stripped photo goes on the day
+  it was sent unless the words name another morning ("this is from
+  Tuesday"), up to 14 days back; then it moves with the report. The stored
+  derivatives keep no metadata, GPS included.
+- **No report is not a sleep-in.** The late-morning nudge
+  (`/api/cron/morning-nudge`, 17:30 UTC, so 9:30 in winter and 10:30 in
+  summer) goes out only if nothing has come in, and offers a Slept in
+  button. An unanswered nudge leaves the morning unreported; a sunrise photo
+  that turns up later clears a mistaken Slept in. Slept-in mornings stay out
+  of calibration and the spot scores.
+- **Spots and the schedule** are kept from the chat too: "McLaren is a 10
+  minute drive and a 15 minute walk", "no school on Nov 11", "summer break
+  June 12 to August 20". Claude records them with `set_spot_timing`,
+  `add_spot` and the schedule tools, and the evening plan only suggests
+  spots in reach.
 - **The weekly summary** (`/api/cron/weekly-summary`, Sundays) counts the
-  last seven mornings: walks, ratings, the best morning, how often the
-  week's forecasts held, the running held-rate per category, and which
-  preference files changed. `/plan` and `/week` do the same on demand.
+  last seven mornings: out, at home, slept in and unreported, ratings, the
+  best morning, how often the week's forecasts held, the running held-rate
+  per category, and which preference files changed. `/plan` and `/week` do
+  the same on demand.
 
 ### Trust
 
@@ -277,14 +312,17 @@ The webhook rejects any request without the secret given to `setWebhook`
 (Telegram echoes it in `X-Telegram-Bot-Api-Secret-Token`; compared in
 constant time), then drops updates from any chat but `TELEGRAM_CHAT_ID`
 with an empty 200. Past those checks the text is still not trusted: Claude
-gets it fenced as the owner's account of a walk, the prompt says nothing in
-it changes the rules, and the tools can only touch the one morning the code
-chose. `log_walk` has no date parameter.
+gets it fenced as the owner's account of their mornings, the prompt says
+nothing in it changes the rules, and the code checks every value its tools
+pass: dates no later than today and no more than 14 days back, never
+against a photo's own EXIF date, ratings 1 to 5, spot names that exist,
+timings and schedule times in range.
 
 Telegram redelivers an update when the webhook is slow, so the route
 records each `update_id` in `telegram_updates` before doing anything, and a
-second copy is a no-op. The same row records the update's kind, any error
-(also sent to the chat as "That didn't work: …") and the tokens it cost.
+second copy is a no-op. The same row records the update's kind, its album,
+any error (also sent to the chat as "That didn't work: …") and the tokens
+it cost.
 
 ### Running it
 
@@ -295,13 +333,18 @@ second copy is a no-op. The same row records the update's kind, any error
    `SITE_URL` pointing at the deployment, `npm run telegram -- set-webhook`.
    `npm run telegram -- info` shows the webhook Telegram has on file and its
    last delivery error.
+4. Set the spots' timings and the schedule, from the chat or with
+   `npm run walk -- timing`, `-- schedule-add`; `npm run walk -- reach`
+   shows which spots fit a morning.
 
-`npm run telegram -- plan` and `-- week` send the plan or the summary now.
+`npm run telegram -- plan`, `-- nudge` and `-- week` send those now.
 `TELEGRAM_API_BASE` points the client somewhere else, which is how it was
-tested: against a stand-in Bot API that logged every call. On demo data a
-plan took 9 seconds; a photo with a caption (tag plus a 3-turn loop) read
-7,100 prompt tokens from the cache, wrote 6,100 and sent 1,400 uncached;
-a text message read 10,700 from the cache. Button taps make no Claude call.
+tested: against a stand-in Bot API that logged every call. On demo data an
+evening plan took 9 seconds; a photo with no words (tag only) cost about
+1,400 uncached and 2,200 cached prompt tokens; a late photo with words
+(tag plus a short loop) read 7,500 from the cache and wrote 5,900; a text
+message read 10,500. Button taps, the nudge and the weekly summary make no
+Claude call.
 
 ## Not built yet
 
@@ -310,5 +353,7 @@ a text message read 10,700 from the cache. Button taps make no Claude call.
   tagged on arrival.
 - There's no UI in the app to set or confirm a place, log a walk or add a
   spot; the walk buddy and `npm run walk` do it until the MCP server does.
-- Logging a walk only sets the place of a photo sent with it. Photos
-  imported from Google Photos are joined to the walk log by date.
+- Photos imported from Google Photos are joined to the walk log by date;
+  only photos sent to the walk buddy get a place from the report.
+- A spot's timing is one number per leg, not per day: traffic and parking
+  aren't modelled.

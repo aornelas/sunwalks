@@ -376,16 +376,17 @@
   <div class="impls">
     <div class="card"><h4><code>mornings.ts</code></h4><p>Joins everything known about each morning: the forecast (the evening-before live snapshot when there is one, else the historical one, with the verdict re-derived from its inputs), the sky the day's photo shows, and the walk log entry.</p></div>
     <div class="card"><h4><code>calibration.ts</code></h4><p>Counts how often each forecast category matched the sky in the photo. Confidence is the smoothed held-rate <code>(held + 1) / (forecasts + 2)</code>, so a category with no history reads 0.5, not 0 or 1. It also gives the odds of each sky given a forecast.</p></div>
-    <div class="card"><h4><code>place-scores.ts</code></h4><p>Scores each walk 0–1 from the rating and the photos' drama, averaged per spot and observed sky, and shrunk towards a default for the spot's kind with one walk's worth of weight. A spot's rank is its expected score across the skies the forecast tends to bring.</p></div>
+    <div class="card"><h4><code>place-scores.ts</code></h4><p>Scores each morning 0–1 from your rating, the only signal that says the place paid off (drama mostly measures the sky, so it only stands in without a rating), averaged per spot and observed sky and shrunk towards a default for the spot's kind. Home is scored like a spot. A spot's rank is its expected score across the skies the forecast tends to bring.</p></div>
+    <div class="card"><h4><code>reach.ts</code> + <code>schedule.ts</code></h4><p>Which spots fit a morning: sunrise, plus how long you stay, plus any walk there, plus the trip home, against when you must be back. Weekly rules ("school days, back by 7:50, 5 minutes") and dated exceptions (holidays, summer break) set the deadline.</p></div>
   </div>
   <div class="callout">
-    <p><strong>Defaults by kind</strong>, until walks say otherwise: high places for colour, forest for fog, a short walk for a clear sky, bed for rain. They're capped at 0.75, so a few genuinely great mornings somewhere can outrank an untried spot that merely suits the sky on paper.</p>
+    <p><strong>Defaults by kind</strong>, until walks say otherwise: high places for colour, forest for fog, a short walk for a clear sky, home for rain. They're capped at 0.75, so a few genuinely great mornings somewhere can outrank an untried spot that merely suits the sky on paper.</p>
   </div>
   <p><code>npm run calibration</code> prints all of this: the backtest (how often each forecast held, and the full forecast-against-observed table), the place scores, and the filed preferences. It makes no API calls.</p>
 
   <h3>What Claude does</h3>
   <div class="choices">
-    <div class="card"><h4>Planning</h4><p><code>recommend.ts</code>, prompt in <code>prompts/recommend-walk/v1.md</code>. Claude reads the owner's preferences through the memory tool, calls the four engine tools, and decides: stated preferences first, then the ranking, then specific past mornings. The answer is structured output, validated, and its spots must be real ones.</p></div>
+    <div class="card"><h4>Planning</h4><p><code>recommend.ts</code>, prompt in <code>prompts/recommend-walk/v2.md</code>. Claude reads the owner's preferences through the memory tool, calls the four engine tools, and decides: stated preferences first, then the ranking, then specific past mornings. The answer is structured output, validated, and its spots must be real ones.</p></div>
     <div class="card"><h4>Filing feedback</h4><p><code>feedback.ts</code>, prompt in <code>prompts/file-feedback/v1.md</code>. Claude reads the existing preferences and edits them with the memory tool, adding, sharpening or replacing rules instead of appending.</p></div>
     <div class="card"><h4>Honest backtests</h4><p>Planning a past date uses only the mornings before it, and answers <code>get_forecast</code> from what was forecast at the time, so the recommender itself can be tested against history.</p></div>
   </div>
@@ -395,7 +396,7 @@
     <tbody>
       <tr><td><code>get_forecast</code></td><td>The morning's category, reason, sunrise, cloud by level, rain and fog chance, ceiling</td></tr>
       <tr><td><code>forecast_accuracy</code></td><td>How often that category has held ("7 of 9 Foggy forecasts held"), its confidence, and what the sky was instead</td></tr>
-      <tr><td><code>spots_for</code></td><td>Spots (and staying in) ranked for the forecast, with walks logged and notes</td></tr>
+      <tr><td><code>spots_for</code></td><td>Spots (and Home) ranked for the forecast, split into in reach and out of reach for that morning's schedule, with walks logged and notes</td></tr>
       <tr><td><code>similar_mornings</code></td><td>Past mornings with the same forecast: the actual sky, where the owner went, rating, note, drama</td></tr>
       <tr><td><code>memory</code></td><td>The owner's preferences under <code>/memories</code>, stored in <code>memory_files</code> and confined to that folder</td></tr>
     </tbody>
@@ -421,23 +422,23 @@
   <p>The walk buddy is the engine's daily surface: a private chat with your own Telegram bot, run from the Vercel app through the Bot API, so it works without a laptop or a Claude Code session.</p>
 
   <div class="diagram">
-    <svg viewBox="0 0 860 390" role="img" aria-label="Walk buddy flow: an evening cron runs the engine and sends the plan to Telegram with a button per spot. Telegram posts updates to /api/telegram, which checks the secret, the chat ID and the update ID, logs each update in telegram_updates, and sends button taps to the walk log, photos to storage and tagging, and words to Claude, which logs the walk, adds spots and files preferences. A Sunday cron sends a weekly summary.">
+    <svg viewBox="0 0 860 400" role="img" aria-label="Walk buddy flow: an evening cron sends the plan as text; a late-morning cron sends a nudge only if nothing was reported; a Sunday cron sends the weekly summary. Telegram posts updates to /api/telegram, which checks the secret, chat and update ID and logs each update. Photos are dated (from EXIF when sent as a file), stored and tagged; words go to Claude, which logs the report and keeps spots and the schedule; anything missing is asked with buttons, and taps log the report.">
       <defs>
         <marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="currentColor" style="color: var(--muted)"/>
         </marker>
       </defs>
 
-      <!-- evening -->
+      <!-- crons -->
       <rect class="box-run" x="20" y="20" width="170" height="44" rx="8"/>
       <text x="105" y="39" text-anchor="middle">Vercel cron</text>
       <text x="105" y="55" text-anchor="middle" class="sub">evening, 03:15 UTC</text>
       <rect class="box-api" x="240" y="20" width="180" height="44" rx="8"/>
       <text x="330" y="39" text-anchor="middle" class="mono">recommendWalk</text>
-      <text x="330" y="55" text-anchor="middle" class="sub">the engine's tool loop</text>
+      <text x="330" y="55" text-anchor="middle" class="sub">only spots in reach</text>
       <path class="arrow" d="M190,42 L240,42" marker-end="url(#ah3)"/>
       <path class="arrow" d="M330,64 L330,100 L105,100 L105,150" marker-end="url(#ah3)"/>
-      <text x="225" y="92" text-anchor="middle" class="sub">the plan + a button per spot</text>
+      <text x="225" y="92" text-anchor="middle" class="sub">the plan, as text</text>
 
       <!-- telegram and the webhook -->
       <rect class="box-src" x="20" y="150" width="170" height="50" rx="8"/>
@@ -450,44 +451,45 @@
       <path class="arrow" d="M190,170 L240,170" marker-end="url(#ah3)"/>
 
       <!-- branches -->
-      <rect class="box-code" x="480" y="120" width="190" height="44" rx="8"/>
-      <text x="575" y="139" text-anchor="middle">button tap</text>
-      <text x="575" y="155" text-anchor="middle" class="sub">log it, edit the plan in place</text>
-      <rect class="box-api" x="480" y="180" width="190" height="44" rx="8"/>
-      <text x="575" y="199" text-anchor="middle">photo</text>
-      <text x="575" y="215" text-anchor="middle" class="sub">sharp → Blob, Files API, tag</text>
-      <rect class="box-api" x="480" y="240" width="190" height="44" rx="8"/>
-      <text x="575" y="259" text-anchor="middle">words → Claude</text>
-      <text x="575" y="275" text-anchor="middle" class="sub">logs the walk, files preferences</text>
-      <path class="arrow" d="M420,160 L480,142" marker-end="url(#ah3)"/>
-      <path class="arrow" d="M420,180 L480,202" marker-end="url(#ah3)"/>
-      <path class="arrow" d="M420,200 L480,258" marker-end="url(#ah3)"/>
+      <rect class="box-api" x="480" y="110" width="190" height="44" rx="8"/>
+      <text x="575" y="129" text-anchor="middle">photo or file</text>
+      <text x="575" y="145" text-anchor="middle" class="sub">EXIF date, Blob, Files API, tag</text>
+      <rect class="box-api" x="480" y="170" width="190" height="44" rx="8"/>
+      <text x="575" y="189" text-anchor="middle">words → Claude</text>
+      <text x="575" y="205" text-anchor="middle" class="sub">report, spots, schedule</text>
+      <rect class="box-code" x="480" y="230" width="190" height="44" rx="8"/>
+      <text x="575" y="249" text-anchor="middle">buttons</text>
+      <text x="575" y="265" text-anchor="middle" class="sub">ask for what's missing</text>
+      <path class="arrow" d="M420,155 L480,132" marker-end="url(#ah3)"/>
+      <path class="arrow" d="M420,180 L480,192" marker-end="url(#ah3)"/>
+      <path class="arrow" d="M420,200 L480,250" marker-end="url(#ah3)"/>
 
       <!-- tables -->
-      <rect class="box-db" x="710" y="120" width="130" height="44" rx="8"/>
-      <text x="775" y="147" text-anchor="middle" class="mono">walks, spots</text>
-      <rect class="box-db" x="710" y="180" width="130" height="44" rx="8"/>
-      <text x="775" y="207" text-anchor="middle" class="mono">photos, tags</text>
-      <rect class="box-db" x="710" y="240" width="130" height="44" rx="8"/>
-      <text x="775" y="267" text-anchor="middle" class="mono">memory_files</text>
-      <path class="arrow" d="M670,142 L710,142" marker-end="url(#ah3)"/>
-      <path class="arrow" d="M670,202 L710,202" marker-end="url(#ah3)"/>
-      <path class="arrow" d="M670,262 L710,262" marker-end="url(#ah3)"/>
+      <rect class="box-db" x="710" y="110" width="130" height="44" rx="8"/>
+      <text x="775" y="137" text-anchor="middle" class="mono">photos, tags</text>
+      <rect class="box-db" x="710" y="170" width="130" height="44" rx="8"/>
+      <text x="775" y="190" text-anchor="middle" class="mono">walks, spots</text>
+      <text x="775" y="206" text-anchor="middle" class="mono sub">schedule_rules</text>
+      <rect class="box-db" x="710" y="230" width="130" height="44" rx="8"/>
+      <text x="775" y="257" text-anchor="middle" class="mono">walks</text>
+      <path class="arrow" d="M670,132 L710,132" marker-end="url(#ah3)"/>
+      <path class="arrow" d="M670,192 L710,192" marker-end="url(#ah3)"/>
+      <path class="arrow" d="M670,252 L710,252" marker-end="url(#ah3)"/>
 
       <!-- the update log -->
       <rect class="box-db" x="240" y="255" width="180" height="40" rx="8"/>
       <text x="330" y="280" text-anchor="middle" class="mono">telegram_updates</text>
       <path class="arrow" d="M330,215 L330,255" marker-end="url(#ah3)"/>
 
-      <!-- weekly -->
-      <rect class="box-run" x="20" y="325" width="170" height="44" rx="8"/>
-      <text x="105" y="344" text-anchor="middle">Vercel cron</text>
-      <text x="105" y="360" text-anchor="middle" class="sub">Sundays, 16:00 UTC</text>
-      <rect class="box-code" x="240" y="325" width="180" height="44" rx="8"/>
-      <text x="330" y="344" text-anchor="middle">weekly summary</text>
-      <text x="330" y="360" text-anchor="middle" class="sub">plain counting, no Claude call</text>
-      <path class="arrow" d="M190,355 L240,355" marker-end="url(#ah3)"/>
-      <path class="arrow" d="M240,335 L215,335 L215,190 L190,190" marker-end="url(#ah3)"/>
+      <!-- nudge and weekly -->
+      <rect class="box-run" x="20" y="320" width="170" height="44" rx="8"/>
+      <text x="105" y="339" text-anchor="middle">Vercel crons</text>
+      <text x="105" y="355" text-anchor="middle" class="sub">late morning · Sundays</text>
+      <rect class="box-code" x="240" y="320" width="180" height="44" rx="8"/>
+      <text x="330" y="339" text-anchor="middle">nudge · weekly summary</text>
+      <text x="330" y="355" text-anchor="middle" class="sub">plain counting, no Claude call</text>
+      <path class="arrow" d="M190,350 L240,350" marker-end="url(#ah3)"/>
+      <path class="arrow" d="M240,330 L215,330 L215,190 L190,190" marker-end="url(#ah3)"/>
     </svg>
     <div class="legend">
       <span class="lg-src">Telegram</span>
@@ -498,48 +500,57 @@
     </div>
   </div>
 
+  <div class="callout">
+    <p><strong>The morning report</strong> is a photo, a place and a 1–5 rating, every morning. A morning at home counts: a window photo on a wet day, place Home. That's how calibration sees the skies on days nobody goes out, and how the engine learns when staying in was right. The rating asks whether the choice paid off: 5 exactly right, 4 glad I went (or stayed), 3 fine, 2 somewhere else would have been better, 1 the wrong call.</p>
+  </div>
+
   <div class="impls">
-    <div class="card"><h4>The evening plan</h4><p><code>/api/cron/evening-plan</code> plans the next morning and sends its message with a button per suggested spot, plus "Stay in". A tap logs the walk, keeping any rating or note, and edits the plan in place to show it, with a row of 1–5 buttons to rate the morning. One message per morning, no replies.</p></div>
-    <div class="card"><h4>A photo</h4><p>Downloaded at its largest size, cut into the same two derivatives a Google Photos import stores (a 480 px square, up to 1600 px wide), saved to Blob, uploaded to the Files API from the bytes in hand and tagged. Telegram strips EXIF, so it goes in the calendar on the morning it was sent.</p></div>
-    <div class="card"><h4>Words</h4><p><code>walk-buddy.ts</code>, prompt in <code>prompts/walk-buddy/v1.md</code>. Claude gets the morning's context (what's logged, last night's plan, the spots, the photo's tag), logs or corrects the walk, adds a new spot, files preferences, and says what it changed. A photo with no place takes the logged spot.</p></div>
-    <div class="card"><h4>The weekly summary</h4><p><code>/api/cron/weekly-summary</code> counts the last seven mornings: walks, ratings, the best morning, how often the week's forecasts held, the running held-rate per category, and which preference files changed. <code>/plan</code> and <code>/week</code> do the same on demand.</p></div>
+    <div class="card"><h4>The evening plan</h4><p><code>/api/cron/evening-plan</code> sends the plan as text: a suggestion, not a question. It only suggests spots you can get back from in time, and says when a farther one opens up (a weekend, a holiday, an earlier sunrise).</p></div>
+    <div class="card"><h4>A photo</h4><p>Filed, tagged and acknowledged. With words, Claude logs what they say; without, the code asks. Then buttons ask for whatever is missing: the place (last night's picks first, Home last), then the rating. Each tap edits the same message. Only an album's first photo asks.</p></div>
+    <div class="card"><h4>Late photos</h4><p>An image sent as a file keeps its EXIF, so it's filed on the morning it was taken. A normal photo goes on the day it was sent, unless the words name another morning ("this is from Tuesday", up to 14 days back), and moves with the report. Stored copies keep no metadata, GPS included.</p></div>
+    <div class="card"><h4>No report isn't a sleep-in</h4><p><code>/api/cron/morning-nudge</code> asks for the photo only if nothing came in, with a Slept in button. An unanswered nudge leaves the morning unreported, and a sunrise photo later clears a mistaken Slept in.</p></div>
+    <div class="card"><h4>Spots and the schedule</h4><p>Kept from the chat: "McLaren is a 10 minute drive and a 15 minute walk", "no school on Nov 11", "summer break June 12 to August 20". Prompt in <code>prompts/walk-buddy/v2.md</code>.</p></div>
+    <div class="card"><h4>The weekly summary</h4><p><code>/api/cron/weekly-summary</code> counts the last seven mornings: out, home, slept in and unreported, ratings, the best one, how often forecasts held, and which preferences changed. <code>/plan</code> and <code>/week</code> work on demand.</p></div>
   </div>
 
   <div class="table-wrap"><table>
     <thead><tr><th>Tool</th><th>Lets Claude</th></tr></thead>
     <tbody>
-      <tr><td><code>log_walk</code></td><td>Log or correct where the owner went (or that they stayed in), a 1–5 rating and a note. A null field keeps what's logged. It has no date: the code decides which morning it touches.</td></tr>
-      <tr><td><code>add_spot</code></td><td>Add a place the owner walked to that isn't one of their spots yet, with its kind</td></tr>
-      <tr><td><code>memory</code></td><td>File anything that should change future plans in <code>/memories/preferences.md</code>, where the recommender reads it</td></tr>
+      <tr><td><code>log_walk</code></td><td>Log or correct a morning: the place (a spot, Home, or Slept in when you say so), a 1–5 rating and a note. A null field keeps what's logged; the date defaults to the morning in question and can go back 14 days, never past a photo's own EXIF date.</td></tr>
+      <tr><td><code>add_spot</code>, <code>set_spot_timing</code></td><td>Add a new place, and record how long a spot takes: minutes home from where you watch, and any walk there after sunrise</td></tr>
+      <tr><td><code>schedule</code>, <code>add_schedule_rule</code>, <code>remove_schedule_rule</code></td><td>Keep the weekly pattern and its dated exceptions</td></tr>
+      <tr><td><code>memory</code></td><td>File anything that should change future plans in <code>/memories/preferences.md</code></td></tr>
     </tbody>
   </table></div>
 
   <h3>Trust</h3>
   <div class="callout">
-    <p>The webhook rejects any request without the secret given to <code>setWebhook</code> (Telegram echoes it in <code>X-Telegram-Bot-Api-Secret-Token</code>; compared in constant time), then drops updates from any chat but <code>TELEGRAM_CHAT_ID</code> with an empty 200. Past those checks the text still isn't trusted: Claude gets it fenced as the owner's account of a walk, and its tools can only touch the one morning the code chose.</p>
+    <p>The webhook rejects any request without the secret given to <code>setWebhook</code> (Telegram echoes it in <code>X-Telegram-Bot-Api-Secret-Token</code>; compared in constant time), then drops updates from any chat but <code>TELEGRAM_CHAT_ID</code> with an empty 200. Past those checks the text still isn't trusted: Claude gets it fenced as your account of your mornings, and the code checks every value its tools pass (dates, ratings, spot names, timings, schedule times).</p>
   </div>
-  <p>Telegram redelivers an update when the webhook is slow, so the route records each <code>update_id</code> in <code>telegram_updates</code> before doing anything, and a second copy is a no-op. The same row records the update's kind, any error (also sent to the chat as "That didn't work: …") and the tokens it cost.</p>
+  <p>Telegram redelivers an update when the webhook is slow, so the route records each <code>update_id</code> in <code>telegram_updates</code> before doing anything, and a second copy is a no-op. The same row records the update's kind, its album, any error (also sent to the chat as "That didn't work: …") and the tokens it cost.</p>
 
   <h3>Running it</h3>
   <ol class="loop">
     <li>Create a bot with @BotFather and set <code>TELEGRAM_BOT_TOKEN</code>.</li>
     <li>Send it <code>/start</code> from your phone, then run <code>npm run telegram -- chats</code> to find <code>TELEGRAM_CHAT_ID</code>.</li>
     <li>Set <code>TELEGRAM_WEBHOOK_SECRET</code> (<code>openssl rand -hex 32</code>) and, with <code>SITE_URL</code> pointing at the deployment, run <code>npm run telegram -- set-webhook</code>. <code>-- info</code> shows the webhook Telegram has on file and its last delivery error.</li>
+    <li>Set the spots' timings and your schedule, from the chat or with <code>npm run walk -- timing</code> and <code>-- schedule-add</code>. <code>npm run walk -- reach</code> shows which spots fit a morning.</li>
   </ol>
-  <p><code>npm run telegram -- plan</code> and <code>-- week</code> send the plan or the summary now. <code>TELEGRAM_API_BASE</code> points the client somewhere else, which is how it was tested: against a stand-in Bot API that logged every call.</p>
+  <p><code>npm run telegram -- plan</code>, <code>-- nudge</code> and <code>-- week</code> send those now. <code>TELEGRAM_API_BASE</code> points the client somewhere else, which is how it was tested: against a stand-in Bot API that logged every call.</p>
 
   <h3>On the demo data</h3>
   <div class="stats">
     <div class="stat"><div class="v">9 s</div><div class="l">from the evening cron firing to the plan being sent</div></div>
-    <div class="stat"><div class="v">7,100</div><div class="l">prompt tokens read from cache for a photo with a caption (6,100 written, 1,400 uncached)</div></div>
-    <div class="stat"><div class="v">0</div><div class="l">Claude calls for a button tap or the weekly summary</div></div>
+    <div class="stat"><div class="v">1,400</div><div class="l">uncached prompt tokens for a photo with no words (tag only; 2,200 more from cache)</div></div>
+    <div class="stat"><div class="v">0</div><div class="l">Claude calls for a tap, the nudge or the weekly summary</div></div>
   </div>
 
   <h2 id="not-built">Not built yet</h2>
   <ul class="todo">
     <li>Nothing tags photos imported from Google Photos as they arrive. Run <code>npm run tag-photos</code> after an import; photos sent to the walk buddy are tagged on arrival.</li>
     <li>There's no UI in the app to set or confirm a place, log a walk or add a spot; the walk buddy and <code>npm run walk</code> do it until the MCP server does.</li>
-    <li>Logging a walk only sets the place of a photo sent with it. Photos imported from Google Photos are joined to the walk log by date.</li>
+    <li>Photos imported from Google Photos are joined to the walk log by date; only photos sent to the walk buddy get a place from the report.</li>
+    <li>A spot's timing is one number per leg, not per day: traffic and parking aren't modelled.</li>
   </ul>
 </main>
 </body>

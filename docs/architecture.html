@@ -54,6 +54,7 @@
   .box-db { fill: var(--green-soft); stroke: var(--green); }
   .box-future { fill: var(--surface); stroke: var(--muted); stroke-dasharray: 5 4; }
   .box-run { fill: var(--violet-soft); stroke: var(--violet); }
+  .box-code { fill: var(--surface); stroke: var(--ink); }
   .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.82rem; color: var(--muted); margin-top: 10px; }
   .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 1.5px solid; }
   .lg-src::before { background: var(--accent-soft); border-color: var(--accent) !important; }
@@ -61,6 +62,11 @@
   .lg-api::before { background: var(--blue-soft); border-color: var(--blue) !important; }
   .lg-db::before { background: var(--green-soft); border-color: var(--green) !important; }
   .lg-fut::before { border-style: dashed !important; border-color: var(--muted) !important; }
+  .lg-code::before { background: var(--surface); border-color: var(--ink) !important; }
+
+  ol.loop { counter-reset: step; list-style: none; padding: 0; margin: 12px 0 20px; }
+  ol.loop li { counter-increment: step; position: relative; padding: 0 0 12px 40px; }
+  ol.loop li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 26px; height: 26px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; }
 
   .table-wrap { overflow-x: auto; margin: 16px 0 20px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
   table { border-collapse: collapse; width: 100%; font-size: 0.93rem; }
@@ -108,18 +114,19 @@
 <body>
 <main>
   <h1>Architecture: the Claude layer</h1>
-  <p class="lede">The README covers the calendar itself. This page covers what sits on top of it: the photo-source interface, vision tagging, and the forecast record they're compared against. Together they're the foundations for the walk recommender, the Telegram bot and the MCP server on the roadmap.</p>
+  <p class="lede">The README covers the calendar itself. This page covers what sits on top of it: the photo-source interface, vision tagging, the forecast record they're compared against, and the engine that turns all three into a plan for tomorrow's walk. The Telegram bot and the MCP server on the roadmap are two ways to reach that engine.</p>
 
   <nav class="toc">
     <a href="#photo-source">Photo-source interface</a>
     <a href="#tagging">Vision tagging</a>
     <a href="#cost">Cost</a>
     <a href="#forecast">Forecast record</a>
+    <a href="#engine">The engine</a>
     <a href="#not-built">Not built yet</a>
   </nav>
 
   <div class="diagram">
-    <svg viewBox="0 0 860 470" role="img" aria-label="Data flow: photo sources feed tagging via the Files and Messages APIs into photo_tags; forecasts are snapshotted into forecast_snapshots; both feed calibration.">
+    <svg viewBox="0 0 860 470" role="img" aria-label="Data flow: photo sources feed tagging via the Files and Messages APIs into photo_tags; forecasts are snapshotted into forecast_snapshots; both feed the engine.">
       <defs>
         <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="currentColor" style="color: var(--muted)"/>
@@ -176,18 +183,19 @@
       <path class="arrow" d="M240,434 L270,426" marker-end="url(#ah)"/>
       <text x="255" y="462" text-anchor="middle" class="sub">historical</text>
 
-      <!-- calibration -->
-      <rect class="box-future" x="660" y="384" width="180" height="56" rx="8"/>
-      <text x="750" y="408" text-anchor="middle" font-weight="600">Calibration</text>
-      <text x="750" y="426" text-anchor="middle" class="sub">roadmap</text>
-      <path class="arrow dashed" d="M610,376 L660,400" marker-end="url(#ah)"/>
-      <path class="arrow dashed" d="M420,440 L470,460 L640,460 L660,430" marker-end="url(#ah)"/>
+      <!-- engine -->
+      <rect class="box-code" x="660" y="384" width="180" height="56" rx="8"/>
+      <text x="750" y="408" text-anchor="middle" font-weight="600">The engine</text>
+      <text x="750" y="426" text-anchor="middle" class="sub">calibration · recommender</text>
+      <path class="arrow" d="M610,376 L660,400" marker-end="url(#ah)"/>
+      <path class="arrow" d="M420,440 L470,460 L640,460 L660,430" marker-end="url(#ah)"/>
     </svg>
     <div class="legend">
       <span class="lg-src">Photo source</span>
       <span class="lg-run">Script / job</span>
       <span class="lg-api">Claude API</span>
       <span class="lg-db">Database table</span>
+      <span class="lg-code">Plain TypeScript</span>
       <span class="lg-fut">Not built yet</span>
     </div>
   </div>
@@ -290,10 +298,129 @@
 
   <p>Snapshots store the forecast inputs as well as the verdict. Calibration should re-derive the verdict from the inputs, as the planning view already does, so a rule change applies to the whole history.</p>
 
+  <h2 id="engine">The engine</h2>
+  <p>The engine turns the forecast, the tagged photos and the walk log into a plan for tomorrow. It splits the work in two: plain TypeScript does the counting, and Claude does the judgement.</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 860 360" role="img" aria-label="Engine data flow: forecast_snapshots, photo_tags and the walk log are joined per morning in mornings.ts, which feeds calibration.ts and place-scores.ts; Claude reads those through four tools and the owner's preferences through the memory tool, and writes a recommendation.">
+      <defs>
+        <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="currentColor" style="color: var(--muted)"/>
+        </marker>
+      </defs>
+
+      <!-- inputs -->
+      <rect class="box-db" x="20" y="30" width="170" height="40" rx="8"/>
+      <text x="105" y="55" text-anchor="middle" class="mono">forecast_snapshots</text>
+      <rect class="box-db" x="20" y="90" width="170" height="40" rx="8"/>
+      <text x="105" y="115" text-anchor="middle" class="mono">photo_tags</text>
+      <rect class="box-db" x="20" y="150" width="170" height="40" rx="8"/>
+      <text x="105" y="175" text-anchor="middle" class="mono">walks + spots</text>
+
+      <!-- mornings -->
+      <rect class="box-code" x="240" y="82" width="150" height="56" rx="8"/>
+      <text x="315" y="105" text-anchor="middle" class="mono">mornings.ts</text>
+      <text x="315" y="124" text-anchor="middle" class="sub">one record per morning</text>
+      <path class="arrow" d="M190,50 L240,100" marker-end="url(#ah2)"/>
+      <path class="arrow" d="M190,110 L240,110" marker-end="url(#ah2)"/>
+      <path class="arrow" d="M190,170 L240,122" marker-end="url(#ah2)"/>
+
+      <!-- counting -->
+      <rect class="box-code" x="440" y="40" width="170" height="44" rx="8"/>
+      <text x="525" y="60" text-anchor="middle" class="mono">calibration.ts</text>
+      <text x="525" y="76" text-anchor="middle" class="sub">how often forecasts held</text>
+      <rect class="box-code" x="440" y="136" width="170" height="44" rx="8"/>
+      <text x="525" y="156" text-anchor="middle" class="mono">place-scores.ts</text>
+      <text x="525" y="172" text-anchor="middle" class="sub">which spots suit which skies</text>
+      <path class="arrow" d="M390,100 L440,66" marker-end="url(#ah2)"/>
+      <path class="arrow" d="M390,122 L440,154" marker-end="url(#ah2)"/>
+
+      <!-- Claude -->
+      <rect class="box-api" x="660" y="30" width="180" height="160" rx="10"/>
+      <text x="750" y="54" text-anchor="middle" font-weight="600">Claude</text>
+      <text x="750" y="72" text-anchor="middle" class="sub">tool-loop.ts</text>
+      <text x="750" y="100" text-anchor="middle" class="mono sub">get_forecast</text>
+      <text x="750" y="120" text-anchor="middle" class="mono sub">forecast_accuracy</text>
+      <text x="750" y="140" text-anchor="middle" class="mono sub">spots_for</text>
+      <text x="750" y="160" text-anchor="middle" class="mono sub">similar_mornings</text>
+      <path class="arrow" d="M610,62 L660,90" marker-end="url(#ah2)"/>
+      <path class="arrow" d="M610,158 L660,140" marker-end="url(#ah2)"/>
+
+      <!-- memory -->
+      <rect class="box-db" x="440" y="236" width="170" height="40" rx="8"/>
+      <text x="525" y="261" text-anchor="middle" class="mono">memory_files</text>
+      <path class="arrow" d="M610,256 L720,256 L720,190" marker-start="url(#ah2)" marker-end="url(#ah2)"/>
+      <text x="665" y="248" text-anchor="middle" class="sub">memory tool</text>
+
+      <!-- feedback -->
+      <rect class="box-run" x="220" y="236" width="170" height="40" rx="8"/>
+      <text x="305" y="261" text-anchor="middle" class="mono">npm run feedback</text>
+      <path class="arrow dashed" d="M390,256 L440,256" marker-end="url(#ah2)"/>
+      <text x="415" y="292" text-anchor="middle" class="sub">filed by Claude</text>
+
+      <!-- output -->
+      <rect class="box-db" x="660" y="300" width="180" height="40" rx="8"/>
+      <text x="750" y="325" text-anchor="middle" class="mono">recommendations</text>
+      <path class="arrow" d="M790,190 L790,300" marker-end="url(#ah2)"/>
+    </svg>
+    <div class="legend">
+      <span class="lg-db">Database table</span>
+      <span class="lg-code">Plain TypeScript</span>
+      <span class="lg-api">Claude API</span>
+      <span class="lg-run">Script / job</span>
+    </div>
+  </div>
+
+  <h3>What plain code does</h3>
+  <div class="impls">
+    <div class="card"><h4><code>mornings.ts</code></h4><p>Joins everything known about each morning: the forecast (the evening-before live snapshot when there is one, else the historical one, with the verdict re-derived from its inputs), the sky the day's photo shows, and the walk log entry.</p></div>
+    <div class="card"><h4><code>calibration.ts</code></h4><p>Counts how often each forecast category matched the sky in the photo. Confidence is the smoothed held-rate <code>(held + 1) / (forecasts + 2)</code>, so a category with no history reads 0.5, not 0 or 1. It also gives the odds of each sky given a forecast.</p></div>
+    <div class="card"><h4><code>place-scores.ts</code></h4><p>Scores each walk 0–1 from the rating and the photos' drama, averaged per spot and observed sky, and shrunk towards a default for the spot's kind with one walk's worth of weight. A spot's rank is its expected score across the skies the forecast tends to bring.</p></div>
+  </div>
+  <div class="callout">
+    <p><strong>Defaults by kind</strong>, until walks say otherwise: high places for colour, forest for fog, a short walk for a clear sky, bed for rain. They're capped at 0.75, so a few genuinely great mornings somewhere can outrank an untried spot that merely suits the sky on paper.</p>
+  </div>
+  <p><code>npm run calibration</code> prints all of this: the backtest (how often each forecast held, and the full forecast-against-observed table), the place scores, and the filed preferences. It makes no API calls.</p>
+
+  <h3>What Claude does</h3>
+  <div class="choices">
+    <div class="card"><h4>Planning</h4><p><code>recommend.ts</code>, prompt in <code>prompts/recommend-walk/v1.md</code>. Claude reads the owner's preferences through the memory tool, calls the four engine tools, and decides: stated preferences first, then the ranking, then specific past mornings. The answer is structured output, validated, and its spots must be real ones.</p></div>
+    <div class="card"><h4>Filing feedback</h4><p><code>feedback.ts</code>, prompt in <code>prompts/file-feedback/v1.md</code>. Claude reads the existing preferences and edits them with the memory tool, adding, sharpening or replacing rules instead of appending.</p></div>
+    <div class="card"><h4>Honest backtests</h4><p>Planning a past date uses only the mornings before it, and answers <code>get_forecast</code> from what was forecast at the time, so the recommender itself can be tested against history.</p></div>
+  </div>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Tool</th><th>Gives Claude</th></tr></thead>
+    <tbody>
+      <tr><td><code>get_forecast</code></td><td>The morning's category, reason, sunrise, cloud by level, rain and fog chance, ceiling</td></tr>
+      <tr><td><code>forecast_accuracy</code></td><td>How often that category has held ("7 of 9 Foggy forecasts held"), its confidence, and what the sky was instead</td></tr>
+      <tr><td><code>spots_for</code></td><td>Spots (and staying in) ranked for the forecast, with walks logged and notes</td></tr>
+      <tr><td><code>similar_mornings</code></td><td>Past mornings with the same forecast: the actual sky, where the owner went, rating, note, drama</td></tr>
+      <tr><td><code>memory</code></td><td>The owner's preferences under <code>/memories</code>, stored in <code>memory_files</code> and confined to that folder</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>The tool loop</h3>
+  <p>Both run through <code>tool-loop.ts</code>, a manual loop written out on purpose as a teaching example:</p>
+  <ol class="loop">
+    <li>Send the conversation, with the tools Claude may call.</li>
+    <li>Run every <code>tool_use</code> Claude asks for, in our own code, and return all the results in one message. A failing tool goes back as an error result instead of ending the run.</li>
+    <li>Repeat until Claude stops asking for tools; its last message is the answer. The loop gives up after 12 turns.</li>
+  </ol>
+  <p>The custom tools use <code>strict: true</code>, so their inputs always match their schemas. The memory tool (<code>memory_20250818</code>) is client-side: Claude issues file commands and <code>memory-store.ts</code> carries them out.</p>
+
+  <h3>On the demo data</h3>
+  <div class="stats">
+    <div class="stat"><div class="v">3–4</div><div class="l">turns per plan; Claude batches its tool calls</div></div>
+    <div class="stat"><div class="v">68%</div><div class="l">of prompt tokens read from cache (12,000 of 17,600)</div></div>
+    <div class="stat"><div class="v">~6¢</div><div class="l">per plan with Claude Opus 5.5, half of it the first turn's cache write</div></div>
+  </div>
+
   <h2 id="not-built">Not built yet</h2>
   <ul class="todo">
     <li>Nothing tags new photos when they're imported. Run <code>npm run tag-photos</code> after an import; the Telegram bot will tag the photos it receives.</li>
-    <li>There's no UI to set or confirm a place. The walk log (spot picker, Telegram buttons) is where places come from.</li>
+    <li>There's no UI to set or confirm a place, log a walk or add a spot yet; <code>npm run walk</code> does it from the command line until the Telegram bot and MCP server do.</li>
+    <li>Logging a walk doesn't set the morning's photos' place. The two are joined by date for now.</li>
     <li>Tagging reads its prompt from disk with <code>process.cwd()</code>. That's fine for scripts, but calling it from a Vercel function will need the <code>prompts/</code> folder added to <code>outputFileTracingIncludes</code>.</li>
   </ul>
 </main>

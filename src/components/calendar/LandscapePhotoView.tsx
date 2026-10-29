@@ -111,7 +111,7 @@ export function LandscapePhotoView({
             className={`${styles.photo} ${fit ? styles.photoContain : styles.photoCover}`}
             {...buildSrcSet(shot.id, "full")}
             sizes="100vw"
-            alt={formatLongDate(date)}
+            alt={shot.alt ?? formatLongDate(date)}
             fetchPriority="high"
             onClick={() => setChromeVisible((v) => !v)}
             onLoad={decodeThenNotify(notifyPhotoLoaded)}

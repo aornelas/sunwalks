@@ -2,6 +2,8 @@
 
 import { useLayoutEffect, useRef } from "react";
 import type { ZoomLevel } from "@/lib/types";
+import type { Facet } from "@/lib/facets";
+import { FacetSelects } from "./FacetSelects";
 import { EASE_SOFT, prefersReducedMotion } from "@/lib/motion";
 import styles from "./WebZoomBar.module.css";
 
@@ -16,9 +18,12 @@ interface WebZoomBarProps {
   onZoomChange(zoom: ZoomLevel): void;
   filter: boolean;
   onFilterChange(filter: boolean): void;
+  facet: Facet;
+  onFacetChange(facet: Facet): void;
+  places: string[];
 }
 
-export function WebZoomBar({ zoom, onZoomChange, filter, onFilterChange }: WebZoomBarProps) {
+export function WebZoomBar({ zoom, onZoomChange, filter, onFilterChange, facet, onFacetChange, places }: WebZoomBarProps) {
   const pillRefs = useRef(new Map<string, HTMLButtonElement>());
   const zoomGroupRef = useRef<HTMLDivElement>(null);
   const fillRef = useRef<HTMLSpanElement>(null);
@@ -96,6 +101,7 @@ export function WebZoomBar({ zoom, onZoomChange, filter, onFilterChange }: WebZo
       >
         Sunwalk days only
       </button>
+      <FacetSelects facet={facet} onFacetChange={onFacetChange} places={places} />
     </div>
   );
 }

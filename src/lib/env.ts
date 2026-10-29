@@ -33,6 +33,10 @@ export const env = {
   get siteUrl() {
     return process.env.SITE_URL || "http://localhost:3000";
   },
+  /** Vercel sends it as a bearer token on cron invocations; unset means cron routes refuse every call. */
+  get cronSecret() {
+    return process.env.CRON_SECRET;
+  },
   /** Serves seeded local images instead of calling Google — local dev/demo only. */
   get demoMode() {
     return process.env.DEMO_MODE === "true";

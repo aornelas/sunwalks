@@ -7,6 +7,7 @@ const SESSION_COOKIE = "sunrise_session";
 const PUBLIC_PREFIXES = [
   "/login",
   "/api/auth",
+  "/api/cron/", // authenticated by CRON_SECRET in the route itself
   "/s/",
   "/api/s/",
   "/api/photos/",

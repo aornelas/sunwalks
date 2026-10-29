@@ -68,7 +68,7 @@ The real-world problems show up in the history too:
 Next.js 16 (App Router) · React 19 · TypeScript · Drizzle ORM + Postgres
 (Neon in production) · Vercel Blob (private store) for photo bytes ·
 hand-rolled Google OAuth · Google Photos **Picker API** · Open-Meteo +
-`suncalc` · CSS Modules, no UI framework.
+`suncalc` · Claude API (vision tagging) · CSS Modules, no UI framework.
 
 ## Architecture
 
@@ -95,6 +95,16 @@ hand-rolled Google OAuth · Google Photos **Picker API** · Open-Meteo +
   - `sessions` and `share_links`: sign-in sessions and unlisted share tokens.
   - `sync_log`: a record of each import.
   - `forecast_days`: a cache of fetched forecasts for the planning view.
+  - `forecast_snapshots`: what the forecast said about each morning, kept
+    per lead time (1 = the evening before), so it can later be compared
+    with the sky the photo actually shows.
+  - `photo_tags`: Claude's reading of each photo: the sky category it
+    actually was, alt text, colours, drama, mood and a place suggestion.
+  - `tagging_batches`: Message Batches in flight, so a re-run resumes them.
+- **Photos go through one interface.** `src/lib/photo-source.ts` is the seam
+  between the app and wherever photos live (Google Photos imports today,
+  the phone itself on Android). See [docs/architecture.md](docs/architecture.md)
+  for it and the rest of the Claude layer.
 - **Auth**: Google OAuth is used only to identify the owner and to call the
   Picker API. `src/proxy.ts` redirects unauthenticated page loads to
   `/login`, and every owner API route re-checks the session in
@@ -131,6 +141,19 @@ npm run dev
 ```
 
 Open http://localhost:3000.
+
+To try vision tagging on the sample photos, add an `ANTHROPIC_API_KEY` to
+`.env`, then:
+
+```bash
+npm run tag-photos -- --sync --limit 3   # a few photos, one request each
+npm run tag-photos                       # the rest, as one Message Batch
+npm run backfill-forecasts               # what the forecast said each morning
+```
+
+Both scripts are safe to re-run: photos already tagged with the current
+prompt version, and mornings that already have a forecast, are skipped.
+Tagging the ~115 sample photos as a batch costs about $1.
 
 The sample photos are rebuilt with `npm run sample-photos -- <dir>`, which
 crops and resizes any folder of 16:9 images and strips their metadata
@@ -206,6 +229,9 @@ one-time, user-present selection flow, so:
 | `APP_TIMEZONE` | no | IANA zone that defines a "day" (default `America/Los_Angeles`) |
 | `OWNER_LAT` / `OWNER_LON` | no | Location for the planning forecast (defaults to San Francisco) |
 | `DEMO_MODE` | no | `true` = seeded local preview, no auth |
+| `ANTHROPIC_API_KEY` | for tagging | Claude API key used by `npm run tag-photos` |
+| `TAGGING_MODEL` | no | Model for tagging (default `claude-opus-5-5`) |
+| `CRON_SECRET` | production | Authenticates Vercel's call to the nightly forecast job |
 
 ### Deploying
 
@@ -215,7 +241,12 @@ The app runs on Vercel as-is:
 2. Attach a Postgres database (e.g. Neon from the Vercel Marketplace) and a
    Blob store.
 3. Set the variables above.
-4. Run `npm run db:push` against the production `DATABASE_URL` once.
+4. Run `npm run db:push` against the production `DATABASE_URL` once (and
+   again after pulling a schema change).
+
+`vercel.json` schedules `/api/cron/forecast` nightly at 03:00 UTC (8 PM
+Pacific in summer), which records the evening-before forecast even on days
+the app isn't opened.
 
 ## Project layout
 
@@ -228,15 +259,20 @@ src/components/calendar/ CalendarApp (state) + mobile/web shells, zoom views,
 src/lib/                 dates + grid maths, Google OAuth/Picker client, ingest,
                          Blob storage, stats, weather + verdict rules, crypto, session
 src/db/                  Drizzle schema
-scripts/seed.ts          demo-mode seed data
+src/lib/photo-source.ts  the interface between the app and wherever photos live
+src/lib/tagging.ts       vision tagging: schema, request, validation
+prompts/                 versioned prompts (tag-photo/v1.md)
+scripts/                 seed, tag-photos, backfill-forecasts, sample-photos
+test/                    unit tests (`npm test`); the Claude API is mocked
 design_handoff_*/        the Claude Design specs this was built from
 ```
 
 ## Known gaps
 
-- **No location captions.** The design shows a place under the time; the
-  Picker API exposes no location data, so it's omitted. The roadmap fills it
-  in from what you tell the walk buddy instead.
+- **Places have to come from you.** The Picker API exposes no location
+  data. Tagging suggests a place from visible landmarks, but only a place
+  you've set appears in captions and the place filter; setting one in the
+  app arrives with the walk log (roadmap).
 - **No AVIF/WebP or Display P3.** Imported photos are the sRGB JPEGs Google
   serves; re-encoding on import isn't implemented.
 - **No automatic sync.** This is a Google platform restriction (see above).
@@ -249,10 +285,11 @@ The next step turns the planning view from "is it worth going out?" into
 "where should I walk?", and gives every kind of morning a good answer.
 
 - **Walk planning that learns** (Claude API)
-  - A photo-source interface between the app and wherever photos live.
-  - Vision tagging of each sunrise (colours, cloud type, alt text, which
-    category the sky actually turned out to be, and a place suggestion from
-    visible landmarks), with a Batch API backfill.
+  - *Done:* a photo-source interface between the app and wherever photos
+    live; vision tagging of each sunrise (colours, cloud type, alt text,
+    which category the sky actually turned out to be, and a place suggestion
+    from visible landmarks) with a Batch API backfill; and a record of what
+    the forecast said each evening, backfilled from Open-Meteo's archive.
   - An evening recommendation of where to walk tomorrow, starting from
     these defaults and replacing them with what has worked for you:
     - *Stunning* or *Nice*: a high vantage point.

@@ -35,7 +35,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
   const windowStart = `${addMonths(monthKey(today), -2)}-01`;
 
   const [initialDays, initialStats, initialDayKeys] = await Promise.all([
-    getDaysInRange(windowStart, today),
+    getDaysInRange(windowStart, today, { includePlace: false }),
     computeStats(),
     getAllCapturedDayKeys(),
   ]);

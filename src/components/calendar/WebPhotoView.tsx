@@ -131,7 +131,7 @@ export function WebPhotoView({
             <img
               {...buildSrcSet(shot.id, "full")}
               sizes="70vw"
-              alt={formatLongDate(date)}
+              alt={shot.alt ?? formatLongDate(date)}
               fetchPriority="high"
               onLoad={decodeThenNotify(notifyPhotoLoaded)}
               onError={notifyPhotoLoaded}

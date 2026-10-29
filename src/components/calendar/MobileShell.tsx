@@ -1,6 +1,7 @@
 "use client";
 
 import type { DayData, PlanningDay, Stats, ZoomLevel } from "@/lib/types";
+import type { Facet } from "@/lib/facets";
 import { MobileHeader } from "./MobileHeader";
 import { PlanningEntryRow } from "./PlanningEntryRow";
 import { WeekStrip } from "./WeekStrip";
@@ -21,6 +22,9 @@ interface MobileShellProps {
   onZoomChange(zoom: ZoomLevel): void;
   filter: boolean;
   onFilterChange(filter: boolean): void;
+  facet: Facet;
+  onFacetChange(facet: Facet): void;
+  places: string[];
   stats: Stats;
   getDay(date: string): DayData | undefined;
   ensureLoaded(start: string, end: string): Promise<void>;
@@ -46,6 +50,9 @@ export function MobileShell({
   onZoomChange,
   filter,
   onFilterChange,
+  facet,
+  onFacetChange,
+  places,
   stats,
   getDay,
   ensureLoaded,
@@ -117,7 +124,15 @@ export function MobileShell({
         )}
       </ZoomTransition>
 
-      <ControlBar zoom={zoom} onZoomChange={onZoomChange} filter={filter} onFilterChange={onFilterChange} />
+      <ControlBar
+        zoom={zoom}
+        onZoomChange={onZoomChange}
+        filter={filter}
+        onFilterChange={onFilterChange}
+        facet={facet}
+        onFacetChange={onFacetChange}
+        places={places}
+      />
     </div>
   );
 }

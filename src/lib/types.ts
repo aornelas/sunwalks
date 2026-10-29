@@ -5,7 +5,12 @@ export interface Shot {
   url: string;
   thumbUrl: string;
   takenAt: string;
+  /** Owner view only; never sent to the share link. */
   place?: string;
+  /** Claude's alt text (see lib/tagging.ts), once the photo is tagged. */
+  alt?: string;
+  /** The sky the photo actually shows, in the forecast's vocabulary, once tagged. */
+  category?: VerdictWord;
 }
 
 export interface DayData {

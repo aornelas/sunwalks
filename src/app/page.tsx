@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getOwnerAccount } from "@/lib/owner";
-import { getDaysInRange, getAllCapturedDayKeys } from "@/lib/data";
+import { getDaysInRange, getAllCapturedDayKeys, getPlaces } from "@/lib/data";
 import { computeStats } from "@/lib/stats";
 import { env } from "@/lib/env";
 import { addMonths, monthKey, todayDayKey } from "@/lib/dates";
@@ -23,10 +23,11 @@ export default async function HomePage() {
   // first paint on a third-party network request is worse than the entry
   // row briefly reading "Checking forecast…" — CalendarApp fetches it
   // itself once mounted.
-  const [initialDays, initialStats, initialDayKeys] = await Promise.all([
-    getDaysInRange(windowStart, today),
+  const [initialDays, initialStats, initialDayKeys, places] = await Promise.all([
+    getDaysInRange(windowStart, today, { includePlace: true }),
     computeStats(),
     getAllCapturedDayKeys(),
+    getPlaces(),
   ]);
 
   const accountInfo: AccountInfo = {
@@ -43,6 +44,7 @@ export default async function HomePage() {
       initialStats={initialStats}
       initialDayKeys={initialDayKeys}
       account={accountInfo}
+      places={places}
     />
   );
 }

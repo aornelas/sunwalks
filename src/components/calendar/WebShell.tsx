@@ -4,6 +4,7 @@ import { useState } from "react";
 import { addDays, dayOfMonth, formatLongDateWithYear, formatTime } from "@/lib/dates";
 import { setPendingOrigin } from "@/lib/photo-origin";
 import type { AccountInfo, DayData, PlanningDay, Stats, ZoomLevel } from "@/lib/types";
+import type { Facet } from "@/lib/facets";
 import type { PickerImportState } from "@/hooks/usePickerImport";
 import { PlanningEntryRow } from "./PlanningEntryRow";
 import { WebZoomBar } from "./WebZoomBar";
@@ -23,6 +24,9 @@ interface WebShellProps {
   onZoomChange(zoom: ZoomLevel): void;
   filter: boolean;
   onFilterChange(filter: boolean): void;
+  facet: Facet;
+  onFacetChange(facet: Facet): void;
+  places: string[];
   stats: Stats;
   getDay(date: string): DayData | undefined;
   ensureLoaded(start: string, end: string): Promise<void>;
@@ -53,6 +57,9 @@ export function WebShell({
   onZoomChange,
   filter,
   onFilterChange,
+  facet,
+  onFacetChange,
+  places,
   stats,
   getDay,
   ensureLoaded,
@@ -110,7 +117,15 @@ export function WebShell({
               </h1>
               <div className={styles.date}>{formatLongDateWithYear(today)}</div>
             </div>
-            <WebZoomBar zoom={zoom} onZoomChange={onZoomChange} filter={filter} onFilterChange={onFilterChange} />
+            <WebZoomBar
+              zoom={zoom}
+              onZoomChange={onZoomChange}
+              filter={filter}
+              onFilterChange={onFilterChange}
+              facet={facet}
+              onFacetChange={onFacetChange}
+              places={places}
+            />
           </div>
 
           {!readOnly && onOpenPlanning && (

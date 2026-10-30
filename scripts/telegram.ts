@@ -39,6 +39,8 @@ async function main() {
       await api.call("setMyCommands", {
         commands: [
           { command: "plan", description: "Plan the next morning now" },
+          { command: "spots", description: "Your spots, their timings, and what fits tomorrow" },
+          { command: "schedule", description: "Your schedule rules, and tomorrow's" },
           { command: "week", description: "What I've learned this week" },
           { command: "help", description: "What I do" },
         ],

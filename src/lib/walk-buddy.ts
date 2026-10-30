@@ -24,14 +24,26 @@ import { and, count, eq, gte, lt } from "drizzle-orm";
 import { db } from "@/db";
 import { memoryFiles, photos, recommendations, telegramUpdates } from "@/db/schema";
 import { computeCalibration, describeConfidence } from "./calibration";
-import { addDays, formatMonthDayRange, formatShortDate, localDayKey, todayDayKey } from "./dates";
+import {
+  addDays,
+  dayOfMonth,
+  formatMonthDayRange,
+  formatShortDate,
+  formatTime,
+  localDayKey,
+  monthKey,
+  monthShort,
+  todayDayKey,
+  weekdayShort,
+} from "./dates";
 import { env } from "./env";
 import { loadMornings, type MorningRecord } from "./mornings";
 import { getPhotoSource } from "./photo-source";
 import { STAY_IN, type SpotKind } from "./place-scores";
 import { planningStartDate } from "./planning";
 import { recommendModel, recommendWalk, type Recommendation } from "./recommend";
-import { addRule, listRules, removeRule } from "./schedule";
+import { addRule, listRules, morningSchedule, removeRule, type ScheduleRule } from "./schedule";
+import { reachFor } from "./reach";
 import { addSpot, clearSleptIn, getWalk, listSpots, logWalk, setSpotTiming, type Spot } from "./spots";
 import {
   decodeButton,
@@ -644,13 +656,97 @@ export async function sendWeeklySummary(deps: Pick<BuddyDeps, "api" | "chatId">,
   await deps.api.call("sendMessage", { chat_id: deps.chatId, text: weeklySummaryText(today, mornings, changed.map((c) => c.path)) });
 }
 
+// ─── What's on file ──────────────────────────────────────────────────────
+// /spots and /schedule answer from the database, with no Claude call, so a
+// wrong timing or rule is quick to spot. Changes go back through words.
+
+export type MorningPlan = Awaited<ReturnType<typeof morningSchedule>>;
+
+const WEEKDAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const CHANGE_HINT = "To change any of this, tell me in words.";
+
+/** "Mon–Fri", "Sat, Sun", "every day"; Monday first, so a weekend reads naturally. */
+export function weekdaysText(days: number[]): string {
+  const set = new Set(days);
+  if (set.size === 7) return "every day";
+  // Positions in a Monday-first week, grouped into runs of consecutive days.
+  const positions = [...set].map((d) => (d + 6) % 7).sort((a, b) => a - b);
+  const runs: number[][] = [];
+  for (const p of positions) {
+    const run = runs.at(-1);
+    if (run && p === run.at(-1)! + 1) run.push(p);
+    else runs.push([p]);
+  }
+  const name = (p: number) => WEEKDAY_NAMES[(p + 1) % 7];
+  return runs.map((r) => (r.length >= 3 ? `${name(r[0])}–${name(r.at(-1)!)}` : r.map(name).join(", "))).join(", ");
+}
+
+function clockText(hhmm: string): string {
+  const [h, m] = hhmm.split(":").map(Number);
+  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+}
+
+function dayRuleText(rule: { backBy: string | null; stayMinutes: number }): string {
+  return `${rule.backBy ? `back by ${clockText(rule.backBy)}` : "no time to be back"}, ${rule.stayMinutes} min out`;
+}
+
+function morningHeading(date: string, plan: MorningPlan): string {
+  return `${formatShortDate(date)}: sunrise ${formatTime(plan.sunrise, env.timezone)}, ${plan.rule.label}, ${dayRuleText(plan.rule)}.`;
+}
+
+/** Each spot's timing, and whether it fits the next morning. */
+export function spotsText(date: string, spotList: Spot[], plan: MorningPlan): string {
+  if (spotList.length === 0) return `No spots yet. Tell me where you watch the sunrise and how long it takes to get home.`;
+  const lines = spotList.map((s) => {
+    const timing =
+      s.minutesHome == null ? "timing not set" : `${s.minutesHome} min home${s.loopMinutes ? `, ${s.loopMinutes} min walk there` : ""}`;
+    // With no time to be back everything fits, and the heading already says so.
+    if (!plan.backBy) return `${s.name}: ${timing}.`;
+    const reach = reachFor(plan.sunrise, plan.rule, plan.backBy, s, env.timezone);
+    const mark = reach.status === "in_reach" ? "✓" : reach.status === "too_far" ? "✗" : "?";
+    return `${mark} ${s.name}: ${timing}. ${reach.reason[0].toUpperCase()}${reach.reason.slice(1)}.`;
+  });
+  return [morningHeading(date, plan), lines.join("\n"), CHANGE_HINT].join("\n\n");
+}
+
+/** The rules, weekly first, then exceptions by date, and which one the next morning uses. */
+export function scheduleText(date: string, rules: ScheduleRule[], plan: MorningPlan): string {
+  const mondayFirst = (r: ScheduleRule) => Math.min(...r.weekdays.map((d) => (d + 6) % 7));
+  const weekly = rules.filter((r) => !r.startDate).sort((a, b) => mondayFirst(a) - mondayFirst(b));
+  const dated = rules.filter((r) => r.startDate).sort((a, b) => a.startDate!.localeCompare(b.startDate!));
+  const day = (d: string) => `${weekdayShort(d)} ${monthShort(monthKey(d))} ${dayOfMonth(d)}`;
+  const line = (r: ScheduleRule) => {
+    const range = r.startDate && r.endDate && r.endDate !== r.startDate;
+    const when = r.startDate ? (range ? `${day(r.startDate)} to ${day(r.endDate!)}` : day(r.startDate)) : weekdaysText(r.weekdays);
+    // A dated rule limited to some weekdays ("school holiday, weekdays only") says which.
+    const days = range && r.weekdays.length < 7 ? ` (${weekdaysText(r.weekdays)})` : "";
+    return `${r.label}: ${when}${days}, ${dayRuleText(r)}.`;
+  };
+  const sections = [morningHeading(date, plan)];
+  if (rules.length === 0) sections.push(`No schedule yet, so every morning gets ${plan.rule.stayMinutes} min out and no time to be back.`);
+  if (weekly.length) sections.push(["Every week:", ...weekly.map(line)].join("\n"));
+  if (dated.length) sections.push(["Exceptions:", ...dated.map(line)].join("\n"));
+  sections.push(CHANGE_HINT);
+  return sections.join("\n\n");
+}
+
+async function sendSpots(deps: BuddyDeps, date: string): Promise<void> {
+  const [spotList, plan] = await Promise.all([listSpots(), morningSchedule(date)]);
+  await deps.api.call("sendMessage", { chat_id: deps.chatId, text: spotsText(date, spotList, plan) });
+}
+
+async function sendSchedule(deps: BuddyDeps, date: string): Promise<void> {
+  const [rules, plan] = await Promise.all([listRules(), morningSchedule(date)]);
+  await deps.api.call("sendMessage", { chat_id: deps.chatId, text: scheduleText(date, rules, plan) });
+}
+
 // ─── Updates ─────────────────────────────────────────────────────────────
 
 const HELP = [
   "I keep your sunrise log. Each evening I send a plan for the next morning.",
   "Each morning, send a photo (from the window counts) with a few words: where you were and how it was, 1 to 5. I'll ask for anything missing. Late is fine: send the photo as a file to keep its date, or say which morning it was.",
   "Tell me your schedule (\"back by 7:50 on school days\", \"no school Friday\") and how long spots take (\"McLaren: 10 min drive, 15 min walk\"), and the plan only suggests what fits.",
-  "/plan plans the next morning now. /week sends what I've learned this week.",
+  "/plan plans the next morning now. /spots and /schedule show what I have on file. /week sends what I've learned this week.",
 ].join("\n\n");
 
 export type UpdateKind = (typeof telegramUpdates.$inferInsert)["kind"];
@@ -711,6 +807,10 @@ async function dispatch(deps: BuddyDeps, update: TelegramUpdate, usage: Usage): 
   if (command === "plan") {
     await deps.api.call("sendChatAction", { chat_id: deps.chatId, action: "typing" }).catch(() => {});
     addUsage(usage, await sendEveningPlan(deps));
+  } else if (command === "spots") {
+    await sendSpots(deps, planningStartDate());
+  } else if (command === "schedule") {
+    await sendSchedule(deps, planningStartDate());
   } else if (command === "week") {
     await sendWeeklySummary(deps, todayDayKey(env.timezone));
   } else if (command) {

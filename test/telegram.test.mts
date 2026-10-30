@@ -6,15 +6,16 @@ import assert from "node:assert/strict";
 
 process.env.DATABASE_URL ??= "postgres://test@localhost/unused";
 const { decodeButton, encodeButton, imageOf, isFromOwner, largestPhoto, secretMatches, telegramApi } = await import("../src/lib/telegram");
-const { headingOf, isComplete, kindOf, placeKeyboard, planMessage, reportStatus, weeklySummaryText, withStatus } = await import(
-  "../src/lib/walk-buddy"
-);
+const { headingOf, isComplete, kindOf, placeKeyboard, planMessage, reportStatus, scheduleText, spotsText, weekdaysText, weeklySummaryText, withStatus } =
+  await import("../src/lib/walk-buddy");
+const { zonedTimeToInstant } = await import("../src/lib/dates");
 const { STAY_IN } = await import("../src/lib/place-scores");
 import type { ButtonAction, TelegramUpdate } from "../src/lib/telegram";
 import type { MorningRecord } from "../src/lib/mornings";
 import type { Recommendation } from "../src/lib/recommend";
 import type { Spot } from "../src/lib/spots";
-import type { MorningReport } from "../src/lib/walk-buddy";
+import type { MorningPlan, MorningReport } from "../src/lib/walk-buddy";
+import type { ScheduleRule } from "../src/lib/schedule";
 
 test("the webhook secret must match exactly", () => {
   assert.equal(secretMatches("s3cret", "s3cret"), true);
@@ -185,4 +186,62 @@ test("the Bot API client posts JSON and surfaces Telegram's errors", async () =>
   await assert.rejects(api.call("getChat", { chat_id: 2 }), /getChat failed: Bad Request: chat not found/);
   assert.equal((await api.download("photos/file_1.jpg")).toString(), "jpeg");
   assert.equal(calls[2].url, "https://tg.test/file/botTOKEN/photos/file_1.jpg");
+});
+
+test("weekdays read as runs, Monday first", () => {
+  assert.equal(weekdaysText([1, 2, 3, 4, 5]), "Mon–Fri");
+  assert.equal(weekdaysText([0, 6]), "Sat, Sun");
+  assert.equal(weekdaysText([0, 1, 2, 3, 4, 5, 6]), "every day");
+  assert.equal(weekdaysText([1, 3, 4, 5]), "Mon, Wed–Fri");
+});
+
+// Friday Oct 30, 2026: sunrise 7:33, a school day.
+const TZ = "America/Los_Angeles";
+const friday: MorningPlan = {
+  rule: { label: "school day", backBy: "07:50", stayMinutes: 5 },
+  backBy: zonedTimeToInstant("2026-10-30", "07:50", TZ),
+  sunrise: zonedTimeToInstant("2026-10-30", "07:33", TZ),
+};
+
+test("/spots shows each timing and whether it fits the next morning", () => {
+  const spots = [
+    { ...spot(1, "San Jose Bridge"), minutesHome: 5 },
+    { ...spot(2, "McLaren Park"), minutesHome: 10, loopMinutes: 15 },
+    spot(3, "Bernal Hill"),
+  ];
+  const text = spotsText("2026-10-30", spots, friday);
+  assert.match(text, /^Fri 30: sunrise 7:33 AM, school day, back by 7:50 AM, 5 min out\./);
+  assert.match(text, /✓ San Jose Bridge: 5 min home\. Home by 7:43 AM, 7 min before 7:50 AM\./);
+  assert.match(text, /✗ McLaren Park: 10 min home, 15 min walk there\. Home at 8:03 AM, 13 min after 7:50 AM\./);
+  assert.match(text, /\? Bernal Hill: timing not set\./);
+  assert.match(text, /tell me in words/);
+
+  const saturday = { ...friday, rule: { label: "weekend", backBy: null, stayMinutes: 20 }, backBy: null };
+  assert.match(spotsText("2026-10-31", spots, saturday), /\n\nSan Jose Bridge: 5 min home\.\nMcLaren Park: 10 min home, 15 min walk there\.\nBernal Hill: timing not set\.\n\n/);
+});
+
+test("/schedule lists weekly rules, then exceptions by date", () => {
+  const rule = (o: Partial<ScheduleRule>): ScheduleRule => ({
+    id: 1, label: "school day", weekdays: [1, 2, 3, 4, 5], startDate: null, endDate: null, backBy: "07:50", stayMinutes: 5, createdAt: new Date(0), ...o,
+  });
+  const text = scheduleText(
+    "2026-10-30",
+    [
+      rule({ id: 2, label: "weekend", weekdays: [0, 6], backBy: null, stayMinutes: 20 }),
+      rule({}),
+      rule({ id: 4, label: "thanksgiving break", weekdays: [0, 1, 2, 3, 4, 5, 6], startDate: "2026-11-23", endDate: "2026-11-27", backBy: null, stayMinutes: 20 }),
+      rule({ id: 3, label: "no school", weekdays: [3], startDate: "2026-11-11", endDate: "2026-11-11", backBy: null, stayMinutes: 20 }),
+    ],
+    friday,
+  );
+  assert.equal(
+    text,
+    [
+      "Fri 30: sunrise 7:33 AM, school day, back by 7:50 AM, 5 min out.",
+      "Every week:\nschool day: Mon–Fri, back by 7:50 AM, 5 min out.\nweekend: Sat, Sun, no time to be back, 20 min out.",
+      "Exceptions:\nno school: Wed Nov 11, no time to be back, 20 min out.\nthanksgiving break: Mon Nov 23 to Fri Nov 27, no time to be back, 20 min out.",
+      "To change any of this, tell me in words.",
+    ].join("\n\n"),
+  );
+  assert.match(scheduleText("2026-10-30", [], { ...friday, rule: { label: "no schedule set", backBy: null, stayMinutes: 15 }, backBy: null }), /No schedule yet/);
 });

@@ -299,7 +299,9 @@ better, 1 the wrong call.
   minute drive and a 15 minute walk", "no school on Nov 11", "summer break
   June 12 to August 20". Claude records them with `set_spot_timing`,
   `add_spot` and the schedule tools, and the evening plan only suggests
-  spots in reach.
+  spots in reach. `/spots` and `/schedule` show what's on file straight
+  from the database, with no Claude call: each spot's timing and whether
+  it fits the next morning, and the weekly rules and dated exceptions.
 - **The weekly summary** (`/api/cron/weekly-summary`, Sundays) counts the
   last seven mornings: out, at home, slept in and unreported, ratings, the
   best morning, how often the week's forecasts held, the running held-rate

@@ -257,6 +257,23 @@ export const recommendations = pgTable("recommendations", {
 });
 
 /**
+ * The walk buddy's chat, both sides, so a short reply ("12 min") reaches
+ * Claude with the question it answers. Only recent lines are read back
+ * (lib/walk-buddy.ts), and lines older than a month are pruned. Personal:
+ * never committed.
+ */
+export const chatMessages = pgTable(
+  "chat_messages",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+    from: text("from", { enum: ["owner", "bot"] }).notNull(),
+    text: text("text").notNull(),
+  },
+  (t) => [index("chat_messages_at_idx").on(t.at)],
+);
+
+/**
  * Every update the Telegram webhook accepted (see app/api/telegram). The
  * primary key makes a redelivered update a no-op, and each row records how
  * handling went and what the Claude calls behind it cost.

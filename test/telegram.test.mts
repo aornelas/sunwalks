@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 
 process.env.DATABASE_URL ??= "postgres://test@localhost/unused";
 const { decodeButton, encodeButton, imageOf, isFromOwner, largestPhoto, secretMatches, telegramApi } = await import("../src/lib/telegram");
-const { headingOf, isComplete, kindOf, placeKeyboard, planMessage, reportStatus, scheduleText, spotsText, weekdaysText, weeklySummaryText, withStatus } =
+const { conversationText, headingOf, isComplete, kindOf, placeKeyboard, planMessage, reportStatus, scheduleText, spotsText, weekdaysText, weeklySummaryText, withStatus } =
   await import("../src/lib/walk-buddy");
 const { zonedTimeToInstant } = await import("../src/lib/dates");
 const { STAY_IN } = await import("../src/lib/place-scores");
@@ -244,4 +244,20 @@ test("/schedule lists weekly rules, then exceptions by date", () => {
     ].join("\n\n"),
   );
   assert.match(scheduleText("2026-10-30", [], { ...friday, rule: { label: "no schedule set", backBy: null, stayMinutes: 15 }, backBy: null }), /No schedule yet/);
+});
+
+test("the conversation reads oldest first, with the bot as You and long messages cut", () => {
+  const at = (hhmm: string) => zonedTimeToInstant("2026-10-30", hhmm, TZ);
+  const text = conversationText(
+    [
+      { at: at("13:37"), from: "bot", text: "Added St. Mary's Park. How long does it take to get home from there?" },
+      { at: at("13:38"), from: "owner", text: "12" },
+      { at: at("13:40"), from: "bot", text: "x".repeat(700) },
+    ],
+    TZ,
+  );
+  const lines = text.split("\n");
+  assert.equal(lines[0], "[1:37 PM] You: Added St. Mary's Park. How long does it take to get home from there?");
+  assert.equal(lines[1], "[1:38 PM] Owner: 12");
+  assert.equal(lines[2].length, "[1:40 PM] You: ".length + 601);
 });

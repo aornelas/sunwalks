@@ -277,7 +277,7 @@ better, 1 the wrong call.
   a suggestion, not a question. Nothing is logged until the morning
   happens.
 - **A photo** is filed, tagged and acknowledged. With words, Claude
-  (`walk-buddy.ts`, prompt in `prompts/walk-buddy/v2.md`) logs what they
+  (`walk-buddy.ts`, prompt in `prompts/walk-buddy/v3.md`) logs what they
   say; without, the code just asks. Either way the code then asks with
   buttons for whatever is still missing: the place (last night's
   suggestions first, then the other spots, then Home), then the rating.
@@ -289,6 +289,16 @@ better, 1 the wrong call.
   it was sent unless the words name another morning ("this is from
   Tuesday"), up to 14 days back; then it moves with the report. The stored
   derivatives keep no metadata, GPS included.
+- **Photos from the web app count.** A photo picked in the web app is the
+  morning's photo. After an import, the bot asks with the same buttons for
+  the place and rating of today or yesterday if they're missing; older
+  days are history being filled in, so it leaves them alone.
+- **The conversation.** Telegram doesn't give a bot its chat history, so
+  `chat_messages` keeps both sides: the owner's messages and taps, and
+  everything the bot sends. The last six hours (up to 20 lines) go ahead
+  of each message to Claude, so a short answer ("12" after "how long home
+  from St. Mary's?") lands with its question, as does a message quoted
+  with Reply. Lines older than a month are deleted.
 - **No report is not a sleep-in.** The late-morning nudge
   (`/api/cron/morning-nudge`, 17:30 UTC, so 9:30 in winter and 10:30 in
   summer) goes out only if nothing has come in, and offers a Slept in

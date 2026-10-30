@@ -44,6 +44,8 @@ export interface TelegramMessage {
   document?: TelegramDocument;
   /** Shared by the photos of one album, which arrive as separate messages. */
   media_group_id?: string;
+  /** The message this one answers, when the owner used Reply. */
+  reply_to_message?: TelegramMessage;
 }
 
 export interface CallbackQuery {

@@ -277,7 +277,7 @@ better, 1 the wrong call.
   a suggestion, not a question. Nothing is logged until the morning
   happens.
 - **A photo** is filed, tagged and acknowledged. With words, Claude
-  (`walk-buddy.ts`, prompt in `prompts/walk-buddy/v3.md`) logs what they
+  (`walk-buddy.ts`, prompt in `prompts/walk-buddy/v4.md`) logs what they
   say; without, the code just asks. Either way the code then asks with
   buttons for whatever is still missing: the place (last night's
   suggestions first, then the other spots, then Home), then the rating.
@@ -287,8 +287,15 @@ better, 1 the wrong call.
   but not from an image sent as a file: that keeps the time it was taken,
   and decides the date whenever it's sent. A stripped photo goes on the day
   it was sent unless the words name another morning ("this is from
-  Tuesday"), up to 14 days back; then it moves with the report. The stored
-  derivatives keep no metadata, GPS included.
+  Tuesday"), up to 14 days back; then it moves with the report. Its time
+  is a guess: when it was sent if that was within two hours of sunrise,
+  otherwise sunrise, until the owner says ("took it at 7:52", `photo_time`
+  on `log_walk`). The stored derivatives keep no metadata, GPS included.
+- **Replacing a photo.** Asked to replace a morning's photo, `replace_photo`
+  makes the new one the morning's and deletes the old copies for good (Blob
+  files, the Files API upload, the tags). The new one inherits the place, and
+  the time unless its own EXIF has one. Several others need "all". HEIC
+  originals are decoded with `heic-decode`, since sharp's binary can't.
 - **Photos from the web app count.** A photo picked in the web app is the
   morning's photo. After an import, the bot asks with the same buttons for
   the place and rating of today or yesterday if they're missing; older

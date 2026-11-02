@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   devIndicators: false,
+  // The HEIC decoder loads a large WebAssembly bundle; left unbundled, it runs as plain Node.
+  serverExternalPackages: ["heic-decode", "libheif-js"],
   // The Claude prompts are read from disk at run time (lib/tagging.ts,
   // recommend.ts, walk-buddy.ts), which file tracing can't see, so the
   // functions that call Claude get the folder explicitly.

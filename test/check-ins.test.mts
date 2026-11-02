@@ -9,7 +9,7 @@ process.env.DATABASE_URL ??= "postgres://test@localhost/unused";
 const { reachFor, HOME_TIMING } = await import("../src/lib/reach");
 const { ruleForDate, DEFAULT_RULE } = await import("../src/lib/schedule");
 const { wallClockToInstant, zonedTimeToInstant } = await import("../src/lib/dates");
-const { takenAtFromExif } = await import("../src/lib/telegram-photos");
+const { takenAtFromExif, takenAtWithoutExif, photosToRemove, isHeic } = await import("../src/lib/telegram-photos");
 const { walkScore } = await import("../src/lib/place-scores");
 import type { ScheduleRule } from "../src/lib/schedule";
 
@@ -104,6 +104,29 @@ test("a photo sent as a file is dated by its EXIF, in the owner's zone unless it
   // A file with no date, and no EXIF at all.
   assert.equal(takenAtFromExif(await withExif({ Make: "x" }), TZ), null);
   assert.equal(takenAtFromExif(undefined, TZ), null);
+});
+
+test("a photo with no EXIF keeps its sent time near sunrise, and falls back to sunrise when shared later", () => {
+  const sunrise = zonedTimeToInstant("2026-10-31", "07:34", TZ);
+  const fromTheSpot = zonedTimeToInstant("2026-10-31", "07:52", TZ);
+  assert.equal(takenAtWithoutExif(fromTheSpot, sunrise), fromTheSpot);
+  const beforeSunrise = zonedTimeToInstant("2026-10-31", "07:20", TZ);
+  assert.equal(takenAtWithoutExif(beforeSunrise, sunrise), beforeSunrise);
+  // Sent that afternoon (the 10/31 photo arrived at 3:47 PM).
+  assert.equal(takenAtWithoutExif(zonedTimeToInstant("2026-10-31", "15:47", TZ), sunrise), sunrise);
+});
+
+test("replacing removes the one other photo, and several only when told all", () => {
+  assert.deepEqual(photosToRemove(["a"], false), ["a"]);
+  assert.equal(photosToRemove(["a", "b"], false), "ask");
+  assert.deepEqual(photosToRemove(["a", "b"], true), ["a", "b"]);
+  assert.deepEqual(photosToRemove([], false), []);
+});
+
+test("HEIC is recognized by its brand", () => {
+  assert.equal(isHeic(Buffer.from("\0\0\0\x18ftypheic", "latin1")), true);
+  assert.equal(isHeic(Buffer.from("\0\0\0\x18ftypavif", "latin1")), false);
+  assert.equal(isHeic(Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0])), false);
 });
 
 test("the rating is the score; drama only stands in without one, and never for home", () => {

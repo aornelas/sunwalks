@@ -20,7 +20,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import type Anthropic from "@anthropic-ai/sdk";
-import { and, count, desc, eq, gte, lt, notLike } from "drizzle-orm";
+import { and, count, desc, eq, gte, like, lt, notLike } from "drizzle-orm";
 import { db } from "@/db";
 import { chatMessages, memoryFiles, photos, recommendations, telegramUpdates } from "@/db/schema";
 import { computeCalibration, describeConfidence } from "./calibration";
@@ -56,10 +56,10 @@ import {
   type TelegramMessage,
   type TelegramUpdate,
 } from "./telegram";
-import { importTelegramPhoto, movePhoto, type ImportedPhoto } from "./telegram-photos";
+import { importTelegramPhoto, movePhoto, recentTelegramPhoto, replacePhotos, setPhotoTime, type ImportedPhoto } from "./telegram-photos";
 import { finalText, runToolLoop, type LoopTool } from "./tool-loop";
 
-export const BUDDY_PROMPT_VERSION = "walk-buddy/v3";
+export const BUDDY_PROMPT_VERSION = "walk-buddy/v4";
 
 /** What the owner says (or Claude passes as a place) for a missed sunrise. */
 export const SLEPT_IN = "Slept in";
@@ -370,9 +370,71 @@ function checkDate(run: MessageRun, date: string | null): string {
   return d;
 }
 
+/**
+ * Applies a time the owner gave for a photo: this message's photo unless its
+ * EXIF already dated it, or else the morning's one Telegram photo.
+ */
+async function setMorningPhotoTime(run: MessageRun, date: string, hhmm: string): Promise<string> {
+  let id: string;
+  if (run.photo && run.photo.date === date) {
+    if (run.photo.datedByExif) return "kept: the photo's own metadata has its time";
+    id = run.photo.id;
+  } else {
+    const sent = await db
+      .select({ id: photos.id })
+      .from(photos)
+      .where(and(eq(photos.date, date), like(photos.id, "tg-%")));
+    if (sent.length !== 1) return sent.length === 0 ? "no photo sent here for that morning" : "several photos that morning; not changed";
+    id = sent[0].id;
+  }
+  const takenAt = await setPhotoTime(id, hhmm);
+  return takenAt ? `taken at ${formatTime(takenAt, env.timezone)}` : "photo not found";
+}
+
 /** Claude's tools besides memory. The code checks every date and value. */
-function buddyTools(run: MessageRun): LoopTool[] {
+function buddyTools(run: MessageRun, client: Anthropic): LoopTool[] {
   return [
+    {
+      definition: {
+        name: "replace_photo",
+        description:
+          "Replaces a morning's other photos with the new one, deleting them for good. Only when the owner asks to replace a photo. The new photo is the one in this message, or one they sent in the last hour.",
+        strict: true,
+        input_schema: {
+          type: "object",
+          properties: {
+            date: {
+              type: ["string", "null"],
+              description: `YYYY-MM-DD, the morning whose photo is replaced. Null for ${run.defaultDate}.`,
+            },
+            all: { type: "boolean", description: "True only when they said to replace all of that morning's other photos." },
+          },
+          required: ["date", "all"],
+          additionalProperties: false,
+        },
+      },
+      async run(input) {
+        const { date, all } = input as { date: string | null; all: boolean };
+        const d = date ?? run.defaultDate;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) throw new Error("Dates are YYYY-MM-DD");
+        if (d > run.today) throw new Error("That morning hasn't happened yet");
+        if (run.photo?.datedByExif && d !== run.photo.date) {
+          throw new Error(`The new photo's own metadata says it was taken on ${run.photo.date}, not ${d}`);
+        }
+        if (run.photo && d !== run.photo.date) {
+          await movePhoto(run.photo.id, d);
+          run.photo.date = d;
+        }
+        const keepId = run.photo?.id ?? (await recentTelegramPhoto(d, new Date()));
+        if (!keepId) return { status: "no_new_photo", detail: "Ask them to send the new photo with their request." };
+        run.defaultDate = d;
+        const result = await replacePhotos(client, keepId, d, { all, keepOwnTime: run.photo?.datedByExif ?? true });
+        if (result.status === "ask") {
+          return { status: "ask", detail: "Several other photos that morning; ask which or whether all.", taken: result.others.map((o) => formatTime(o.takenAt, env.timezone)) };
+        }
+        return result;
+      },
+    },
     {
       definition: {
         name: "log_walk",
@@ -388,14 +450,25 @@ function buddyTools(run: MessageRun): LoopTool[] {
             place: { type: ["string", "null"], description: "A spot, spelled as listed, or Home, or Slept in." },
             rating: { ...nullableInt, description: "1 (wrong call) to 5 (exactly right; one of the best mornings)." },
             note: { type: ["string", "null"], description: "What they said about the morning, shortened, in their words." },
+            photo_time: {
+              type: ["string", "null"],
+              description: "HH:MM, 24-hour, their local time: when they say the morning's photo was taken (\"took it at 7:52\"). Null unless they said.",
+            },
           },
-          required: ["date", "place", "rating", "note"],
+          required: ["date", "place", "rating", "note", "photo_time"],
           additionalProperties: false,
         },
       },
       async run(input) {
-        const { date, place, rating, note } = input as { date: string | null; place: string | null; rating: number | null; note: string | null };
+        const { date, place, rating, note, photo_time } = input as {
+          date: string | null;
+          place: string | null;
+          rating: number | null;
+          note: string | null;
+          photo_time: string | null;
+        };
         const d = checkDate(run, date);
+        if (photo_time != null && !/^([01]\d|2[0-3]):[0-5]\d$/.test(photo_time)) throw new Error("photo_time is HH:MM, 24-hour");
         // The first morning logged takes the photo with it, unless the
         // photo's own metadata already dated it.
         if (run.photo && !run.photo.datedByExif && run.logged.length === 0 && d !== run.photo.date) {
@@ -414,7 +487,8 @@ function buddyTools(run: MessageRun): LoopTool[] {
           source: "telegram",
         });
         if (!run.logged.includes(d)) run.logged.push(d);
-        return { logged: await morningReport(d) };
+        const photoTime = photo_time ? await setMorningPhotoTime(run, d, photo_time) : undefined;
+        return { logged: await morningReport(d), ...(photoTime && { photoTime }) };
       },
     },
     {
@@ -576,7 +650,7 @@ async function messageContext(run: MessageRun, spotList: Spot[], message: Telegr
       [
         p.datedByExif
           ? `The owner sent a photo; its own metadata says it was taken on ${p.date}, so it belongs to that morning.`
-          : `The owner sent a photo with no record of when it was taken; it's filed under ${p.date} unless their words say it's from another morning. If you log another morning for it, the photo moves there with the report.`,
+          : `The owner sent a photo with no record of when it was taken (Telegram strips it); it's filed under ${p.date} at ${formatTime(p.takenAt, env.timezone)}, a guess, unless their words say it's from another morning. If you log another morning for it, the photo moves there with the report. If they say what time they took it, pass it as photo_time.`,
         `Claude's reading of it: sky ${p.tag.observed_category} (${p.tag.category_confidence} confidence), drama ${p.tag.drama} of 10: ${p.tag.drama_reason}`,
         `${p.tag.alt_text}`,
         `Suggested place: ${p.tag.suggested_place ?? "none"}; landmarks: ${p.tag.landmarks.join(", ") || "none"}; vantage: ${p.tag.vantage}.`,
@@ -636,7 +710,7 @@ async function handleMessage(deps: BuddyDeps, update: TelegramUpdate, message: T
     model: recommendModel(),
     system: loadSystemPrompt(),
     prompt,
-    tools: buddyTools(run),
+    tools: buddyTools(run, deps.client),
     memory: true,
     effort: "low",
   });

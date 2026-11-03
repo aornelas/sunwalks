@@ -14,13 +14,13 @@
 import "dotenv/config";
 import { formatTime } from "../src/lib/dates";
 import { env } from "../src/lib/env";
-import { STAY_IN, type SpotKind } from "../src/lib/place-scores";
+import { SPOT_KINDS, STAY_IN, type SpotKind } from "../src/lib/place-scores";
 import { planningStartDate } from "../src/lib/planning";
 import { HOME_TIMING, reachFor } from "../src/lib/reach";
 import { addRule, listRules, morningSchedule, removeRule } from "../src/lib/schedule";
 import { addSpot, listSpots, logWalk, setSpotTiming } from "../src/lib/spots";
 
-const KINDS: SpotKind[] = ["vantage", "forest", "short_walk", "waterfront"];
+const KINDS = SPOT_KINDS;
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function flag(args: string[], name: string): string | undefined {

@@ -23,7 +23,7 @@ import { computeCalibration, describeConfidence } from "@/lib/calibration";
 import { addDays, formatTime, todayDayKey } from "@/lib/dates";
 import { env } from "@/lib/env";
 import { loadMornings } from "@/lib/mornings";
-import { STAY_IN } from "@/lib/place-scores";
+import { isTravel, STAY_IN } from "@/lib/place-scores";
 import { getPhotoSource } from "@/lib/photo-source";
 import { planningStartDate } from "@/lib/planning";
 import { HOME_TIMING, reachFor } from "@/lib/reach";
@@ -234,7 +234,7 @@ export function createSunwalksServer(): McpServer {
     "list_spots",
     {
       title: "List sunrise spots",
-      description: "The owner's spots with their timings (minutes home from where they watch, and any walk there after sunrise), and whether each fits a morning's schedule.",
+      description: "The owner's spots with their timings (minutes home from where they watch, and any walk there after sunrise), and whether each fits a morning's schedule. Travel spots (one-off mornings away) are left out.",
       inputSchema: z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe("YYYY-MM-DD; the next sunrise by default.") }),
       outputSchema: z.object({
         date: z.string(),
@@ -257,7 +257,7 @@ export function createSunwalksServer(): McpServer {
       const day = date ?? planningStartDate();
       const [{ rule, backBy, sunrise }, spotList] = await Promise.all([morningSchedule(day), listSpots()]);
       const spots = [
-        ...spotList.map((s) => ({ name: s.name, kind: s.kind as string, timing: s })),
+        ...spotList.filter((s) => !isTravel(s)).map((s) => ({ name: s.name, kind: s.kind as string, timing: s })),
         { name: STAY_IN, kind: "home", timing: HOME_TIMING },
       ].map(({ name, kind, timing }) => {
         const r = reachFor(sunrise, rule, backBy, timing, env.timezone);

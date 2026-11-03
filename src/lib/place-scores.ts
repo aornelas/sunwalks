@@ -8,7 +8,19 @@
 import type { MorningRecord } from "./mornings";
 import { CATEGORY_ORDER, type VerdictWord } from "./verdict";
 
-export type SpotKind = "vantage" | "forest" | "short_walk" | "waterfront";
+export type SpotKind = "vantage" | "forest" | "short_walk" | "waterfront" | "travel";
+
+export const SPOT_KINDS: SpotKind[] = ["vantage", "forest", "short_walk", "waterfront", "travel"];
+
+/**
+ * A one-off morning away from home. Logged like any spot, but never
+ * recommended, and its mornings are left out of everything the engine
+ * learns from (see lib/mornings.ts): the home forecast says nothing about
+ * that sky, and the place will likely never come up again.
+ */
+export function isTravel(spot: { kind: string }): boolean {
+  return spot.kind === "travel";
+}
 
 /** The pseudo-spot for mornings at home (a window photo, or none). Logged as `stayedIn`, scored like any spot. */
 export const STAY_IN = "Home";
@@ -18,7 +30,7 @@ export const STAY_IN = "Home";
  * are logged there. Capped at 0.75 so a spot with a few genuinely great
  * mornings can outrank an untried one that merely suits the sky on paper.
  */
-const KIND_PRIORS: Record<SpotKind | "stay_in", Record<VerdictWord, number>> = {
+const KIND_PRIORS: Record<Exclude<SpotKind, "travel"> | "stay_in", Record<VerdictWord, number>> = {
   vantage: { Stunning: 0.75, Nice: 0.65, Clear: 0.45, Foggy: 0.35, Wet: 0.1 },
   waterfront: { Stunning: 0.65, Nice: 0.6, Clear: 0.5, Foggy: 0.35, Wet: 0.1 },
   short_walk: { Stunning: 0.5, Nice: 0.5, Clear: 0.65, Foggy: 0.35, Wet: 0.15 },
@@ -50,7 +62,7 @@ export interface SpotSkyScore {
 
 export interface SpotScores {
   spot: string;
-  kind: SpotKind | "stay_in";
+  kind: keyof typeof KIND_PRIORS;
   bySky: Record<VerdictWord, SpotSkyScore>;
   totalWalks: number;
 }
@@ -59,7 +71,10 @@ export function computeSpotScores(
   spotList: { name: string; kind: SpotKind }[],
   mornings: MorningRecord[],
 ): SpotScores[] {
-  const all = [...spotList.map((s) => ({ name: s.name, kind: s.kind as SpotKind | "stay_in" })), { name: STAY_IN, kind: "stay_in" as const }];
+  const all = [
+    ...spotList.filter((s) => !isTravel(s)).map((s) => ({ name: s.name, kind: s.kind as keyof typeof KIND_PRIORS })),
+    { name: STAY_IN, kind: "stay_in" as const },
+  ];
   return all.map(({ name, kind }) => {
     const prior = KIND_PRIORS[kind];
     const visits = mornings.filter((m) => (kind === "stay_in" ? m.stayedIn : m.spot === name));

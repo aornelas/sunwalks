@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireOwner } from "@/lib/require-owner";
-import type { SpotKind } from "@/lib/place-scores";
+import { SPOT_KINDS as KINDS } from "@/lib/place-scores";
 import { addSpot } from "@/lib/spots";
-
-const KINDS: SpotKind[] = ["vantage", "forest", "short_walk", "waterfront"];
 
 /** Adds a spot, for a morning somewhere new. Timings are set from the walk buddy or the CLI. */
 export async function POST(req: NextRequest) {

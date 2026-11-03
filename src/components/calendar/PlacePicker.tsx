@@ -9,6 +9,7 @@ const KINDS = [
   { value: "short_walk", label: "A short walk" },
   { value: "forest", label: "Forest" },
   { value: "waterfront", label: "Waterfront" },
+  { value: "travel", label: "Travel (not learned from)" },
 ] as const;
 
 interface PlacePickerProps {

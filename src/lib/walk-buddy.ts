@@ -39,7 +39,7 @@ import {
 import { env } from "./env";
 import { loadMornings, type MorningRecord } from "./mornings";
 import { getPhotoSource } from "./photo-source";
-import { STAY_IN, type SpotKind } from "./place-scores";
+import { SPOT_KINDS, STAY_IN, type SpotKind } from "./place-scores";
 import { planningStartDate } from "./planning";
 import { recommendModel, recommendWalk, type Recommendation } from "./recommend";
 import { addRule, listRules, morningSchedule, removeRule, type ScheduleRule } from "./schedule";
@@ -346,7 +346,6 @@ function loadSystemPrompt(): string {
   return systemPrompt;
 }
 
-const SPOT_KINDS: SpotKind[] = ["vantage", "forest", "short_walk", "waterfront"];
 const nullableInt = { type: ["integer", "null"] } as const;
 
 interface MessageRun {
@@ -501,7 +500,7 @@ function buddyTools(run: MessageRun, client: Anthropic): LoopTool[] {
           type: "object",
           properties: {
             name: { type: "string", description: "The name the owner uses for it." },
-            kind: { type: "string", enum: SPOT_KINDS, description: "vantage: somewhere high; forest; short_walk: near home; waterfront." },
+            kind: { type: "string", enum: SPOT_KINDS, description: "vantage: somewhere high; forest; short_walk: near home; waterfront; travel: a one-off morning away from home, never recommended and left out of what the planner learns." },
             minutes_home: nullableInt,
             loop_minutes: nullableInt,
           },

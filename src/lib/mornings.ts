@@ -2,6 +2,7 @@
 // forecast said, what the sky turned out to be (from the photos' tags),
 // and where the owner went and how it was. Calibration, place scores and
 // the recommender's similar_mornings tool all read from this one shape.
+// Mornings at a travel spot are left out.
 
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
@@ -52,7 +53,7 @@ export async function loadMornings(): Promise<MorningRecord[]> {
       .innerJoin(photos, eq(photoTags.photoId, photos.id)),
     db.select().from(days),
     db
-      .select({ walk: walks, spotName: spots.name })
+      .select({ walk: walks, spotName: spots.name, spotKind: spots.kind })
       .from(walks)
       .leftJoin(spots, eq(walks.spotId, spots.id))
       .orderBy(asc(walks.date)),
@@ -70,6 +71,8 @@ export async function loadMornings(): Promise<MorningRecord[]> {
     const tags = tagsByDate.get(date) ?? [];
     const chosen = tags.find((t) => t.photoId === dayShot.get(date)) ?? tags[0];
     const walk = walkByDate.get(date);
+    // A morning away is no evidence about home's sky or spots.
+    if (walk?.spotKind === "travel") continue;
     out.push({
       date,
       forecast: snapshot ? deriveVerdict(snapshot).word : null,

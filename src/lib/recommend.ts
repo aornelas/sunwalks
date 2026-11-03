@@ -14,7 +14,7 @@ import { computeCalibration, describeConfidence, observedDistribution } from "./
 import { formatTime, todayDayKey } from "./dates";
 import { env } from "./env";
 import { loadMornings, type MorningRecord } from "./mornings";
-import { computeSpotScores, rankSpots, STAY_IN } from "./place-scores";
+import { computeSpotScores, isTravel, rankSpots, STAY_IN } from "./place-scores";
 import { jsonSchemaFor } from "./json-schema";
 import { getPlanningResponse } from "./planning";
 import { HOME_TIMING, reachFor, type DayRule, type Reach } from "./reach";
@@ -63,7 +63,8 @@ interface EngineData {
 }
 
 async function loadEngineData(date: string): Promise<EngineData> {
-  const [all, spotList, { rule, backBy, sunrise }] = await Promise.all([loadMornings(), listSpots(), morningSchedule(date)]);
+  const [all, allSpots, { rule, backBy, sunrise }] = await Promise.all([loadMornings(), listSpots(), morningSchedule(date)]);
+  const spotList = allSpots.filter((s) => !isTravel(s));
   const mornings = all.filter((m) => m.date < date);
   const reach = new Map(
     [...spotList.map((s) => [s.name, s] as const), [STAY_IN, HOME_TIMING] as const].map(([name, timing]) => [

@@ -105,6 +105,17 @@ function scriptedClient(responses: Partial<Anthropic.Message>[]) {
   return { client, requests };
 }
 
+test("travel spots are never scored, so they're never recommended", () => {
+  const scores = computeSpotScores(
+    [
+      { name: "Telegraph Hill", kind: "vantage" },
+      { name: "A trip abroad", kind: "travel" },
+    ],
+    [],
+  );
+  assert.deepEqual(scores.map((s) => s.spot), ["Telegraph Hill", STAY_IN]);
+});
+
 test("the tool loop runs every requested tool and returns the results together", async () => {
   const { client, requests } = scriptedClient([
     {

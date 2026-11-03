@@ -206,18 +206,18 @@ const friday: MorningPlan = {
 test("/spots shows each timing and whether it fits the next morning", () => {
   const spots = [
     { ...spot(1, "Treasure Island"), minutesHome: 5 },
-    { ...spot(2, "Crissy Field Park"), minutesHome: 10, loopMinutes: 15 },
+    { ...spot(2, "Crissy Field"), minutesHome: 10, loopMinutes: 15 },
     spot(3, "Telegraph Hill"),
   ];
   const text = spotsText("2026-10-30", spots, friday);
   assert.match(text, /^Fri 30: sunrise 7:33 AM, school day, back by 7:50 AM, 5 min out\./);
   assert.match(text, /✓ Treasure Island: 5 min home\. Home by 7:43 AM, 7 min before 7:50 AM\./);
-  assert.match(text, /✗ Crissy Field Park: 10 min home, 15 min walk there\. Home at 8:03 AM, 13 min after 7:50 AM\./);
+  assert.match(text, /✗ Crissy Field: 10 min home, 15 min walk there\. Home at 8:03 AM, 13 min after 7:50 AM\./);
   assert.match(text, /\? Telegraph Hill: timing not set\./);
   assert.match(text, /tell me in words/);
 
   const saturday = { ...friday, rule: { label: "weekend", backBy: null, stayMinutes: 20 }, backBy: null };
-  assert.match(spotsText("2026-10-31", spots, saturday), /\n\nTreasure Island: 5 min home\.\nCrissy Field Park: 10 min home, 15 min walk there\.\nTelegraph Hill: timing not set\.\n\n/);
+  assert.match(spotsText("2026-10-31", spots, saturday), /\n\nTreasure Island: 5 min home\.\nCrissy Field: 10 min home, 15 min walk there\.\nTelegraph Hill: timing not set\.\n\n/);
 });
 
 test("/schedule lists weekly rules, then exceptions by date", () => {

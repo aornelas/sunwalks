@@ -4,7 +4,7 @@
 //   npm run walk -- stayed-in 2026-10-31 --rating 4 --note "rain, good book"
 //   npm run walk -- slept-in 2026-11-01
 //   npm run walk -- add-spot "Glen Canyon" forest
-//   npm run walk -- timing "Crissy Field Park" 10 --loop 15     10 min home from where you watch, a 15 min walk there
+//   npm run walk -- timing "Crissy Field" 10 --loop 15     10 min home from where you watch, a 15 min walk there
 //   npm run walk -- spots
 //   npm run walk -- schedule
 //   npm run walk -- schedule-add "school day" --days 1,2,3,4,5 --back-by 07:50 --stay 5

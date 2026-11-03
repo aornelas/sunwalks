@@ -298,9 +298,11 @@ src/lib/calibration.ts   how often each forecast held; place-scores.ts: which sp
 src/lib/walk-buddy.ts    the Telegram bot: evening plan, morning reports (photo, place, rating),
                          nudge, weekly summary; telegram.ts is the Bot API client
 src/lib/reach.ts         which spots fit a morning, from spot timings and schedule.ts's rules
+src/mcp/                 the MCP server (tools, resources, prompts) and the planning card;
+                         see docs/mcp.md
 prompts/                 versioned prompts (tag-photo, recommend-walk, file-feedback, walk-buddy)
 scripts/                 seed, tag-photos, backfill-forecasts, recommend, calibration,
-                         feedback, walk, telegram, sample-photos
+                         feedback, walk, telegram, mcp, sample-photos
 test/                    unit tests (`npm test`); the Claude API is mocked
 design_handoff_*/        the Claude Design specs this was built from
 ```
@@ -348,9 +350,12 @@ The next step turns the planning view from "is it worth going out?" into
   (from the window counts), the place and a 1–5 rating make the report; the
   bot asks with buttons for anything missing, files late photos on the
   right morning, and a weekly message says what it has learned.
-- **Sunwalks in Claude** (MCP): an MCP server over the same tools, so Claude
-  can plan a walk, log feedback or search the archive, with tomorrow's
-  planning card rendered inside the conversation as an MCP App.
+- **Sunwalks in Claude** (MCP, *done* for Claude Desktop and Claude Code):
+  an MCP server over the same engine, so Claude can plan a walk, log a
+  morning (asking with a form for anything missing) or search the archive,
+  with tomorrow's planning card rendered inside the conversation as an MCP
+  App. A remote version for claude.ai and the phone is next. See
+  [docs/mcp.md](docs/mcp.md).
 - **Native Android**: read sunrise photos straight from the device instead
   of importing them, plus home-screen widgets.
 

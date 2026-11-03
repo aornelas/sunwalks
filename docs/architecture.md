@@ -365,13 +365,23 @@ evening plan took 9 seconds; a photo with no words (tag only) cost about
 message read 10,500. Button taps, the nudge and the weekly summary make no
 Claude call.
 
+## Sunwalks in Claude (MCP)
+
+`src/mcp/server.ts` puts the same engine behind MCP: `recommend_walk`,
+`log_walk`, `list_spots`, `forecast_accuracy` and `find_photos`, resources
+for spots and photos, and the `/plan-tomorrow` and `/how-was-it` prompts.
+`recommend_walk` renders as the planning card (an MCP App) in hosts that
+support it; `log_walk` asks with a form when it doesn't know where you
+were. Stdio only for now, run by `npm run mcp`. The plan stays advice:
+nothing records a choice the night before. Details in [mcp.md](mcp.md).
+
 ## Not built yet
 
 - Nothing tags photos imported from Google Photos as they arrive. Run
   `npm run tag-photos` after an import; photos sent to the walk buddy are
   tagged on arrival.
 - There's no UI in the app to set or confirm a place, log a walk or add a
-  spot; the walk buddy and `npm run walk` do it until the MCP server does.
+  spot; the walk buddy, the MCP server and `npm run walk` do it.
 - Photos imported from Google Photos are joined to the walk log by date;
   only photos sent to the walk buddy get a place from the report.
 - A spot's timing is one number per leg, not per day: traffic and parking

@@ -6,7 +6,7 @@ import styles from "./PlacePicker.module.css";
 
 const KINDS = [
   { value: "vantage", label: "Somewhere high" },
-  { value: "short_walk", label: "A short walk" },
+  { value: "short_walk", label: "Short walk" },
   { value: "forest", label: "Forest" },
   { value: "waterfront", label: "Waterfront" },
   { value: "travel", label: "Travel" },

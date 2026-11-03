@@ -276,3 +276,7 @@
   border-radius: 999px;
   background: var(--color-accent);
 }
+
+.placeRow {
+  margin-top: 10px;
+}

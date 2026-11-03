@@ -1,4 +1,4 @@
-import type { DayData, PickerSessionInfo, PlanningResponse, Stats } from "./types";
+import type { DayData, PickerSessionInfo, PlaceReview, PlanningResponse, Stats } from "./types";
 
 export interface CalendarApi {
   fetchDays(start: string, end: string): Promise<DayData[]>;
@@ -6,6 +6,9 @@ export interface CalendarApi {
   fetchDayKeys(): Promise<string[]>;
   fetchPlanning?(start?: string): Promise<PlanningResponse>;
   setDayPhoto?(date: string, shotId: string): Promise<void>;
+  fetchPlaces?(): Promise<PlaceReview>;
+  setMorningPlace?(date: string, place: string, photoId?: string): Promise<void>;
+  addSpot?(name: string, kind: string): Promise<string>;
   createPickerSession?(): Promise<PickerSessionInfo>;
   pollPickerSession?(sessionId: string): Promise<{ ready: boolean }>;
   importPickerSession?(
@@ -51,6 +54,25 @@ export function createOwnerApi(): CalendarApi {
         body: JSON.stringify({ shotId }),
       });
       await json(res);
+    },
+    async fetchPlaces() {
+      return json<PlaceReview>(await fetch("/api/places"));
+    },
+    async setMorningPlace(date, place, photoId) {
+      const res = await fetch(`/api/day/${date}/place`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ place, photoId }),
+      });
+      await json(res);
+    },
+    async addSpot(name, kind) {
+      const res = await fetch("/api/spots", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, kind }),
+      });
+      return (await json<{ name: string }>(res)).name;
     },
     async createPickerSession() {
       const res = await fetch("/api/picker/session", { method: "POST" });

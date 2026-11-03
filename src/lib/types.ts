@@ -73,3 +73,27 @@ export interface PlanningResponse {
   stale: boolean;
   error?: string;
 }
+
+/** One morning whose photos need a place, for the review screen (see lib/places.ts). */
+export interface PlaceReviewMorning {
+  date: string;
+  photoId: string;
+  photos: number;
+  suggestion: string | null;
+  suggestionSource: "walk log" | "another photo" | "landmarks" | null;
+}
+
+export interface PlaceReview {
+  /** Spots plus Home. */
+  options: string[];
+  /** Newest first. */
+  queue: PlaceReviewMorning[];
+}
+
+/** What the photo views need to set a morning's place; absent on the share link. */
+export interface PlaceActions {
+  loadOptions(): Promise<string[]>;
+  addSpot(name: string, kind: string): Promise<string>;
+  /** Sets the place on the morning's photos without one, and on `photoId` when given. */
+  setPlace(date: string, place: string, photoId?: string): Promise<void>;
+}

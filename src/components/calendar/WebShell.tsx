@@ -42,6 +42,8 @@ interface WebShellProps {
   onAddPhotos?(): void;
   onCopyShareLink?(): void;
   onRegenerateShareLink?(): Promise<void>;
+  /** Owner only: opens the review of mornings that still need a place. */
+  onReviewPlaces?(): void;
   newDates?: ReadonlySet<string>;
   animateStats?: boolean;
   planningDay?: PlanningDay;
@@ -75,6 +77,7 @@ export function WebShell({
   onAddPhotos,
   onCopyShareLink,
   onRegenerateShareLink,
+  onReviewPlaces,
   newDates,
   animateStats,
   planningDay,
@@ -268,6 +271,11 @@ export function WebShell({
                   <CrossfadeText text={copied ? "Link copied" : "Copy link"} duration={280} delay={0} />
                 </button>
               </div>
+              {onReviewPlaces && (
+                <button type="button" className={styles.regenerateAction} onClick={onReviewPlaces}>
+                  Review places
+                </button>
+              )}
               {shareUrl && (
                 <>
                   <div className={styles.shareUrl}>{shareUrl}</div>

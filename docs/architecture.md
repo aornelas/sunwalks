@@ -365,6 +365,18 @@ evening plan took 9 seconds; a photo with no words (tag only) cost about
 message read 10,500. Button taps, the nudge and the weekly summary make no
 Claude call.
 
+## Places from the web app
+
+The photo view has a place pill under the caption, and *Review places*
+(in the settings panel, or `/#places`) lists every morning with a photo
+that has no place, newest first, with your spots laid out and a suggestion
+marked: the walk logged that morning, else another photo's place that
+morning, else the place tagging read from the landmarks when it names a
+spot. Choosing one (`lib/places.ts`) sets it on the morning's photos that
+have none (and on the photo being edited) and in the walk log, keeping a
+logged rating and note. That turns old imports into history: the place
+scores and calibration learn from every morning confirmed.
+
 ## Sunwalks in Claude (MCP)
 
 `src/mcp/server.ts` puts the same engine behind MCP: `recommend_walk`,
@@ -380,8 +392,8 @@ nothing records a choice the night before. Details in [mcp.md](mcp.md).
 - Nothing tags photos imported from Google Photos as they arrive. Run
   `npm run tag-photos` after an import; photos sent to the walk buddy are
   tagged on arrival.
-- There's no UI in the app to set or confirm a place, log a walk or add a
-  spot; the walk buddy, the MCP server and `npm run walk` do it.
+- The app sets a morning's place (and adds a spot), but logs no rating or
+  note; the walk buddy, the MCP server and `npm run walk` do.
 - Photos imported from Google Photos are joined to the walk log by date;
   only photos sent to the walk buddy get a place from the report.
 - A spot's timing is one number per leg, not per day: traffic and parking

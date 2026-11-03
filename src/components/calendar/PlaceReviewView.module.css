@@ -1,0 +1,129 @@
+/* The review of mornings without a place: the photo views' dark ground,
+   one row per morning. */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  overflow-y: auto;
+  background: var(--photo-ground);
+  color: #f5ead8;
+  padding: calc(env(safe-area-inset-top, 0px) + 20px) 16px calc(env(safe-area-inset-bottom, 0px) + 32px);
+  animation: review-in calc(160ms + var(--motion-scale) * 240ms) var(--ease-standard);
+}
+
+@keyframes review-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 760px;
+  margin: 0 auto 20px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 1.5rem;
+}
+
+.sub {
+  margin: 6px 0 0;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: rgba(245, 234, 216, 0.6);
+}
+
+.close {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  color: #f5ead8;
+}
+
+.error {
+  max-width: 760px;
+  margin: 0 auto 16px;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: #f0a58a;
+}
+
+.list {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  max-width: 760px;
+  display: grid;
+  gap: 12px;
+}
+
+.morning {
+  display: flex;
+  gap: 14px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  transition: opacity var(--dur-base) var(--ease-standard);
+}
+
+.morningDone {
+  opacity: 0.55;
+}
+
+.thumb {
+  flex: none;
+  width: 96px;
+  height: 96px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.date {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+}
+
+.meta {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: rgba(245, 234, 216, 0.55);
+  margin-bottom: 6px;
+}
+
+.chosen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 480px) {
+  .thumb {
+    width: 72px;
+    height: 72px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay { animation: none; }
+}

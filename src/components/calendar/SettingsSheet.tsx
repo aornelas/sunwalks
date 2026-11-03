@@ -31,6 +31,8 @@ interface SettingsSheetProps {
   onCopyLink(): void;
   onRegenerateLink(): Promise<void>;
   onChangeAccount(): void;
+  /** Opens the review of mornings that still need a place. */
+  onReviewPlaces?(): void;
 }
 
 export function SettingsSheet({
@@ -46,6 +48,7 @@ export function SettingsSheet({
   onCopyLink,
   onRegenerateLink,
   onChangeAccount,
+  onReviewPlaces,
 }: SettingsSheetProps) {
   const [copied, setCopied] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
@@ -191,6 +194,18 @@ export function SettingsSheet({
               <CrossfadeText className={styles.rowSub} text={photosLabel} />
             </div>
           </div>
+
+          {onReviewPlaces && (
+            <div className={styles.row}>
+              <div className={styles.rowText}>
+                <div className={styles.rowMain}>Places</div>
+                <div className={styles.rowSub}>Where each morning was, for the planner</div>
+              </div>
+              <button type="button" className={styles.linkAction} onClick={onReviewPlaces}>
+                Review
+              </button>
+            </div>
+          )}
         </div>
 
         <div className={styles.card}>

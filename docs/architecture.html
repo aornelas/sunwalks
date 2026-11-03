@@ -123,6 +123,7 @@
     <a href="#forecast">Forecast record</a>
     <a href="#engine">The engine</a>
     <a href="#walk-buddy">Walk buddy</a>
+    <a href="#places">Places</a>
     <a href="#mcp">MCP</a>
     <a href="#not-built">Not built yet</a>
   </nav>
@@ -548,13 +549,16 @@
     <div class="stat"><div class="v">0</div><div class="l">Claude calls for a tap, the nudge or the weekly summary</div></div>
   </div>
 
+  <h2 id="places">Places from the web app</h2>
+  <p>The photo view has a place pill under the caption, and <em>Review places</em> (in the settings panel, or <code>/#places</code>) lists every morning with a photo that has no place, newest first, with your spots laid out and a suggestion marked: the walk logged that morning, else another photo's place that morning, else the place tagging read from the landmarks when it names a spot. Choosing one (<code>lib/places.ts</code>) sets it on the morning's photos that have none (and on the photo being edited) and in the walk log, keeping a logged rating and note. That turns old imports into history: the place scores and calibration learn from every morning confirmed.</p>
+
   <h2 id="mcp">Sunwalks in Claude (MCP)</h2>
   <p><code>src/mcp/server.ts</code> puts the same engine behind MCP: <code>recommend_walk</code>, <code>log_walk</code>, <code>list_spots</code>, <code>forecast_accuracy</code> and <code>find_photos</code>, resources for spots and photos, and the <code>/plan-tomorrow</code> and <code>/how-was-it</code> prompts. <code>recommend_walk</code> renders as the planning card (an MCP App) in hosts that support it; <code>log_walk</code> asks with a form when it doesn't know where you were. Stdio only for now, run by <code>npm run mcp</code>. The plan stays advice: nothing records a choice the night before. Details in <code>docs/mcp.md</code>.</p>
 
   <h2 id="not-built">Not built yet</h2>
   <ul class="todo">
     <li>Nothing tags photos imported from Google Photos as they arrive. Run <code>npm run tag-photos</code> after an import; photos sent to the walk buddy are tagged on arrival.</li>
-    <li>There's no UI in the app to set or confirm a place, log a walk or add a spot; the walk buddy, the MCP server and <code>npm run walk</code> do it.</li>
+    <li>The app sets a morning's place (and adds a spot), but logs no rating or note; the walk buddy, the MCP server and <code>npm run walk</code> do.</li>
     <li>Photos imported from Google Photos are joined to the walk log by date; only photos sent to the walk buddy get a place from the report.</li>
     <li>A spot's timing is one number per leg, not per day: traffic and parking aren't modelled.</li>
   </ul>

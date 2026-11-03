@@ -14,6 +14,7 @@ export interface CalendarData {
   stats: Stats;
   refreshStats(): Promise<void>;
   applyDayPhoto(date: string, shotId: string): void;
+  applyPlace(date: string, place: string, photoId?: string): void;
 }
 
 export function useCalendarData(api: CalendarApi, initialDays: DayData[], initialStats: Stats): CalendarData {
@@ -77,8 +78,19 @@ export function useCalendarData(api: CalendarApi, initialDays: DayData[], initia
     });
   }, []);
 
+  // Mirrors lib/places.ts: the morning's photos without a place, and the one edited.
+  const applyPlace = useCallback((date: string, place: string, photoId?: string) => {
+    setDaysByDate((prev) => {
+      const day = prev.get(date);
+      if (!day) return prev;
+      const next = new Map(prev);
+      next.set(date, { ...day, shots: day.shots.map((s) => (!s.place || s.id === photoId ? { ...s, place } : s)) });
+      return next;
+    });
+  }, []);
+
   return useMemo(
-    () => ({ daysByDate, getDay, ensureLoaded, refreshRange, isLoading, stats, refreshStats, applyDayPhoto }),
-    [daysByDate, getDay, ensureLoaded, refreshRange, isLoading, stats, refreshStats, applyDayPhoto],
+    () => ({ daysByDate, getDay, ensureLoaded, refreshRange, isLoading, stats, refreshStats, applyDayPhoto, applyPlace }),
+    [daysByDate, getDay, ensureLoaded, refreshRange, isLoading, stats, refreshStats, applyDayPhoto, applyPlace],
   );
 }

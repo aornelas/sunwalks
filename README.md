@@ -310,10 +310,11 @@ design_handoff_*/        the Claude Design specs this was built from
 ## Known gaps
 
 - **Places have to come from you.** The Picker API exposes no location
-  data. Tagging suggests a place from visible landmarks, but only a place
-  you've set appears in captions and the place filter. A photo sent to the
-  walk buddy takes the spot you logged; for imported photos, setting one in
-  the app is still on the roadmap.
+  data. A photo sent to the walk buddy takes the spot you logged; for
+  imported photos, set the place in the photo view, or confirm a morning at
+  a time in *Review places* (suggestions come from the walk log, the
+  morning's other photos, or the landmarks tagging recognised). Each place
+  you set also goes into the walk log, so the planner learns from it.
 - **No AVIF/WebP or Display P3.** Imported photos are the sRGB JPEGs Google
   serves; re-encoding on import isn't implemented.
 - **No automatic sync.** This is a Google platform restriction (see above).

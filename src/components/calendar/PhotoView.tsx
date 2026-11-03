@@ -7,10 +7,11 @@ import { buildSrcSet } from "@/lib/image";
 import { EASE_SOFT, prefersReducedMotion } from "@/lib/motion";
 import { usePhotoOpenAnimation, decodeThenNotify } from "@/hooks/usePhotoOpenAnimation";
 import type { PhotoOrigin } from "@/lib/photo-origin";
-import type { DayData } from "@/lib/types";
+import type { DayData, PlaceActions } from "@/lib/types";
 import { ViewingRing } from "./ViewingRing";
 import { SteppingPhoto } from "./SteppingPhoto";
 import { CrossfadeText } from "./CrossfadeText";
+import { PlacePicker } from "./PlacePicker";
 import styles from "./PhotoView.module.css";
 
 const DISMISS_THRESHOLD = 110;
@@ -35,6 +36,8 @@ interface PhotoViewProps {
   onNavigate(date: string): void;
   onChangeShotIndex(index: number): void;
   onSetDayPhoto(shotId: string): void;
+  /** Owner only: set where the morning was. */
+  placeActions?: PlaceActions;
 }
 
 export function PhotoView({
@@ -50,6 +53,7 @@ export function PhotoView({
   onNavigate,
   onChangeShotIndex,
   onSetDayPhoto,
+  placeActions,
 }: PhotoViewProps) {
   const shots = day.shots;
   const shot = shots[shotIndex] ?? shots[0];
@@ -218,6 +222,17 @@ export function PhotoView({
 
       <div className={styles.bottomBlock}>
         <CrossfadeText className={styles.caption} text={captionParts} />
+        {placeActions && (
+          <div className={styles.placeRow}>
+            <PlacePicker
+              key={shot.id}
+              place={shot.place}
+              loadOptions={placeActions.loadOptions}
+              addSpot={placeActions.addSpot}
+              onChoose={(place) => placeActions.setPlace(date, place, shot.id)}
+            />
+          </div>
+        )}
 
         {shots.length > 1 && (
           <>

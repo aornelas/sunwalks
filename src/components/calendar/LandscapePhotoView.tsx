@@ -7,10 +7,11 @@ import { buildSrcSet } from "@/lib/image";
 import { EASE_SOFT, prefersReducedMotion } from "@/lib/motion";
 import { usePhotoOpenAnimation, decodeThenNotify } from "@/hooks/usePhotoOpenAnimation";
 import type { PhotoOrigin } from "@/lib/photo-origin";
-import type { DayData } from "@/lib/types";
+import type { DayData, PlaceActions } from "@/lib/types";
 import { ViewingRing } from "./ViewingRing";
 import { SteppingPhoto } from "./SteppingPhoto";
 import { CrossfadeText } from "./CrossfadeText";
+import { PlacePicker } from "./PlacePicker";
 import styles from "./LandscapePhotoView.module.css";
 
 interface LandscapePhotoViewProps {
@@ -27,6 +28,8 @@ interface LandscapePhotoViewProps {
   onNavigate(date: string): void;
   onChangeShotIndex(index: number): void;
   onSetDayPhoto(shotId: string): void;
+  /** Owner only: set where the morning was. */
+  placeActions?: PlaceActions;
 }
 
 export function LandscapePhotoView({
@@ -42,6 +45,7 @@ export function LandscapePhotoView({
   onNavigate,
   onChangeShotIndex,
   onSetDayPhoto,
+  placeActions,
 }: LandscapePhotoViewProps) {
   const [chromeVisible, setChromeVisible] = useState(true);
   const [fit, setFit] = useState(false);
@@ -169,6 +173,17 @@ export function LandscapePhotoView({
             <div className={styles.dateBlock}>
               <CrossfadeText className={styles.dateLine} text={formatLongDate(date)} />
               <CrossfadeText className={styles.metaLine} text={metaParts} />
+              {placeActions && (
+                <div className={styles.placeRow}>
+                  <PlacePicker
+                    key={shot.id}
+                    place={shot.place}
+                    loadOptions={placeActions.loadOptions}
+                    addSpot={placeActions.addSpot}
+                    onChoose={(place) => placeActions.setPlace(date, place, shot.id)}
+                  />
+                </div>
+              )}
             </div>
 
             {shots.length > 1 && (

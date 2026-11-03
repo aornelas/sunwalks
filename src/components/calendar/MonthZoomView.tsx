@@ -89,7 +89,9 @@ export function MonthZoomView({
     const oldestMonth = monthKeys[monthKeys.length - 1];
     const start = `${oldestMonth}-01`;
     const [y, m] = currentMonth.split("-").map(Number);
-    const end = `${y}-${String(m).padStart(2, "0")}-31`;
+    // The month's real last day: Postgres rejects "2026-11-31".
+    const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    const end = `${currentMonth}-${String(lastDay).padStart(2, "0")}`;
     ensureLoaded(start, end);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [monthsShown]);

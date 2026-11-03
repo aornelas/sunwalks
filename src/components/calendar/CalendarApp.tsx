@@ -8,7 +8,7 @@ import { usePickerImport } from "@/hooks/usePickerImport";
 import { createOwnerApi, createShareApi } from "@/lib/api-client";
 import { consumePendingOrigin, type PhotoOrigin } from "@/lib/photo-origin";
 import { NO_FACET, withFacet, type Facet } from "@/lib/facets";
-import type { AccountInfo, DayData, PlanningResponse, Stats, ZoomLevel } from "@/lib/types";
+import type { AccountInfo, DayData, PlaceActions, PlanningResponse, Stats, ZoomLevel } from "@/lib/types";
 import { MobileShell } from "./MobileShell";
 import { WebShell } from "./WebShell";
 import { PhotoView } from "./PhotoView";
@@ -16,6 +16,7 @@ import { WebPhotoView } from "./WebPhotoView";
 import { LandscapePhotoView } from "./LandscapePhotoView";
 import { SettingsSheet } from "./SettingsSheet";
 import { PlanningView } from "./PlanningView";
+import { PlaceReviewView } from "./PlaceReviewView";
 
 const EMPTY_PLANNING: PlanningResponse = {
   days: [],
@@ -89,6 +90,8 @@ export function CalendarApp({
   const hasEnteredRef = useRef(false);
   const [jumpMonth, setJumpMonth] = useState<{ month: string; nonce: number } | undefined>();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [knownPlaces, setKnownPlaces] = useState<string[]>(places);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [planning, setPlanning] = useState<PlanningResponse | undefined>(initialPlanning);
   const [planningOpen, setPlanningOpen] = useState(false);
@@ -275,6 +278,21 @@ export function CalendarApp({
     [api, calendarData, detail],
   );
 
+  // Owner only: a morning's place goes on its photos and into the walk log.
+  const placeActions = useMemo<PlaceActions | undefined>(() => {
+    const { fetchPlaces, setMorningPlace, addSpot } = api;
+    if (readOnly || !fetchPlaces || !setMorningPlace || !addSpot) return undefined;
+    return {
+      loadOptions: async () => (await fetchPlaces()).options,
+      addSpot,
+      setPlace: async (date, place, photoId) => {
+        await setMorningPlace(date, place, photoId);
+        calendarData.applyPlace(date, place, photoId);
+        setKnownPlaces((prev) => (prev.includes(place) ? prev : [...prev, place].sort((a, b) => a.localeCompare(b))));
+      },
+    };
+  }, [api, calendarData, readOnly]);
+
   const handleJumpToMonth = useCallback((mKey: string) => {
     setZoom("month");
     setJumpMonth({ month: mKey, nonce: Date.now() });
@@ -369,7 +387,8 @@ export function CalendarApp({
   }, []);
 
   // Deep link on load: `?d=2026-08-11` (or `?d=today`, used by the PWA
-  // shortcut) opens that day's photo view; `#settings` opens the sheet. The
+  // shortcut) opens that day's photo view; `#settings` opens the sheet and
+  // `#places` the review of mornings without a place. The
   // current entry is rewritten to a clean base first so a single back press
   // lands on the calendar rather than leaving the app.
   useEffect(() => {
@@ -385,6 +404,9 @@ export function CalendarApp({
     } else if (url.hash === "#settings") {
       window.history.replaceState({ overlay: null }, "", url.pathname);
       handleOpenSettings();
+    } else if (url.hash === "#places") {
+      window.history.replaceState({ overlay: null }, "", url.pathname);
+      setReviewOpen(true);
     }
     // Intentionally mount-only: this reads the URL the page loaded with.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -409,7 +431,7 @@ export function CalendarApp({
     onFilterChange: setFilter,
     facet,
     onFacetChange: setFacet,
-    places: readOnly ? [] : places,
+    places: readOnly ? [] : knownPlaces,
     stats: calendarData.stats,
     getDay: facetedGetDay,
     ensureLoaded: calendarData.ensureLoaded,
@@ -435,6 +457,7 @@ export function CalendarApp({
           pickerError={pickerImport.error}
           shareUrl={shareUrl}
           onAddPhotos={pickerImport.start}
+          onReviewPlaces={placeActions ? () => setReviewOpen(true) : undefined}
           onCopyShareLink={handleCopyLink}
           onRegenerateShareLink={handleRegenerateShareLink}
         />
@@ -465,6 +488,7 @@ export function CalendarApp({
             onNavigate={(d) => openDetailFor(d, undefined, "replace")}
             onChangeShotIndex={changeShotIndex}
             onSetDayPhoto={handleSetDayPhoto}
+            placeActions={placeActions}
           />
         ) : isDesktop ? (
           <WebPhotoView
@@ -480,6 +504,7 @@ export function CalendarApp({
             onNavigate={(d) => openDetailFor(d, undefined, "replace")}
             onChangeShotIndex={changeShotIndex}
             onSetDayPhoto={handleSetDayPhoto}
+            placeActions={placeActions}
           />
         ) : (
           <PhotoView
@@ -495,6 +520,7 @@ export function CalendarApp({
             onNavigate={(d) => openDetailFor(d, undefined, "replace")}
             onChangeShotIndex={changeShotIndex}
             onSetDayPhoto={handleSetDayPhoto}
+            placeActions={placeActions}
           />
         )
       )}
@@ -511,6 +537,14 @@ export function CalendarApp({
         />
       )}
 
+      {reviewOpen && placeActions && api.fetchPlaces && (
+        <PlaceReviewView
+          fetchReview={api.fetchPlaces}
+          placeActions={placeActions}
+          onClose={() => setReviewOpen(false)}
+        />
+      )}
+
       {sheetOpen && !readOnly && accountState && (
         <SettingsSheet
           account={accountState}
@@ -522,6 +556,14 @@ export function CalendarApp({
           manualPickerUri={pickerImport.manualPickerUri}
           onClose={closeSheet}
           onAddPhotos={pickerImport.start}
+          onReviewPlaces={
+            placeActions
+              ? () => {
+                  setSheetOpen(false);
+                  setReviewOpen(true);
+                }
+              : undefined
+          }
           onCopyLink={handleCopyLink}
           onRegenerateLink={handleRegenerateShareLink}
           onChangeAccount={() => {

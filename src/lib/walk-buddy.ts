@@ -500,7 +500,7 @@ function buddyTools(run: MessageRun, client: Anthropic): LoopTool[] {
           type: "object",
           properties: {
             name: { type: "string", description: "The name the owner uses for it." },
-            kind: { type: "string", enum: SPOT_KINDS, description: "vantage: somewhere high; forest; short_walk: near home; waterfront; travel: a one-off morning away from home, never recommended and left out of what the planner learns." },
+            kind: { type: "string", enum: SPOT_KINDS, description: "vantage: somewhere high; forest; short_walk: near home; waterfront; travel: a one-off morning away from home, never recommended and left out of what the planner learns; geocache: a sunrise on the way to geocaching, never recommended." },
             minutes_home: nullableInt,
             loop_minutes: nullableInt,
           },

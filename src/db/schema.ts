@@ -200,7 +200,7 @@ export const forecastSnapshots = pgTable(
 export const spots = pgTable("spots", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: text("name").notNull().unique(),
-  kind: text("kind", { enum: ["vantage", "forest", "short_walk", "waterfront", "travel"] }).notNull(),
+  kind: text("kind", { enum: ["vantage", "forest", "short_walk", "waterfront", "travel", "geocache"] }).notNull(),
   notes: text("notes"),
   lat: real("lat"),
   lon: real("lon"),

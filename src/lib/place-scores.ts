@@ -8,18 +8,20 @@
 import type { MorningRecord } from "./mornings";
 import { CATEGORY_ORDER, type VerdictWord } from "./verdict";
 
-export type SpotKind = "vantage" | "forest" | "short_walk" | "waterfront" | "travel";
+export type SpotKind = "vantage" | "forest" | "short_walk" | "waterfront" | "travel" | "geocache";
 
-export const SPOT_KINDS: SpotKind[] = ["vantage", "forest", "short_walk", "waterfront", "travel"];
+export const SPOT_KINDS: SpotKind[] = ["vantage", "forest", "short_walk", "waterfront", "travel", "geocache"];
 
 /**
- * A one-off morning away from home. Logged like any spot, but never
- * recommended, and its mornings are left out of everything the engine
- * learns from (see lib/mornings.ts): the home forecast says nothing about
- * that sky, and the place will likely never come up again.
+ * Spots logged like any other but never recommended or scored. Travel is
+ * a one-off morning away from home: its mornings are also left out of
+ * everything the engine learns from (see lib/mornings.ts), since the home
+ * forecast says nothing about that sky. Geocache is a sunrise on the way
+ * to geocaching, where the cache picked the place, not the sky; it's near
+ * home, so its sky still counts towards the forecast calibration.
  */
-export function isTravel(spot: { kind: string }): boolean {
-  return spot.kind === "travel";
+export function isRecommendable(spot: { kind: string }): boolean {
+  return spot.kind !== "travel" && spot.kind !== "geocache";
 }
 
 /** The pseudo-spot for mornings at home (a window photo, or none). Logged as `stayedIn`, scored like any spot. */
@@ -30,7 +32,7 @@ export const STAY_IN = "Home";
  * are logged there. Capped at 0.75 so a spot with a few genuinely great
  * mornings can outrank an untried one that merely suits the sky on paper.
  */
-const KIND_PRIORS: Record<Exclude<SpotKind, "travel"> | "stay_in", Record<VerdictWord, number>> = {
+const KIND_PRIORS: Record<Exclude<SpotKind, "travel" | "geocache"> | "stay_in", Record<VerdictWord, number>> = {
   vantage: { Stunning: 0.75, Nice: 0.65, Clear: 0.45, Foggy: 0.35, Wet: 0.1 },
   waterfront: { Stunning: 0.65, Nice: 0.6, Clear: 0.5, Foggy: 0.35, Wet: 0.1 },
   short_walk: { Stunning: 0.5, Nice: 0.5, Clear: 0.65, Foggy: 0.35, Wet: 0.15 },
@@ -72,7 +74,7 @@ export function computeSpotScores(
   mornings: MorningRecord[],
 ): SpotScores[] {
   const all = [
-    ...spotList.filter((s) => !isTravel(s)).map((s) => ({ name: s.name, kind: s.kind as keyof typeof KIND_PRIORS })),
+    ...spotList.filter(isRecommendable).map((s) => ({ name: s.name, kind: s.kind as keyof typeof KIND_PRIORS })),
     { name: STAY_IN, kind: "stay_in" as const },
   ];
   return all.map(({ name, kind }) => {

@@ -105,11 +105,12 @@ function scriptedClient(responses: Partial<Anthropic.Message>[]) {
   return { client, requests };
 }
 
-test("travel spots are never scored, so they're never recommended", () => {
+test("travel and geocache spots are never scored, so they're never recommended", () => {
   const scores = computeSpotScores(
     [
       { name: "Telegraph Hill", kind: "vantage" },
       { name: "A trip abroad", kind: "travel" },
+      { name: "A cache on the way", kind: "geocache" },
     ],
     [],
   );

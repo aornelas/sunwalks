@@ -16,21 +16,42 @@ tomorrow's forecast so you can plan your walk accordingly.
   <img src="docs/screenshots/mobile-year.png" alt="Year view" width="24%">
 </p>
 
+<p align="center">
+  <img src="docs/screenshots/mcp-card.png" alt="The planning card from the Sunwalks MCP server: a Clear forecast at 9% confidence and three spots, each with a past photo" width="62%">
+  <img src="docs/screenshots/walk-buddy.png" alt="The Telegram walk buddy: the evening plan, the morning's photo, and buttons asking where it was taken" width="29%">
+</p>
+
 > Screenshots use the bundled sample photos in [demo mode](#quickstart-demo-mode-no-google-account).
 > These are AI-generated stand-ins (see [Credits](#credits)), not real photos.
+> The planning card is the MCP server's real card, rendered with a demo
+> plan. The walk buddy chat is a mock-up: the messages and buttons come from
+> the bot's own code run on the demo data, but the chat around them is
+> drawn, not a Telegram screenshot.
 
 ## Features
 
 - **Week / Month / Year zoom** with animated transitions, a "sunwalk days
   only" filter that collapses empty days, and this/best stats for the week,
   month and year.
+- **Sky and place filters.** Show only the mornings that were *Stunning*, or
+  the ones at a given spot. A matching day keeps its own day photo.
 - **Photo view** with multi-shot mornings, a chosen "day photo",
   swipe-down to dismiss, and a landscape mode that unlocks rotation only while a photo
-  is open.
+  is open. A place pill under the caption sets where that morning was, and
+  *Review places* (side panel, settings, or `/#places`) works through every
+  morning that has no place yet, with a suggestion for each.
 - **Planning view** for tomorrow morning: first light, sunrise and end of golden
   hour (solar maths via `suncalc`), cloud layers and conditions from
   [Open-Meteo](https://open-meteo.com/), and a one-word verdict (*Stunning*,
   *Nice*, *Clear*, *Foggy*, *Wet*) with a week-ahead strip.
+- **A walk planner that learns** (Claude API). Each photo is tagged with the
+  sky it actually showed, the forecast is checked against it, and an evening
+  plan suggests where to walk tomorrow from what has worked before.
+- **Telegram walk buddy.** The evening plan arrives as a message, and the
+  morning's photo, place and rating are reported back the same way.
+- **Sunwalks in Claude.** An MCP server lets Claude Desktop and Claude Code
+  plan a walk, log a morning or search the archive (see
+  [docs/mcp.md](docs/mcp.md)).
 - **Unlisted share link.** Anyone with the URL gets a read-only, `noindex`
   copy of the calendar. You can revoke it or generate a new one.
 - **Installable PWA**, tuned for Android/Chrome: safe-area insets, the
@@ -102,7 +123,13 @@ hand-rolled Google OAuth · Google Photos **Picker API** · Open-Meteo +
     actually was, alt text, colours, drama, mood and a place suggestion.
   - `tagging_batches`: Message Batches in flight, so a re-run resumes them.
   - `spots` and `walks`: named places, and the walk log (where you went,
-    or that you stayed in, with a rating and a note).
+    or that you stayed in, with a rating and a note). A spot's kind
+    (*Somewhere high*, *Short walk*, *Forest*, *Waterfront*) is the
+    planner's starting guess at which skies suit it. Two kinds are never
+    recommended: *Travel*, a morning away from home, which is also left out
+    of everything the engine learns; and *Geocache*, where the cache chose
+    the place, so the spot isn't scored but its sky still counts towards the
+    forecast calibration.
   - `memory_files`: the preferences Claude has filed with its memory tool.
   - `recommendations`: the latest plan for each morning.
 - **Photos go through one interface.** `src/lib/photo-source.ts` is the seam
@@ -266,7 +293,7 @@ The app runs on Vercel as-is:
 4. Run `npm run db:push` against the production `DATABASE_URL` once (and
    again after pulling a schema change).
 
-`vercel.json` schedules three jobs:
+`vercel.json` schedules four jobs:
 
 - `/api/cron/forecast`, nightly at 03:00 UTC (8 PM Pacific in summer),
   records the evening-before forecast even on days the app isn't opened.
@@ -323,8 +350,9 @@ design_handoff_*/        the Claude Design specs this was built from
 
 ## Roadmap
 
-The next step turns the planning view from "is it worth going out?" into
-"where should I walk?", and gives every kind of morning a good answer.
+This work turns the planning view from "is it worth going out?" into
+"where should I walk?", and gives every kind of morning a good answer. Most
+of it has shipped; a remote MCP server and native Android are what's left.
 
 - **Walk planning that learns** (Claude API)
   - *Done:* a photo-source interface between the app and wherever photos
@@ -335,14 +363,14 @@ The next step turns the planning view from "is it worth going out?" into
   - *Done:* the engine. A walk log and named spots, calibration and place
     scores in plain TypeScript, preferences kept with Claude's memory tool,
     and a recommender that runs as an explicit tool loop.
-  - An evening recommendation of where to walk tomorrow, starting from
-    these defaults and replacing them with what has worked for you:
+  - *Done:* an evening recommendation of where to walk tomorrow, starting
+    from these defaults and replacing them with what has worked for you:
     - *Stunning* or *Nice*: a high vantage point.
     - *Clear*: a short walk.
     - *Foggy*: a forest walk, for the "tree rain" as fog condenses on the
       leaves (or somewhere high enough to get above a shallow marine layer).
     - *Wet*: enjoy staying in bed!
-  - Learning from every morning: how often each forecast came true (shown
+  - *Done:* learning from every morning: how often each forecast came true (shown
     as a confidence), which spots worked for which sky, and what you tell it
     ("Telegraph Hill is perfect for Stunning days").
 - **Telegram walk buddy** (*done*): the evening plan arrives as a message,

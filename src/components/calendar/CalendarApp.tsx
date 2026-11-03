@@ -418,7 +418,7 @@ export function CalendarApp({
   }, [shareUrl, fetchShareUrl]);
 
   const detailDay = detail ? calendarData.getDay(detail.date) : undefined;
-  // The grids see only matching shots; the photo view keeps the whole day.
+  // The grids show only matching days, each with its own day photo.
   const facetedGetDay = useMemo(() => withFacet(calendarData.getDay, facet), [calendarData.getDay, facet]);
 
   const shellProps = {

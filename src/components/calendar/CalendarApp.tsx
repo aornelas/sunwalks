@@ -8,6 +8,7 @@ import { usePickerImport } from "@/hooks/usePickerImport";
 import { createOwnerApi, createShareApi } from "@/lib/api-client";
 import { consumePendingOrigin, type PhotoOrigin } from "@/lib/photo-origin";
 import { NO_FACET, withFacet, type Facet } from "@/lib/facets";
+import { enterPhotoFullscreenAfter, exitPhotoFullscreen, onPhotoFullscreenLeft } from "@/lib/fullscreen";
 import type { AccountInfo, DayData, PlaceActions, PlanningResponse, Stats, ZoomLevel } from "@/lib/types";
 import { MobileShell } from "./MobileShell";
 import { WebShell } from "./WebShell";
@@ -247,6 +248,8 @@ export function CalendarApp({
       if (historyMode === "push" && historyOwnerRef.current !== "detail") {
         window.history.pushState({ overlay: "detail" }, "", url);
         historyOwnerRef.current = "detail";
+        // Once the square-opens flight (760ms) has landed.
+        enterPhotoFullscreenAfter(800);
       } else {
         // Already inside the photo view (stepping between days via chevron)
         // — replace, so back from nine days deep returns in one press.
@@ -264,6 +267,15 @@ export function CalendarApp({
     setDetail(null);
     setPhotoOrigin(null);
   }, []);
+
+  // However the photo closed (button, swipe, back), give the system bars back.
+  useEffect(() => {
+    if (!detail) void exitPhotoFullscreen();
+  }, [detail]);
+
+  // On Android, back while fullscreen only leaves fullscreen; close the
+  // photo too, so back is still one press.
+  useEffect(() => onPhotoFullscreenLeft(closeDetail), [closeDetail]);
 
   const changeShotIndex = useCallback((index: number) => {
     setDetail((prev) => (prev ? { ...prev, shotIndex: index } : prev));

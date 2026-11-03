@@ -2,6 +2,7 @@
 
 import { useCallback, useLayoutEffect, useRef, useState, type RefObject, type SyntheticEvent } from "react";
 import { EASE_EXIT, EASE_STANDARD, prefersReducedMotion } from "@/lib/motion";
+import { exitPhotoFullscreen } from "@/lib/fullscreen";
 import type { PhotoOrigin } from "@/lib/photo-origin";
 
 /**
@@ -174,45 +175,51 @@ export function usePhotoOpenAnimation(origin: PhotoOrigin | null, enteredRef?: R
     fadeThumbRef.current?.();
   }, []);
 
-  /** Plays the reverse (or a plain fade, without an origin) then calls `close`. */
+  /**
+   * Plays the reverse (or a plain fade, without an origin) then calls `close`.
+   * Leaves fullscreen first: the origin rect was measured with the system
+   * bars showing, so the flight home only lines up once they're back.
+   */
   const requestClose = useCallback(
     (close: () => void) => {
-      const stage = stageRef.current;
-      const reduced = prefersReducedMotion();
       setClosing(true);
-      scrimRef.current?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: reduced ? 240 : 400, fill: "forwards" });
-      if (!stage) {
-        close();
-        return;
-      }
-      if (reduced) {
-        stage.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 240, fill: "forwards" }).finished
-          .catch(() => {})
-          .finally(close);
-        return;
-      }
-      let anim: Animation;
-      if (origin) {
-        const target = stage.getBoundingClientRect();
-        const dx = origin.rect.left - target.left;
-        const dy = origin.rect.top - target.top;
-        const sx = origin.rect.width / Math.max(target.width, 1);
-        const sy = origin.rect.height / Math.max(target.height, 1);
-        // The thumbnail underlay has already finished its one-time fade-out
-        // by the time a close is possible, so only the stage needs to play
-        // the reverse here — nothing to keep in sync on the thumb.
-        anim = stage.animate(
-          [{ transform: "none" }, { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` }],
-          { duration: 520, easing: EASE_EXIT, fill: "forwards" },
-        );
-      } else {
-        anim = stage.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "scale(.97)" }], {
-          duration: 320,
-          easing: EASE_EXIT,
-          fill: "forwards",
-        });
-      }
-      anim.finished.catch(() => {}).finally(close);
+      void exitPhotoFullscreen().then(() => {
+        const stage = stageRef.current;
+        const reduced = prefersReducedMotion();
+        scrimRef.current?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: reduced ? 240 : 400, fill: "forwards" });
+        if (!stage) {
+          close();
+          return;
+        }
+        if (reduced) {
+          stage.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 240, fill: "forwards" }).finished
+            .catch(() => {})
+            .finally(close);
+          return;
+        }
+        let anim: Animation;
+        if (origin) {
+          const target = stage.getBoundingClientRect();
+          const dx = origin.rect.left - target.left;
+          const dy = origin.rect.top - target.top;
+          const sx = origin.rect.width / Math.max(target.width, 1);
+          const sy = origin.rect.height / Math.max(target.height, 1);
+          // The thumbnail underlay has already finished its one-time fade-out
+          // by the time a close is possible, so only the stage needs to play
+          // the reverse here — nothing to keep in sync on the thumb.
+          anim = stage.animate(
+            [{ transform: "none" }, { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` }],
+            { duration: 520, easing: EASE_EXIT, fill: "forwards" },
+          );
+        } else {
+          anim = stage.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "scale(.97)" }], {
+            duration: 320,
+            easing: EASE_EXIT,
+            fill: "forwards",
+          });
+        }
+        anim.finished.catch(() => {}).finally(close);
+      });
     },
     [origin],
   );

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sunwalks Message Threads</title>
+<style>
+  :root {
+    --bg: #fbf8f3; --surface: #ffffff; --ink: #1f1d1a; --muted: #6b655c;
+    --line: #e6dfd3; --accent: #d9792b; --accent-soft: #fbe9d8;
+    --blue: #3d6fb6; --green: #3f8a5a; --warn: #a8661a; --red: #b03a2e; --code-bg: #f3eee6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17161a; --surface: #201f24; --ink: #ece8e1; --muted: #a29c92;
+      --line: #34323a; --accent: #f0974d; --accent-soft: #3a2a1c;
+      --blue: #7aa5e6; --green: #73c08f; --warn: #e3a858; --red: #ec7d70; --code-bg: #2a2830;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17161a; --surface: #201f24; --ink: #ece8e1; --muted: #a29c92;
+    --line: #34323a; --accent: #f0974d; --accent-soft: #3a2a1c;
+    --blue: #7aa5e6; --green: #73c08f; --warn: #e3a858; --red: #ec7d70; --code-bg: #2a2830;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  main { max-width: 860px; margin: 0 auto; padding: 48px 16px 96px; }
+  h1 { font-size: 2.1rem; line-height: 1.2; margin: 0 0 8px; letter-spacing: -0.01em; text-wrap: balance; }
+  h2 { font-size: 1.45rem; margin: 56px 0 12px; padding-top: 8px; border-top: 1px solid var(--line); text-wrap: balance; }
+  h3 { font-size: 1.1rem; margin: 32px 0 8px; }
+  p, li { max-width: 70ch; }
+  p { margin: 0 0 14px; }
+  .lede { color: var(--muted); font-size: 1.08rem; max-width: 680px; }
+  .eyebrow { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+  code { font: 0.86em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+  pre { font: 0.82rem/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; }
+  pre code { background: none; padding: 0; font-size: inherit; }
+  a { color: var(--blue); }
+  nav.toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 8px; }
+  nav.toc a { text-decoration: none; font-size: 0.88rem; padding: 4px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink); background: var(--surface); }
+  nav.toc a:hover, nav.toc a:focus-visible { border-color: var(--accent); }
+  .verdict { background: var(--accent-soft); border-radius: 12px; padding: 18px 20px; margin: 28px 0; }
+  .verdict p:last-child { margin-bottom: 0; }
+  .tbl { overflow-x: auto; margin: 16px 0 20px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92rem; min-width: 560px; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+  th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pill { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+  .pill.good { color: var(--green); } .pill.warn { color: var(--warn); } .pill.bad { color: var(--red); }
+  .small { font-size: 0.86rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">Experiment · Claude API · November 2026</div>
+  <h1>Message threads in the tool loop</h1>
+  <p class="lede">What Claude's message-threads beta did for the Sunwalks agent loop when measured, why it stays off, and what was built to find out.</p>
+
+  <nav class="toc">
+    <a href="#results">Results</a>
+    <a href="#why-off">Why it stays off</a>
+    <a href="#threads">How threads work</a>
+    <a href="#fit">Where it fits</a>
+    <a href="#built">What was built</a>
+    <a href="#rerun">Re-running it</a>
+    <a href="#risks">Risks</a>
+  </nav>
+
+  <div class="verdict">
+    <p><strong>Threads stay off.</strong> On the planning loop, a thread cut the request size of turns 2 and 3 by 62–80%. Response time didn't change beyond noise, and token use and plan quality were the same. The code is in place behind <code>CLAUDE_MESSAGE_THREADS</code> and costs nothing while unset.</p>
+  </div>
+
+  <h2 id="results">Phase 3 results</h2>
+  <p>Measured on 20 Nov 2026. Ten mornings, 12–21 Nov, were each planned twice with <code>recommendWalk</code> on Claude Opus 5.5: once with threads off and once with them on, alternating which ran first. The runs read the production database with nothing written: no plan was stored and memory was read-only. All 20 plans passed the schema check. Total spend was $0.68.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Measure (median)</th><th>Threads off</th><th>Threads on</th><th>Change</th></tr></thead>
+    <tbody>
+      <tr><td>Request size, turn 2</td><td class="num">7.1 KB</td><td class="num">1.4 KB</td><td><span class="pill good">−80%</span></td></tr>
+      <tr><td>Request size, turn 3</td><td class="num">10.7 KB</td><td class="num">4.1 KB</td><td><span class="pill good">−62%</span></td></tr>
+      <tr><td>Time to response, turn 2</td><td class="num">1,726 ms</td><td class="num">1,838 ms</td><td><span class="pill warn">noise</span></td></tr>
+      <tr><td>Time to response, turn 3 (final answer)</td><td class="num">6,171 ms</td><td class="num">6,450 ms</td><td><span class="pill warn">noise</span></td></tr>
+      <tr><td>Whole run, paired by morning</td><td colspan="2">Threads on faster by 588 ms; 7 of 10 mornings faster, spread −2.5 s to +1.5 s</td><td><span class="pill warn">inconclusive</span></td></tr>
+      <tr><td>Replays / fallbacks to unthreaded</td><td class="num">n/a</td><td class="num">0 / 0</td><td><span class="pill good">clean</span></td></tr>
+      <tr><td>Output tokens per run</td><td class="num">913</td><td class="num">925</td><td>same</td></tr>
+      <tr><td>Turns per run</td><td class="num">3</td><td class="num">3</td><td>same</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small">"Time to response" is time to response headers. The loop doesn't stream, so this includes the model's whole reply, not only the wait for its first token.</p>
+
+  <h2 id="why-off">Why it stays off</h2>
+  <ul>
+    <li><strong>No noticeable benefit here.</strong> Apart from the smaller requests on turns 2 and 3, nothing measurable changed. A thread saves re-uploading and re-processing the conversation, and the planning loop has very little of it: 3 turns over about 10 KB. Most of each turn's time is the model writing its reply, which a thread doesn't touch.</li>
+    <li><strong>The quoted 35% belongs to a different workload.</strong> Roy Arsan (Applied AI team, as recalled) cited a 35% latency saving in the Anthropic webinar "Build Agents with Claude Platform on Google Cloud". Anthropic's docs give no figure, saying only that time to first token "stays lower and steadier as the conversation grows". A long loop with a large history fits that description much better than this one.</li>
+    <li><strong>It costs something to turn on.</strong> Threads are a beta, and they aren't covered by zero data retention (ZDR): Anthropic holds a thread's conversation in memory for up to an hour. Turning them on would also rule out compaction and most context editing. With no gain to show, none of that is worth taking on.</li>
+    <li><strong>Keeping the code costs nothing.</strong> With the flag unset the loop behaves as before. The request trace it adds stays useful. If a loop grows to many turns or large tool results, the flag and the A/B script make it a quick test.</li>
+  </ul>
+
+  <h2 id="threads">How message threads work</h2>
+  <p>Beta header <code>message-threads-2026-08-12</code>, on an ordinary <code>POST /v1/messages</code>.</p>
+  <ul>
+    <li><strong>Create:</strong> the first request as usual (full <code>messages</code>, <code>system</code>, <code>tools</code>) plus <code>thread: {type: "create"}</code>. The API stores the conversation under the response <code>id</code>.</li>
+    <li><strong>Continue:</strong> only the new messages plus <code>thread: {type: "continue", previous_message_id}</code>, and no <code>system</code> or <code>tools</code>.</li>
+    <li><strong>Replay:</strong> threads are best-effort. On 404 <code>thread_not_found</code>, the full conversation goes out again as a new create. The SDK helper (<code>client.beta.messages.thread()</code>, in <code>@anthropic-ai/sdk</code> 1.2.0 and later) does this for you.</li>
+    <li><strong>Lifetime:</strong> a thread expires 5 minutes after its last request and is deleted within 1 hour of its last use.</li>
+    <li><strong>Fixed for the thread's life:</strong> <code>model</code>, <code>tool_choice</code>, <code>thinking</code>, <code>output_config</code>, <code>context_management</code>, top-level <code>cache_control</code>, and the set of beta headers. A change returns 400 <code>thread_fingerprint_mismatch</code>.</li>
+    <li><strong>Price and caching:</strong> pricing and rate limits are the same, and a thread caches nothing, so prompt caching still matters.</li>
+    <li><strong>Can't be used with:</strong> Message Batches, token counting, compaction, most context editing, or organizations with HIPAA readiness enabled. Not available on Bedrock or Vertex AI.</li>
+  </ul>
+  <p class="small">Source: <a href="https://platform.claude.com/docs/en/build-with-claude/message-threads">platform.claude.com, Message threads</a>, read 20 Nov 2026.</p>
+
+  <h2 id="fit">Where it fits in Sunwalks</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Call site</th><th>Shape</th><th>Who waits</th><th>Fit</th></tr></thead>
+    <tbody>
+      <tr><td><code>recommendWalk</code></td><td><code>runToolLoop</code>, engine tools + memory, JSON-schema output, effort <code>medium</code></td><td>Nobody: the cron, MCP and the CLI</td><td><span class="pill good">Fits</span> Measured above</td></tr>
+      <tr><td>Walk-buddy reply</td><td><code>runToolLoop</code>, buddy tools + memory, effort <code>low</code></td><td>The owner on Telegram</td><td><span class="pill good">Fits</span> Not measured, because its tools write</td></tr>
+      <tr><td><code>fileFeedback</code></td><td><code>runToolLoop</code>, memory only, effort <code>low</code></td><td>The owner, briefly</td><td><span class="pill good">Fits</span> Fewer turns, less to save</td></tr>
+      <tr><td>Photo tagging</td><td>Single calls and Message Batches</td><td>Nobody</td><td><span class="pill bad">No</span> Batches don't support threads</td></tr>
+      <tr><td>Chat across Telegram messages</td><td>A new loop per message, with recent chat pasted into the prompt</td><td>The owner</td><td><span class="pill warn">No</span> Gaps often exceed 5 minutes, and the history is rebuilt each time</td></tr>
+    </tbody>
+  </table></div>
+  <p>Every agent call goes through one manual loop, <code>src/lib/tool-loop.ts</code>. It already keeps the model, system prompt, tools and output settings the same on every turn, and only adds to the history, which is all a thread asks for.</p>
+
+  <h2 id="built">What was built</h2>
+  <h3>Request tracing</h3>
+  <p><code>src/lib/claude-client.ts</code> adds <code>createClaudeClient()</code>, which every entry point except photo tagging now uses. Its fetch notes each request's size, time to response headers, status, and whether it was a thread create or continue. The loop collects these per turn with <code>traceRequests</code>, returns them as <code>trace</code>, and logs one <code>[tool-loop]</code> line per run. A turn after the first with two requests means the conversation was replayed.</p>
+
+  <h3>The thread path</h3>
+  <p>With the flag on (<code>CLAUDE_MESSAGE_THREADS=1</code> or <code>thread: true</code>), <code>runToolLoop</code> creates a thread with the SDK helper and sends each turn with <code>thread.send()</code>. It keeps its own copy of the history either way. The helper is created with <code>unsupportedRequestBehavior: "continue_unthreaded"</code>, so a request the API won't thread finishes without one. The loop stays manual, as its header comment intends.</p>
+<pre><code>const thread = client.beta.messages.thread({
+  model, max_tokens: 16000, system, tools: toolDefs,
+  cache_control: { type: "ephemeral" },
+  output_config: { effort, ...(outputFormat ? { format: outputFormat } : {}) },
+  unsupportedRequestBehavior: "continue_unthreaded",
+});
+const response = await thread.send(next); // turn 1 creates, later turns continue</code></pre>
+
+  <h3>Dry runs</h3>
+  <p><code>recommendWalk(client, date, onToolCall, { dryRun: true })</code> doesn't store the plan. It passes <code>memory: "read-only"</code> to the loop, which turns down every memory command except <code>view</code> before it reaches the database.</p>
+
+  <h3>Tests</h3>
+  <p><code>test/engine.test.mts</code> drives a real SDK client over a scripted fetch, so the SDK's own thread code runs. It covers continue requests carrying only the new messages with the fixed fields unchanged, a lost thread being replayed in full, an unthreadable request finishing without a thread, and read-only memory.</p>
+
+  <h2 id="rerun">Re-running the measurement</h2>
+<pre><code>npm run threads-ab -- --runs 10 --out results.json</code></pre>
+  <p>Each morning is planned once per arm, going back a day at a time from <code>--date</code> (default: the next morning to plan). The runs are dry and write nothing, and each one costs about $0.03–0.05 on Claude Opus 5.5. The summary gives, per arm, the time and request size of the turns after the first, replays, tokens and cost.</p>
+
+  <h2 id="risks">Risks if it's turned on later</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Risk</th><th>Impact</th><th>Handling</th></tr></thead>
+    <tbody>
+      <tr><td>Not ZDR eligible</td><td>Location and walk data held by Anthropic for up to 1 hour</td><td>Check the organization's retention terms before enabling</td></tr>
+      <tr><td>Silent replays</td><td>Slower than no thread, with no error raised</td><td>The <code>[tool-loop]</code> trace shows them</td></tr>
+      <tr><td>Compaction or context editing</td><td>Can't be used with a thread</td><td>Not used today; choose one or the other if loops grow</td></tr>
+      <tr><td>Changing effort or tools mid-loop</td><td><code>thread_fingerprint_mismatch</code></td><td>Doesn't happen today; start a new thread if it's ever needed</td></tr>
+      <tr><td>Beta changes</td><td>Header or request shape changes</td><td>All thread code is in <code>tool-loop.ts</code> behind the flag</td></tr>
+    </tbody>
+  </table></div>
+</main>
+</body>
+</html>

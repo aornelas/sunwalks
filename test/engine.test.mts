@@ -239,3 +239,17 @@ test("a request the server can't thread finishes without one", async () => {
   assert.deepEqual(requests.map((r) => r.thread?.type), ["create", undefined, undefined]);
   assert.equal(requests[2].messages.length, 3);
 });
+
+test("read-only memory turns down every change before it reaches the database", async () => {
+  const write: ScriptedReply = {
+    stop_reason: "tool_use",
+    content: [
+      { type: "tool_use", id: "m1", name: "memory", input: { command: "create", path: "/memories/x.md", file_text: "hi" }, caller: { type: "direct" } },
+    ] as Anthropic.Beta.BetaContentBlock[],
+  };
+  const { client, requests } = scriptedClient([write, answer]);
+  await runToolLoop(client, { ...noopLoop, memory: "read-only", thread: false, ...quiet });
+  const [result] = requests[1].messages.at(-1)!.content as Anthropic.Beta.BetaToolResultBlockParam[];
+  assert.equal(result.is_error, true);
+  assert.match(String(result.content), /read-only/);
+});

@@ -20,6 +20,7 @@
     "feedback": "tsx scripts/feedback.ts",
     "walk": "tsx scripts/walk.ts",
     "telegram": "tsx scripts/telegram.ts",
+    "threads-ab": "tsx scripts/threads-ab.ts",
     "mcp": "tsx scripts/mcp.ts"
   },
   "dependencies": {

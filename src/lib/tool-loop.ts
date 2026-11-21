@@ -44,8 +44,8 @@ export interface LoopOptions {
   system: string;
   prompt: string;
   tools: LoopTool[];
-  /** Adds Claude's memory tool, backed by memory_files. */
-  memory?: boolean;
+  /** Adds Claude's memory tool, backed by memory_files. "read-only" lets Claude view it but not change it. */
+  memory?: boolean | "read-only";
   outputFormat?: Anthropic.Beta.BetaJSONOutputFormat;
   effort?: Anthropic.Beta.BetaOutputConfig["effort"];
   maxTurns?: number;
@@ -125,7 +125,7 @@ export async function runToolLoop(client: Anthropic, options: LoopOptions): Prom
       }
 
       // 2. Run every requested tool and return all results together.
-      next = [{ role: "user", content: await runCalls(calls, byName, turn, onToolCall) }];
+      next = [{ role: "user", content: await runCalls(calls, byName, turn, onToolCall, memory === "read-only") }];
     }
     throw new Error(`No answer after ${maxTurns} turns`);
   } finally {
@@ -143,6 +143,7 @@ async function runCalls(
   byName: Map<string, LoopTool>,
   turn: number,
   onToolCall: LoopOptions["onToolCall"],
+  readOnlyMemory: boolean,
 ): Promise<Anthropic.Beta.BetaToolResultBlockParam[]> {
   const results: Anthropic.Beta.BetaToolResultBlockParam[] = [];
   for (const call of calls) {
@@ -150,7 +151,9 @@ async function runCalls(
     let isError = false;
     try {
       if (call.name === MEMORY_TOOL.name) {
-        content = await runMemoryCommand(call.input as MemoryCommand);
+        const command = call.input as MemoryCommand;
+        if (readOnlyMemory && command.command !== "view") throw new MemoryError("Memory is read-only here; use view.");
+        content = await runMemoryCommand(command);
       } else {
         const tool = byName.get(call.name);
         if (!tool) throw new Error(`Unknown tool ${call.name}`);

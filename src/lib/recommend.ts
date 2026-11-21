@@ -20,7 +20,7 @@ import { getPlanningResponse } from "./planning";
 import { HOME_TIMING, reachFor, type DayRule, type Reach } from "./reach";
 import { morningSchedule } from "./schedule";
 import { listSpots } from "./spots";
-import { runToolLoop, finalText, type LoopEvent, type LoopTool } from "./tool-loop";
+import { runToolLoop, finalText, type LoopEvent, type LoopTool, type LoopTrace } from "./tool-loop";
 import { buildReason, CATEGORY_ORDER, type VerdictWord } from "./verdict";
 
 export const RECOMMEND_PROMPT_VERSION = "recommend-walk/v2";
@@ -237,22 +237,27 @@ export interface RecommendResult {
   recommendation: Recommendation;
   turns: number;
   usage: { inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheCreationTokens: number };
+  trace: LoopTrace;
 }
 
-/** Plans the walk for `date` (a day key), stores it, and returns it. */
+/**
+ * Plans the walk for `date` (a day key), stores it, and returns it. With
+ * `dryRun` nothing is written: the plan isn't stored and memory is read-only.
+ */
 export async function recommendWalk(
   client: Anthropic,
   date: string,
   onToolCall?: (event: LoopEvent) => void,
+  { dryRun = false }: { dryRun?: boolean } = {},
 ): Promise<RecommendResult> {
   const data = await loadEngineData(date);
   const model = recommendModel();
-  const { message, turns, usage } = await runToolLoop(client, {
+  const { message, turns, usage, trace } = await runToolLoop(client, {
     model,
     system: loadSystemPrompt(),
     prompt: `Plan the walk for the morning of ${date}.`,
     tools: buildTools(data),
-    memory: true,
+    memory: dryRun ? "read-only" : true,
     outputFormat: { type: "json_schema", schema: jsonSchemaFor(RecommendationSchema) },
     onToolCall,
   });
@@ -278,6 +283,6 @@ export async function recommendWalk(
     cacheReadTokens: usage.cacheReadTokens,
     createdAt: new Date(),
   };
-  await db.insert(recommendations).values(row).onConflictDoUpdate({ target: recommendations.date, set: row });
-  return { recommendation, turns, usage };
+  if (!dryRun) await db.insert(recommendations).values(row).onConflictDoUpdate({ target: recommendations.date, set: row });
+  return { recommendation, turns, usage, trace };
 }

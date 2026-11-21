@@ -6,7 +6,7 @@
 //   npm run telegram -- nudge          sends this morning's "no photo yet" nudge, if nothing's been reported
 //   npm run telegram -- week           sends the weekly summary now
 import "dotenv/config";
-import Anthropic from "@anthropic-ai/sdk";
+import { createClaudeClient } from "../src/lib/claude-client";
 import { todayDayKey } from "../src/lib/dates";
 import { env } from "../src/lib/env";
 import type { TelegramUpdate } from "../src/lib/telegram";
@@ -55,7 +55,7 @@ async function main() {
       const chatId = requireChat();
       const idx = process.argv.indexOf("--date");
       const date = idx >= 0 ? process.argv[idx + 1] : undefined;
-      const usage = await sendEveningPlan({ api, client: new Anthropic(), chatId }, date);
+      const usage = await sendEveningPlan({ api, client: createClaudeClient(), chatId }, date);
       console.log(`Sent. input ${usage.inputTokens} + ${usage.cacheReadTokens} cache read; output ${usage.outputTokens}`);
       break;
     }

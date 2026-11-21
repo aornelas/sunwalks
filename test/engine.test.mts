@@ -8,6 +8,7 @@ process.env.DATABASE_URL ??= "postgres://test@localhost/unused";
 const { computeCalibration, describeConfidence, observedDistribution } = await import("../src/lib/calibration");
 const { computeSpotScores, rankSpots, walkScore, STAY_IN } = await import("../src/lib/place-scores");
 const { runToolLoop } = await import("../src/lib/tool-loop");
+const { createClaudeClient } = await import("../src/lib/claude-client");
 import type { MorningRecord } from "../src/lib/mornings";
 
 function morning(overrides: Partial<MorningRecord>): MorningRecord {
@@ -80,30 +81,53 @@ test("spots start from their kind's default and move with the walks logged there
   assert.equal(again[0].walksUnderSky, 3);
 });
 
-/** A stand-in for the SDK client that replays scripted responses and records each request. */
-function scriptedClient(responses: Partial<Anthropic.Message>[]) {
-  const requests: Anthropic.MessageCreateParamsNonStreaming[] = [];
-  const client = {
-    messages: {
-      async create(params: Anthropic.MessageCreateParamsNonStreaming) {
-        // Snapshot: the loop keeps appending to the same messages array.
-        requests.push(structuredClone(params));
-        const next = responses.shift();
-        if (!next) throw new Error("No scripted response left");
-        return {
-          id: "msg",
-          type: "message",
-          role: "assistant",
-          model: "claude-opus-5-5",
-          stop_sequence: null,
-          usage: { input_tokens: 10, output_tokens: 5, cache_read_input_tokens: 100, cache_creation_input_tokens: 0 },
-          ...next,
-        };
-      },
+type ScriptedReply = Partial<Anthropic.Beta.BetaMessage> | { status: number; errorCode: string };
+type SentRequest = Anthropic.Beta.MessageCreateParamsNonStreaming & { thread?: { type: string; previous_message_id?: string } };
+
+/**
+ * A real SDK client whose fetch replays scripted responses and records each
+ * request body, so the SDK's own message-thread helper runs as it would
+ * against the API. An `errorCode` reply is an API error with that
+ * error.details.error_code.
+ */
+function scriptedClient(replies: ScriptedReply[]) {
+  const requests: SentRequest[] = [];
+  const betas: (string | null)[] = [];
+  let n = 0;
+  const client = createClaudeClient({
+    apiKey: "test",
+    maxRetries: 0,
+    fetch: async (_input, init) => {
+      requests.push(JSON.parse(String(init?.body)));
+      betas.push(new Headers(init?.headers).get("anthropic-beta"));
+      const next = replies.shift();
+      if (!next) throw new Error("No scripted response left");
+      if ("errorCode" in next) {
+        const error = { type: "error", error: { type: "invalid_request_error", message: next.errorCode, details: { error_code: next.errorCode } } };
+        return Response.json(error, { status: next.status });
+      }
+      return Response.json({
+        id: `msg_${++n}`,
+        type: "message",
+        role: "assistant",
+        model: "claude-opus-5-5",
+        stop_sequence: null,
+        stop_details: null,
+        usage: { input_tokens: 10, output_tokens: 5, cache_read_input_tokens: 100, cache_creation_input_tokens: 0 },
+        ...next,
+      });
     },
-  } as unknown as Anthropic;
-  return { client, requests };
+  });
+  return { client, requests, betas };
 }
+
+const quiet = { onTrace: () => {} };
+const toolTurn = (id: string): ScriptedReply => ({
+  stop_reason: "tool_use",
+  content: [{ type: "tool_use", id, name: "noop", input: {}, caller: { type: "direct" } }] as Anthropic.Beta.BetaContentBlock[],
+});
+const answer: ScriptedReply = { stop_reason: "end_turn", content: [{ type: "text", text: "done", citations: null }] };
+const noopLoop = { model: "claude-opus-5-5", system: "sys", prompt: "go", tools: [{ definition: { name: "noop", input_schema: { type: "object" as const } }, run: async () => ({ ok: true }) }] };
 
 test("travel and geocache spots are never scored, so they're never recommended", () => {
   const scores = computeSpotScores(
@@ -124,9 +148,9 @@ test("the tool loop runs every requested tool and returns the results together",
       content: [
         { type: "tool_use", id: "t1", name: "double", input: { n: 2 }, caller: { type: "direct" } },
         { type: "tool_use", id: "t2", name: "broken", input: {}, caller: { type: "direct" } },
-      ] as Anthropic.ContentBlock[],
+      ] as Anthropic.Beta.BetaContentBlock[],
     },
-    { stop_reason: "end_turn", content: [{ type: "text", text: "done", citations: null }] },
+    answer,
   ]);
   const calls: string[] = [];
   const result = await runToolLoop(client, {
@@ -145,7 +169,9 @@ test("the tool loop runs every requested tool and returns the results together",
         },
       },
     ],
+    thread: false,
     onToolCall: (e) => calls.push(e.tool),
+    ...quiet,
   });
 
   assert.equal(result.turns, 2);
@@ -154,7 +180,7 @@ test("the tool loop runs every requested tool and returns the results together",
   // Both results went back in one user message; the failure as is_error.
   const followUp = requests[1].messages.at(-1)!;
   assert.equal(followUp.role, "user");
-  const results = followUp.content as Anthropic.ToolResultBlockParam[];
+  const results = followUp.content as Anthropic.Beta.BetaToolResultBlockParam[];
   assert.deepEqual(results.map((r) => [r.tool_use_id, r.content, r.is_error]), [
     ["t1", '{"result":4}', false],
     ["t2", "no data", true],
@@ -163,19 +189,53 @@ test("the tool loop runs every requested tool and returns the results together",
 });
 
 test("the tool loop gives up instead of looping forever", async () => {
-  const toolTurn = {
-    stop_reason: "tool_use" as const,
-    content: [{ type: "tool_use", id: "t", name: "noop", input: {}, caller: { type: "direct" } }] as Anthropic.ContentBlock[],
-  };
-  const { client } = scriptedClient([toolTurn, toolTurn, toolTurn]);
-  await assert.rejects(
-    runToolLoop(client, {
-      model: "m",
-      system: "s",
-      prompt: "p",
-      tools: [{ definition: { name: "noop", input_schema: { type: "object" } }, run: async () => ({}) }],
-      maxTurns: 2,
-    }),
-    /No answer after 2 turns/,
-  );
+  const { client } = scriptedClient([toolTurn("t1"), toolTurn("t2"), toolTurn("t3")]);
+  await assert.rejects(runToolLoop(client, { ...noopLoop, maxTurns: 2, thread: false, ...quiet }), /No answer after 2 turns/);
+});
+
+test("in a message thread, later turns send only the new messages", async () => {
+  const { client, requests, betas } = scriptedClient([toolTurn("t1"), toolTurn("t2"), answer]);
+  const result = await runToolLoop(client, { ...noopLoop, thread: true, effort: "low", ...quiet });
+
+  assert.equal(result.turns, 3);
+  assert.deepEqual(requests.map((r) => r.thread?.type), ["create", "continue", "continue"]);
+  assert.ok(betas.every((b) => b?.includes("message-threads-2026-08-12")));
+  // The first turn carries everything; the rest only the tool results.
+  assert.equal(requests[0].system, "sys");
+  assert.ok(requests[0].tools?.length);
+  for (const [i, later] of requests.slice(1).entries()) {
+    assert.equal(later.thread?.previous_message_id, `msg_${i + 1}`);
+    assert.equal("system" in later, false);
+    assert.equal("tools" in later, false);
+    assert.equal(later.messages.length, 1);
+    assert.equal((later.messages[0].content as Anthropic.Beta.BetaToolResultBlockParam[])[0].type, "tool_result");
+    // Fixed fields stay the same on every turn.
+    assert.deepEqual(later.cache_control, requests[0].cache_control);
+    assert.deepEqual(later.output_config, requests[0].output_config);
+  }
+  // The trace marks each request, so a replay would show up.
+  assert.deepEqual(result.trace.turns.map((t) => t.requests.map((r) => r.thread)), [["create"], ["continue"], ["continue"]]);
+  // Continues don't grow with the conversation.
+  assert.equal(result.trace.turns[2].requests[0].bytes, result.trace.turns[1].requests[0].bytes);
+});
+
+test("a lost thread is replayed in full and the loop carries on", async () => {
+  const { client, requests } = scriptedClient([toolTurn("t1"), { status: 404, errorCode: "thread_not_found" }, answer]);
+  const result = await runToolLoop(client, { ...noopLoop, thread: true, ...quiet });
+
+  assert.equal(result.turns, 2);
+  assert.deepEqual(requests.map((r) => r.thread?.type), ["create", "continue", "create"]);
+  const replay = requests[2];
+  assert.equal(replay.system, "sys");
+  assert.deepEqual(replay.messages.map((m) => m.role), ["user", "assistant", "user"]);
+  assert.equal(result.trace.turns[1].requests.length, 2);
+});
+
+test("a request the server can't thread finishes without one", async () => {
+  const { client, requests } = scriptedClient([{ status: 400, errorCode: "thread_unsupported_request" }, toolTurn("t1"), answer]);
+  const result = await runToolLoop(client, { ...noopLoop, thread: true, ...quiet });
+
+  assert.equal(result.turns, 2);
+  assert.deepEqual(requests.map((r) => r.thread?.type), ["create", undefined, undefined]);
+  assert.equal(requests[2].messages.length, 3);
 });

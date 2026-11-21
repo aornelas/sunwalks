@@ -2,7 +2,7 @@
 // tool Claude called, the plan itself, and the tokens it took.
 // `npm run recommend` plans the next morning; `-- --date YYYY-MM-DD` any other.
 import "dotenv/config";
-import Anthropic from "@anthropic-ai/sdk";
+import { createClaudeClient } from "../src/lib/claude-client";
 import { planningStartDate } from "../src/lib/planning";
 import { recommendWalk } from "../src/lib/recommend";
 
@@ -12,7 +12,7 @@ async function main() {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date ?? "")) throw new Error("--date takes YYYY-MM-DD");
 
   console.log(`Planning the walk for ${date}…`);
-  const { recommendation: r, turns, usage } = await recommendWalk(new Anthropic(), date, (e) => {
+  const { recommendation: r, turns, usage } = await recommendWalk(createClaudeClient(), date, (e) => {
     const input = JSON.stringify(e.input);
     console.log(`  [turn ${e.turn}] ${e.tool} ${input.length > 90 ? `${input.slice(0, 90)}…` : input}${e.error ? `  ✗ ${e.error}` : ""}`);
   });

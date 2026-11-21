@@ -3,13 +3,13 @@
 // Claude files it as a preference (its memory tool, stored in the
 // database), and the recommender applies it from then on.
 import "dotenv/config";
-import Anthropic from "@anthropic-ai/sdk";
+import { createClaudeClient } from "../src/lib/claude-client";
 import { fileFeedback } from "../src/lib/feedback";
 
 async function main() {
   const text = process.argv.slice(2).join(" ").trim();
   if (!text) throw new Error('Usage: npm run feedback -- "what you want the planner to know"');
-  const { summary, usage } = await fileFeedback(new Anthropic(), text, (e) => {
+  const { summary, usage } = await fileFeedback(createClaudeClient(), text, (e) => {
     const input = e.input as { command?: string; path?: string };
     console.log(`  memory ${input.command} ${input.path ?? ""}${e.error ? `  ✗ ${e.error}` : ""}`);
   });

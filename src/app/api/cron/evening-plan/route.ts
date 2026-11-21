@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { createClaudeClient } from "@/lib/claude-client";
 import { NextRequest, NextResponse } from "next/server";
 import { isCronRequest } from "@/lib/cron-auth";
 import { env } from "@/lib/env";
@@ -14,6 +14,6 @@ export async function GET(req: NextRequest) {
   const api = configuredBotApi();
   const chatId = env.telegramChatId;
   if (!api || !chatId) return NextResponse.json({ skipped: "Telegram isn't configured" });
-  const usage = await sendEveningPlan({ api, client: new Anthropic(), chatId });
+  const usage = await sendEveningPlan({ api, client: createClaudeClient(), chatId });
   return NextResponse.json({ sent: true, usage });
 }

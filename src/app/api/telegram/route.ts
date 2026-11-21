@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { createClaudeClient } from "@/lib/claude-client";
 import { after, NextRequest, NextResponse } from "next/server";
 import { env } from "@/lib/env";
 import { isFromOwner, SECRET_HEADER, secretMatches, type TelegramUpdate } from "@/lib/telegram";
@@ -27,6 +27,6 @@ export async function POST(req: NextRequest) {
 
   // Telegram waits for the response and redelivers on a timeout, so the
   // work happens after answering; claimUpdate already made it run once.
-  after(() => handleUpdate({ api, client: new Anthropic(), chatId }, update));
+  after(() => handleUpdate({ api, client: createClaudeClient(), chatId }, update));
   return NextResponse.json({ ok: true });
 }

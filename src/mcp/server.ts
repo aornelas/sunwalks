@@ -12,7 +12,7 @@
 // The plan is advice. Nothing here records a choice the night before: the
 // owner decides in the morning and reports where they went.
 
-import Anthropic from "@anthropic-ai/sdk";
+import { createClaudeClient } from "@/lib/claude-client";
 import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
 import { acceptedContent, inputRequired, McpServer, ResourceTemplate } from "@modelcontextprotocol/server";
 import { and, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
@@ -91,7 +91,7 @@ async function planFor(date: string, refresh: boolean): Promise<Plan | null> {
   let rec: Recommendation | null = null;
   let createdAt = new Date();
   if (refresh) {
-    rec = (await recommendWalk(new Anthropic(), date)).recommendation;
+    rec = (await recommendWalk(createClaudeClient(), date)).recommendation;
   } else {
     const [row] = await db.select().from(recommendations).where(eq(recommendations.date, date)).limit(1);
     if (!row) return null;
